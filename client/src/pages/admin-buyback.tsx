@@ -51,6 +51,8 @@ export default function AdminBuyback() {
   const [selectedOffer, setSelectedOffer] = useState<BuybackOffer | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [rejectReason, setRejectReason] = useState("");
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [activeTab, setActiveTab] = useState("pending");
 
   // Check admin access
@@ -91,6 +93,7 @@ export default function AdminBuyback() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/buyback/offers/review"] });
       setSelectedOffer(null);
       setReviewNotes("");
+      setShowApprovalModal(false);
     },
     onError: (error: any) => {
       toast({
@@ -114,6 +117,7 @@ export default function AdminBuyback() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/buyback/offers/review"] });
       setSelectedOffer(null);
       setRejectReason("");
+      setShowRejectionModal(false);
     },
     onError: (error: any) => {
       toast({
@@ -127,11 +131,15 @@ export default function AdminBuyback() {
   const handleApprove = (offer: BuybackOffer) => {
     setSelectedOffer(offer);
     setReviewNotes("");
+    setShowApprovalModal(true);
+    setShowRejectionModal(false);
   };
 
   const handleReject = (offer: BuybackOffer) => {
     setSelectedOffer(offer);
     setRejectReason("");
+    setShowRejectionModal(true);
+    setShowApprovalModal(false);
   };
 
   const confirmApproval = () => {
@@ -339,7 +347,7 @@ export default function AdminBuyback() {
       </Tabs>
 
       {/* Approval Modal */}
-      {selectedOffer && !rejectReason && (
+      {selectedOffer && showApprovalModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-md">
             <CardHeader>
@@ -368,7 +376,11 @@ export default function AdminBuyback() {
                   {approveMutation.isPending ? "Approving..." : "Confirm Approval"}
                 </Button>
                 <Button
-                  onClick={() => setSelectedOffer(null)}
+                  onClick={() => {
+                    setSelectedOffer(null);
+                    setReviewNotes("");
+                    setShowApprovalModal(false);
+                  }}
                   variant="outline"
                   className="flex-1"
                 >
@@ -381,7 +393,7 @@ export default function AdminBuyback() {
       )}
 
       {/* Rejection Modal */}
-      {selectedOffer && rejectReason !== undefined && (
+      {selectedOffer && showRejectionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-md">
             <CardHeader>
@@ -415,6 +427,7 @@ export default function AdminBuyback() {
                   onClick={() => {
                     setSelectedOffer(null);
                     setRejectReason("");
+                    setShowRejectionModal(false);
                   }}
                   variant="outline"
                   className="flex-1"
