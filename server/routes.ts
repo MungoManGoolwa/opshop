@@ -2,7 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertProductSchema, insertCategorySchema, insertMessageSchema } from "@shared/schema";
+import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
+import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -252,6 +254,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error sending message:", error);
       res.status(400).json({ message: error.message || "Failed to send message" });
+    }
+  });
+
+  // Payment routes - Stripe
+  app.post('/api/stripe/payment-intent', isAuthenticated, createPaymentIntent);
+  app.post('/api/stripe/confirm-payment', isAuthenticated, confirmPayment);
+  app.post('/api/stripe/refund', isAuthenticated, createRefund);
+
+  // Payment routes - PayPal
+  app.get("/api/paypal/setup", loadPaypalDefault);
+  app.post("/api/paypal/order", isAuthenticated, createPaypalOrder);
+  app.post("/api/paypal/order/:orderID/capture", isAuthenticated, capturePaypalOrder);
+
+  // Order management routes
+  app.post('/api/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const buyerId = req.user?.claims?.sub;
+      const orderData = insertOrderSchema.parse({
+        ...req.body,
+        buyerId,
+        orderId: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      });
+      
+      const order = await storage.createOrder(orderData);
+      
+      // Create commission record
+      const product = await storage.getProduct(order.productId);
+      if (product) {
+        const settings = await storage.getPaymentSettings();
+        const commissionRate = settings?.defaultCommissionRate || "10.00";
+        const salePrice = parseFloat(order.totalAmount.toString());
+        const commissionAmount = (salePrice * parseFloat(commissionRate.toString())) / 100;
+        const sellerAmount = salePrice - commissionAmount;
+
+        await storage.createCommission({
+          orderId: order.id,
+          productId: order.productId,
+          sellerId: order.sellerId,
+          salePrice: order.totalAmount,
+          commissionRate,
+          commissionAmount: commissionAmount.toString(),
+          sellerAmount: sellerAmount.toString(),
+          status: 'pending',
+        });
+      }
+      
+      res.json(order);
+    } catch (error: any) {
+      console.error("Error creating order:", error);
+      res.status(400).json({ message: error.message || "Failed to create order" });
+    }
+  });
+
+  app.get('/api/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const orders = await storage.getUserOrders(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get('/api/seller/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const sellerId = req.user?.claims?.sub;
+      const orders = await storage.getSellerOrders(sellerId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching seller orders:", error);
+      res.status(500).json({ message: "Failed to fetch seller orders" });
+    }
+  });
+
+  app.patch('/api/orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const userId = req.user?.claims?.sub;
+      
+      // Check if user owns the order or is the seller
+      const order = await storage.getOrder(orderId);
+      if (!order || (order.buyerId !== userId && order.sellerId !== userId)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const updatedOrder = await storage.updateOrder(orderId, req.body);
+      res.json(updatedOrder);
+    } catch (error: any) {
+      console.error("Error updating order:", error);
+      res.status(400).json({ message: error.message || "Failed to update order" });
+    }
+  });
+
+  // Admin payment settings routes
+  app.get('/api/admin/payment-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const settings = await storage.getPaymentSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching payment settings:", error);
+      res.status(500).json({ message: "Failed to fetch payment settings" });
+    }
+  });
+
+  app.post('/api/admin/payment-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const settings = await storage.updatePaymentSettings(req.body, userId);
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Error updating payment settings:", error);
+      res.status(400).json({ message: error.message || "Failed to update payment settings" });
     }
   });
 

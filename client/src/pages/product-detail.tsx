@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
+import BuyButton from "@/components/ui/buy-button";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -298,7 +299,13 @@ export default function ProductDetail() {
             <div className="space-y-3">
               {isAuthenticated && user?.id !== product.sellerId ? (
                 <>
-                  <Button size="lg" className="w-full">
+                  <BuyButton 
+                    productId={product.id}
+                    price={product.price}
+                    shippingCost={product.shippingCost}
+                    isAvailable={product.status === "available"}
+                  />
+                  <Button size="lg" variant="outline" className="w-full">
                     <MessageCircle className="mr-2 h-5 w-5" />
                     Contact Seller
                   </Button>
@@ -315,15 +322,23 @@ export default function ProductDetail() {
                 </>
               ) : !isAuthenticated ? (
                 <div className="space-y-3">
+                  <BuyButton 
+                    productId={product.id}
+                    price={product.price}
+                    shippingCost={product.shippingCost}
+                    isAvailable={product.status === "available"}
+                  />
                   <Button 
                     size="lg" 
+                    variant="outline"
                     className="w-full"
                     onClick={() => window.location.href = "/api/login"}
                   >
-                    Login to Contact Seller
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Contact Seller
                   </Button>
                   <p className="text-sm text-gray-600 text-center">
-                    Sign in to contact the seller and make an offer
+                    Sign in to contact the seller and make purchases
                   </p>
                 </div>
               ) : (

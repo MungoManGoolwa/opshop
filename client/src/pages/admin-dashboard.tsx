@@ -4,6 +4,7 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
 import ProtectedRoute from "@/components/ui/protected-route";
+import PaymentSettings from "@/components/admin/payment-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -287,20 +288,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Platform Settings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Platform configuration would be implemented here.</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Features: Commission rates, payment settings, feature toggles, etc.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <PaymentSettings />
             </TabsContent>
           </Tabs>
         </div>

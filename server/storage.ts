@@ -5,6 +5,8 @@ import {
   wishlists,
   messages,
   commissions,
+  orders,
+  paymentSettings,
   type User,
   type UpsertUser,
   type Category,
@@ -17,6 +19,9 @@ import {
   type InsertMessage,
   type Commission,
   type InsertCommission,
+  type Order,
+  type InsertOrder,
+  type PaymentSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, desc, sql } from "drizzle-orm";
@@ -61,6 +66,18 @@ export interface IStorage {
   // Commission operations
   createCommission(commission: InsertCommission): Promise<Commission>;
   getSellerCommissions(sellerId: string): Promise<Commission[]>;
+  
+  // Order operations
+  createOrder(order: InsertOrder): Promise<Order>;
+  getOrder(id: number): Promise<Order | undefined>;
+  getOrderByOrderId(orderId: string): Promise<Order | undefined>;
+  getUserOrders(userId: string): Promise<Order[]>;
+  getSellerOrders(sellerId: string): Promise<Order[]>;
+  updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order>;
+  
+  // Payment settings operations
+  getPaymentSettings(): Promise<PaymentSettings | undefined>;
+  updatePaymentSettings(settings: Partial<PaymentSettings>, updatedBy: string): Promise<PaymentSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -234,6 +251,67 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(commissions)
       .where(eq(commissions.sellerId, sellerId))
       .orderBy(desc(commissions.createdAt));
+  }
+
+  // Order operations
+  async createOrder(orderData: InsertOrder): Promise<Order> {
+    const [order] = await db.insert(orders).values(orderData).returning();
+    return order;
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
+  }
+
+  async getOrderByOrderId(orderId: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.orderId, orderId));
+    return order || undefined;
+  }
+
+  async getUserOrders(userId: string): Promise<Order[]> {
+    return await db.select().from(orders)
+      .where(eq(orders.buyerId, userId))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async getSellerOrders(sellerId: string): Promise<Order[]> {
+    return await db.select().from(orders)
+      .where(eq(orders.sellerId, sellerId))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order> {
+    const [order] = await db.update(orders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning();
+    return order;
+  }
+
+  // Payment settings operations
+  async getPaymentSettings(): Promise<PaymentSettings | undefined> {
+    const [settings] = await db.select().from(paymentSettings)
+      .orderBy(desc(paymentSettings.id))
+      .limit(1);
+    return settings || undefined;
+  }
+
+  async updatePaymentSettings(settingsData: Partial<PaymentSettings>, updatedBy: string): Promise<PaymentSettings> {
+    const existingSettings = await this.getPaymentSettings();
+    
+    if (existingSettings) {
+      const [settings] = await db.update(paymentSettings)
+        .set({ ...settingsData, updatedAt: new Date(), updatedBy })
+        .where(eq(paymentSettings.id, existingSettings.id))
+        .returning();
+      return settings;
+    } else {
+      const [settings] = await db.insert(paymentSettings)
+        .values({ ...settingsData, updatedBy })
+        .returning();
+      return settings;
+    }
   }
 }
 

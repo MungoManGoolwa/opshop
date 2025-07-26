@@ -91,15 +91,46 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  orderId: varchar("order_id").notNull().unique(),
+  buyerId: varchar("buyer_id").references(() => users.id),
+  sellerId: varchar("seller_id").references(() => users.id),
+  productId: integer("product_id").references(() => products.id),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default("0.00"),
+  paymentGateway: varchar("payment_gateway").notNull(), // stripe, paypal
+  paymentIntentId: varchar("payment_intent_id"),
+  paymentStatus: varchar("payment_status").notNull().default("pending"), // pending, completed, failed, refunded
+  orderStatus: varchar("order_status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
+  shippingAddress: jsonb("shipping_address"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const commissions = pgTable("commissions", {
   id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id),
   productId: integer("product_id").references(() => products.id),
   sellerId: varchar("seller_id").references(() => users.id),
   salePrice: decimal("sale_price", { precision: 10, scale: 2 }).notNull(),
   commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).notNull(),
   commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }).notNull(),
+  sellerAmount: decimal("seller_amount", { precision: 10, scale: 2 }).notNull(),
   status: varchar("status").notNull().default("pending"), // pending, paid
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const paymentSettings = pgTable("payment_settings", {
+  id: serial("id").primaryKey(),
+  stripeEnabled: boolean("stripe_enabled").default(true),
+  paypalEnabled: boolean("paypal_enabled").default(true),
+  defaultCommissionRate: decimal("default_commission_rate", { precision: 5, scale: 2 }).notNull().default("10.00"),
+  processingFeeRate: decimal("processing_fee_rate", { precision: 5, scale: 2 }).notNull().default("2.90"),
+  currency: varchar("currency").notNull().default("AUD"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
 });
 
 // Schema types
@@ -123,6 +154,21 @@ export const insertProductSchema = createInsertSchema(products).omit({
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
 
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Order = typeof orders.$inferSelect;
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+
 export const insertWishlistSchema = createInsertSchema(wishlists).omit({
   id: true,
   createdAt: true,
@@ -130,17 +176,11 @@ export const insertWishlistSchema = createInsertSchema(wishlists).omit({
 export type InsertWishlist = z.infer<typeof insertWishlistSchema>;
 export type Wishlist = typeof wishlists.$inferSelect;
 
-export const insertMessageSchema = createInsertSchema(messages).omit({
-  id: true,
-  createdAt: true,
-  isRead: true,
-});
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type Message = typeof messages.$inferSelect;
-
 export const insertCommissionSchema = createInsertSchema(commissions).omit({
   id: true,
   createdAt: true,
 });
 export type InsertCommission = z.infer<typeof insertCommissionSchema>;
 export type Commission = typeof commissions.$inferSelect;
+
+export type PaymentSettings = typeof paymentSettings.$inferSelect;
