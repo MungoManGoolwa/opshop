@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
   Heart, 
@@ -17,7 +19,17 @@ import {
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch user's wishlist for count
+  const { data: wishlist } = useQuery({
+    queryKey: ["/api/wishlist"],
+    enabled: isAuthenticated,
+  });
+
+  const wishlistCount = Array.isArray(wishlist) ? wishlist.length : 0;
+  const cartCount = 0; // For now, since we redirect to checkout directly
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
