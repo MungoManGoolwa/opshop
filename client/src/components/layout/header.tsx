@@ -25,6 +25,21 @@ export default function Header() {
     console.log("Search query:", searchQuery);
   };
 
+  const getDashboardRoute = () => {
+    if (!user) return "/";
+    
+    switch ((user as any)?.role) {
+      case "admin":
+        return "/admin/dashboard";
+      case "seller":
+      case "business":
+        return "/seller/dashboard";
+      case "customer":
+      default:
+        return "/profile"; // Default customer profile page
+    }
+  };
+
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -38,7 +53,7 @@ export default function Header() {
               <HelpCircle className="inline h-4 w-4 mr-1" />
               Help
             </Link>
-            {isAuthenticated && (user?.role === 'seller' || user?.role === 'business' || user?.role === 'admin') && (
+            {isAuthenticated && ((user as any)?.role === 'seller' || (user as any)?.role === 'business' || (user as any)?.role === 'admin') && (
               <Link href="/seller/dashboard" className="text-gray-600 hover:text-primary">
                 <Store className="inline h-4 w-4 mr-1" />
                 Sell
@@ -47,7 +62,7 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <span className="text-gray-600">
-                  {user?.firstName || "User"}
+                  {(user as any)?.firstName || "User"}
                 </span>
                 <button 
                   onClick={() => window.location.href = "/api/logout"}
@@ -113,22 +128,24 @@ export default function Header() {
               </Badge>
             </Button>
             {isAuthenticated ? (
-              <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                {user?.profileImageUrl ? (
-                  <img 
-                    src={user.profileImageUrl} 
-                    alt="Profile" 
-                    className="w-8 h-8 rounded-full object-cover" 
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <UserCircle className="h-5 w-5 text-gray-600" />
-                  </div>
-                )}
-                <span className="hidden lg:block">
-                  {user?.firstName || "User"}
-                </span>
-              </Button>
+              <Link href={getDashboardRoute()}>
+                <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-gray-100">
+                  {(user as any)?.profileImageUrl ? (
+                    <img 
+                      src={(user as any).profileImageUrl} 
+                      alt="Profile" 
+                      className="w-8 h-8 rounded-full object-cover" 
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                      <UserCircle className="h-5 w-5 text-gray-600" />
+                    </div>
+                  )}
+                  <span className="hidden lg:block">
+                    {(user as any)?.firstName || "User"}
+                  </span>
+                </Button>
+              </Link>
             ) : (
               <Button 
                 onClick={() => window.location.href = "/api/login"}

@@ -20,6 +20,7 @@ import LoginSuccess from "@/pages/login-success";
 import LoginManual from "@/pages/login-manual";
 import Category from "@/pages/category";
 import CreateListing from "@/pages/create-listing";
+import Profile from "@/pages/profile";
 
 function Router() {
   const { isAuthenticated, isLoading, error } = useAuth();
@@ -64,6 +65,7 @@ function Router() {
           <Route path="/seller/create" component={CreateListing} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/profile" component={Profile} />
         </>
       )}
       <Route component={NotFound} />
