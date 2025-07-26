@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -66,12 +67,12 @@ export default function SellerDashboard() {
   };
 
   // Calculate dashboard stats
-  const totalProducts = products?.length || 0;
-  const availableProducts = products?.filter(p => p.status === "available").length || 0;
-  const soldProducts = products?.filter(p => p.status === "sold").length || 0;
-  const totalViews = products?.reduce((sum, p) => sum + (p.views || 0), 0) || 0;
-  const totalEarnings = commissions?.reduce((sum, c) => sum + parseFloat(c.salePrice || "0"), 0) || 0;
-  const totalCommissions = commissions?.reduce((sum, c) => sum + parseFloat(c.commissionAmount || "0"), 0) || 0;
+  const totalProducts = Array.isArray(products) ? products.length : 0;
+  const availableProducts = Array.isArray(products) ? products.filter((p: any) => p.status === "available").length : 0;
+  const soldProducts = Array.isArray(products) ? products.filter((p: any) => p.status === "sold").length : 0;
+  const totalViews = Array.isArray(products) ? products.reduce((sum: number, p: any) => sum + (p.views || 0), 0) : 0;
+  const totalEarnings = Array.isArray(commissions) ? commissions.reduce((sum: number, c: any) => sum + parseFloat(c.salePrice || "0"), 0) : 0;
+  const totalCommissions = Array.isArray(commissions) ? commissions.reduce((sum: number, c: any) => sum + parseFloat(c.commissionAmount || "0"), 0) : 0;
 
   return (
     <ProtectedRoute allowedRoles={["seller", "business", "admin"]}>
@@ -82,11 +83,13 @@ export default function SellerDashboard() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold">Seller Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.firstName || "Seller"}!</p>
+              <p className="text-gray-600">Welcome back, {(user as any)?.firstName || "Seller"}!</p>
             </div>
-            <Button onClick={() => window.location.href = "/seller/create"}>
-              <Plus className="mr-2 h-4 w-4" />
-              List New Item
+            <Button asChild>
+              <Link href="/seller/create">
+                <Plus className="mr-2 h-4 w-4" />
+                List New Item
+              </Link>
             </Button>
           </div>
 
@@ -167,9 +170,9 @@ export default function SellerDashboard() {
                         </div>
                       ))}
                     </div>
-                  ) : products && products.length > 0 ? (
+                  ) : Array.isArray(products) && products.length > 0 ? (
                     <div className="space-y-4">
-                      {products.map((product) => (
+                      {products.map((product: any) => (
                         <div key={product.id} className="flex items-center space-x-4 p-4 border rounded-lg">
                           <img
                             src={product.images?.[0] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=100&h=100"}
@@ -206,9 +209,11 @@ export default function SellerDashboard() {
                     <div className="text-center py-8">
                       <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-600">No products listed yet.</p>
-                      <Button className="mt-4">
-                        <Plus className="mr-2 h-4 w-4" />
-                        List Your First Item
+                      <Button asChild className="mt-4">
+                        <Link href="/seller/create">
+                          <Plus className="mr-2 h-4 w-4" />
+                          List Your First Item
+                        </Link>
                       </Button>
                     </div>
                   )}
@@ -234,9 +239,9 @@ export default function SellerDashboard() {
                         </div>
                       ))}
                     </div>
-                  ) : commissions && commissions.length > 0 ? (
+                  ) : Array.isArray(commissions) && commissions.length > 0 ? (
                     <div className="space-y-4">
-                      {commissions.map((commission) => (
+                      {commissions.map((commission: any) => (
                         <div key={commission.id} className="flex items-center justify-between p-4 border rounded-lg">
                           <div>
                             <p className="font-semibold">Sale #{commission.id}</p>
