@@ -34,7 +34,7 @@ export async function setupSimpleAuth(app: Express) {
         expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
       };
 
-      res.redirect("/");
+      res.redirect("/login-success");
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Login failed" });
