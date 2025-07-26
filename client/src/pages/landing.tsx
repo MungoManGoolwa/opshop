@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Recycle, Users, Heart, Star, MapPin, ShoppingBag, Plus } from "lucide-react";
+import { Recycle, Users, Heart, Star, MapPin, ShoppingBag, Plus, RefreshCw } from "lucide-react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -163,7 +163,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-success rounded-full flex items-center justify-center mx-auto mb-4">
-                <Recycle className="h-8 w-8 text-white" />
+                <RefreshCw className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Circular Economy</h3>
               <p className="text-gray-600">Keep valuable items in circulation instead of ending up in landfill</p>
