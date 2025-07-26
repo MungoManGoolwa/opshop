@@ -1,0 +1,227 @@
+Using this specification - create a long description of the site for the about page on the site: 
+
+Specification for Opshop Online - Online shop that sells and resells second hand clothes and goods
+Client: Brendan Faulds
+Base Location: Goolwa, South Australia
+Hosting: cPanel (Linux/PHP/MySQL)
+Stack Preference: PHP (Laravel preferred), MySQL DB, HTML/CSS/JS frontend
+Responsive Design: Yes (including Progressive Web App support)
+Market: Australia-first, global-ready
+
+🔧 Core Technologies
+Backend: PHP (Laravel or similar MVC framework)
+
+Database: MySQL (cPanel compatible)
+
+Frontend: HTML5, CSS3 (Tailwind/Bootstrap), JavaScript
+
+AI Integration: Server-side (e.g., OpenAI API)
+
+Media Storage: On server (via Laravel file storage or local filesystem)
+
+Mobile Support: PWA enabled for offline and app-like experience
+
+User Roles:
+Admin
+
+Moderator
+
+Customer
+
+Seller
+
+Business/Store
+
+Authentication
+Native (email/password)
+
+Google and Facebook OAuth
+
+Optional Two-Factor Authentication (TOTP or SMS)
+
+Admin can disable or enable authentication methods
+
+Listings & Products
+Sellers/Businesses list secondhand goods
+
+Categories:
+
+New Arrivals
+
+Clothing (Men, Women, Kids)
+
+Homewares
+
+Bric-a-brac
+
+Electrical
+
+Sports
+
+Entertainment
+
+Furniture
+
+Technology
+
+Admin can add/edit/delete categories
+
+Listings include:
+
+Multiple image upload
+
+Optional video upload
+
+Structured description: size, brand, color, material, condition (new/good/fair)
+
+Status: Available / Reserved / Sold
+
+Auto-filled brand/model
+
+Price history/trend (optional)
+
+Bulk uploading supported
+
+AI assistance (server-side) for auto-generating titles/descriptions from uploaded data (image/text)
+
+Search & Discovery
+Filter by: size, brand, price, condition, distance, category
+
+Location-based search with optional map view
+
+Saved searches with alerts
+
+AI-based recommendations: "You might also like"
+
+Keyword highlighting in results
+
+Ecommerce & Checkout
+Wishlist & favorites
+
+Cart system with checkout flow
+
+Integrated payments: Stripe, PayPal, Credit Card
+
+Commission structure:
+
+$1 minimum site commission per item
+
+Items > $10: 10% default (configurable per user/business by admin)
+
+Admin can adjust commission rates
+
+Site collects all buyer payments
+
+Alternate selling options of site buying item for 50% off AI determined value of goods based off in faith description of goods. Site then re-lists for market price, site takes 100% of these types of sales
+
+Provision for customers to make offers
+
+Automated weekly payouts to sellers (minus commission)
+
+Shipping & Returns
+Sellers handle shipping/logistics
+
+Integration with Australia Post and Sendle for label creation (optional)
+
+Pickup scheduling support
+
+Buyers pay shipping (seller sets cost or flat rate)
+
+Returns:
+
+Automated RMA system
+
+Return rules managed per listing
+
+Refunds handled by seller, optionally mediated by admin
+
+Site has process and checks for returns
+
+Site returns payment to customer, but keeps sellers commission - sellers can re-list of cancel listing.
+
+Communication & Community
+In-app messaging system
+
+Spam protection and block/report user features
+
+Template replies for common questions
+
+Community boards/forums for discussion
+
+Weekly email digests (based on saved search prefs)
+
+Events/garage sales board
+
+Marketing, SEO & Promotion
+SEO optimized listings and category pages
+
+Social sharing integration (Facebook, Insta, etc.)
+
+Featured ads (paid promotions)
+
+Loyalty/points system for buyers and sellers (optional)
+
+Environmental impact tracker (items reused = landfill avoided)
+
+Charity tie-ins (donate goods/proceeds)
+
+Seller & Business Dashboard
+Profile storefront with logo, banner, ratings
+
+Analytics:
+
+Views
+
+Saves
+
+Conversion clicks
+
+Sales history
+
+Earnings & payout info
+
+Admin & Moderator Panel
+User management & verification
+
+Commission & payout settings
+
+Category management
+
+Flagged content review
+
+AI moderation dashboard
+
+Toggle features: AI tools, payout timing, listing limits, etc.
+
+Static & Legal Pages
+Privacy Policy
+
+Terms and Conditions
+
+About Us
+
+FAQ / Help
+
+Safety & Fraud Prevention
+Email/SMS verification
+
+AI scam detection (listings & messages)
+
+Manual moderation queue
+
+User-generated reports (flag abuse, scam, inappropriate content)
+
+Escrow-style payment handling by the site
+
+Developer Instructions & Notes
+Use Laravel for clean MVC and cPanel compatibility
+
+Structure as modular system: Listings, Payments, Users, AI, etc.
+
+Use Laravel queue system for weekly automated payouts
+
+PWA setup with manifest.json and service worker
+
+Laravel file storage set to local (public/uploads)
+
+Include admin toggle to disable AI suggestions or payment features
