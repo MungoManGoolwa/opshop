@@ -8,6 +8,15 @@ Opshop Online is a modern full-stack marketplace application built for buying an
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- **January 26, 2025**: Added PostgreSQL database integration
+  - Created database connection with Neon serverless PostgreSQL
+  - Replaced in-memory storage with DatabaseStorage implementation
+  - Migrated schema to database using Drizzle push
+  - Seeded database with sample users, categories, and products
+  - Updated storage interface to use database queries instead of memory operations
+
 ## System Architecture
 
 ### Monorepo Structure
@@ -29,9 +38,10 @@ The application uses a unified TypeScript codebase with three main directories:
 - **Runtime**: Node.js with Express.js framework
 - **Language**: TypeScript with ES modules
 - **Database ORM**: Drizzle ORM for type-safe database operations
-- **Database**: PostgreSQL (configured for Neon serverless)
+- **Database**: PostgreSQL (configured for Neon serverless) - **ACTIVE**
 - **Authentication**: Replit Auth integration with OpenID Connect
 - **Session Storage**: PostgreSQL-backed sessions using connect-pg-simple
+- **Storage Layer**: DatabaseStorage implementation using Drizzle ORM queries
 
 ## Key Components
 
