@@ -135,6 +135,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Seller access required" });
       }
 
+      // Log the incoming data for debugging
+      console.log("Creating product with data:", req.body);
+
       const productData = insertProductSchema.parse({
         ...req.body,
         sellerId: userId,
@@ -144,6 +147,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(product);
     } catch (error: any) {
       console.error("Error creating product:", error);
+      console.log("Request body was:", req.body);
+      
+      // Provide more detailed error information
+      if (error.name === 'ZodError') {
+        const fieldErrors = error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          received: err.received
+        }));
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: fieldErrors,
+          details: "Please check all required fields are filled correctly"
+        });
+      }
+      
       res.status(400).json({ message: error.message || "Failed to create product" });
     }
   });

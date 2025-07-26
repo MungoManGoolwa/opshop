@@ -70,19 +70,24 @@ export default function CreateListing() {
 
   const createListingMutation = useMutation({
     mutationFn: async (data: CreateListingForm) => {
-      const formData = new FormData();
+      // Convert form data to proper format for backend
+      const productData = {
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        condition: data.condition,
+        categoryId: parseInt(data.categoryId),
+        brand: data.brand || "",
+        size: data.size || "",
+        color: data.color || "",
+        material: data.material || "",
+        location: data.location,
+        shippingCost: data.shippingCost || "0.00",
+        originalPrice: data.price, // Set original price same as selling price
+        images: [], // For now, empty array until image upload is implemented
+      };
       
-      // Add form fields
-      Object.entries(data).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-      
-      // Add images
-      images.forEach((image, index) => {
-        formData.append(`image${index}`, image);
-      });
-      
-      return apiRequest("POST", "/api/products", formData);
+      return apiRequest("POST", "/api/products", productData);
     },
     onSuccess: () => {
       toast({
@@ -201,7 +206,7 @@ export default function CreateListing() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {categories?.map((category) => (
+                                {categories?.map((category: any) => (
                                   <SelectItem key={category.id} value={category.id.toString()}>
                                     {category.name}
                                   </SelectItem>

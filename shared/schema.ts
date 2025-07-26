@@ -75,6 +75,7 @@ export const products = pgTable("products", {
   condition: varchar("condition").notNull(), // new, excellent, good, fair
   status: varchar("status").notNull().default("available"), // available, reserved, sold
   isBuybackItem: boolean("is_buyback_item").default(false), // Items purchased by system via buyback
+  isVerified: boolean("is_verified").default(false),
   categoryId: integer("category_id").references(() => categories.id),
   sellerId: varchar("seller_id").references(() => users.id),
   brand: varchar("brand"),
