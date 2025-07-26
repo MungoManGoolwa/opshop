@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **January 26, 2025**: AUTHENTICATION SYSTEM SWITCHED TO REPLIT AUTH
+  - Switched from simple-auth test user system to proper Replit Auth
+  - Now supports multiple authentication providers: email, Google, Facebook, GitHub
+  - Updated landing page buttons to use /api/login endpoint for proper authentication
+  - Configured for opshop.online domain with proper session management
+  - Users can now register and log in with real accounts instead of test accounts
+
 - **January 26, 2025**: AUTHENTICATION SYSTEM FULLY FIXED AND WORKING
   - Resolved persistent white screen login issue across all browsers and devices
   - Configured session management for custom opshop.online domain  
@@ -86,10 +93,11 @@ The application uses a unified TypeScript codebase with three main directories:
 ## Key Components
 
 ### Authentication System
-- **Provider**: Replit Auth with OpenID Connect
-- **Session Management**: Server-side sessions stored in PostgreSQL
-- **Authorization**: Role-based access control (admin, moderator, customer, seller, business)
-- **Security**: HTTP-only cookies with secure flags
+- **Provider**: Replit Auth with OpenID Connect (supports email, Google, Facebook, GitHub)
+- **Session Management**: Server-side sessions stored in PostgreSQL with domain-specific configuration
+- **Authorization**: Role-based access control (admin, moderator, customer, seller, business)  
+- **Security**: HTTP-only cookies with secure flags for opshop.online domain
+- **Registration**: New users can register with email or social providers
 
 ### Database Schema
 - **Users**: Profile management with role-based permissions

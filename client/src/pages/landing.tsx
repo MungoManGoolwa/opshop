@@ -38,16 +38,16 @@ export default function Landing() {
                 <Button 
                   size="lg" 
                   className="bg-accent hover:bg-accent/90 text-white"
-                  onClick={() => window.location.href = "/login"}
+                  onClick={() => window.location.href = "/api/login"}
                 >
                   <ShoppingBag className="mr-2 h-5 w-5" />
-                  Start Shopping
+                  Sign In with Email/Google/Facebook
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="border-white text-white hover:bg-white hover:text-primary"
-                  onClick={() => window.location.href = "/login"}
+                  onClick={() => window.location.href = "/api/login"}
                 >
                   <Plus className="mr-2 h-5 w-5" />
                   Start Selling
@@ -271,19 +271,19 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="bg-accent hover:bg-accent/90 text-white"
-              onClick={() => window.location.href = "/login"}
+              onClick={() => window.location.href = "/api/login"}
             >
               <ShoppingBag className="mr-2 h-5 w-5" />
-              Start Shopping
+              Sign In to Shop
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="border-white text-white hover:bg-white hover:text-primary"
-              onClick={() => window.location.href = "/login"}
+              onClick={() => window.location.href = "/api/login"}
             >
               <Plus className="mr-2 h-5 w-5" />
-              Start Selling
+              Sign In to Sell
             </Button>
           </div>
           

@@ -1,8 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupSimpleAuth, isAuthenticated } from "./simple-auth";
-import { getSession } from "./replitAuth";
+import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -17,11 +16,8 @@ import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertO
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Session middleware
-  app.use(getSession());
-  
-  // Simple auth setup for development
-  await setupSimpleAuth(app);
+  // Setup Replit Auth (supports email, Google, Facebook, etc.)
+  await setupAuth(app);
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
