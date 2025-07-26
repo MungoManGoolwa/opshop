@@ -54,6 +54,44 @@ export default function Header() {
     }
   };
 
+  const handleWishlistClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to view your wishlist.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 1500);
+      return;
+    }
+    // Create a wishlist page or show wishlist modal
+    toast({
+      title: "Wishlist",
+      description: `You have ${wishlistCount} items in your wishlist.`,
+    });
+  };
+
+  const handleCartClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to view your cart.",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 1500);
+      return;
+    }
+    // For now, redirect to checkout page
+    toast({
+      title: "Cart",
+      description: "Items are purchased directly from product pages.",
+    });
+  };
+
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -129,17 +167,31 @@ export default function Header() {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="relative">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="relative"
+              onClick={handleWishlistClick}
+            >
               <Heart className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                3
-              </Badge>
+              {wishlistCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                  {wishlistCount}
+                </Badge>
+              )}
             </Button>
-            <Button variant="ghost" size="sm" className="relative">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="relative"
+              onClick={handleCartClick}
+            >
               <ShoppingCart className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                2
-              </Badge>
+              {cartCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                  {cartCount}
+                </Badge>
+              )}
             </Button>
             {isAuthenticated ? (
               <Link href={getDashboardRoute()}>

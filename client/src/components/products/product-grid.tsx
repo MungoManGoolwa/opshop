@@ -1,4 +1,6 @@
 import ProductCard from "./product-card";
+import ProductList from "./product-list";
+import { useView } from "@/contexts/ViewContext";
 import type { Product } from "@shared/schema";
 
 interface ProductGridProps {
@@ -6,6 +8,7 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({ products }: ProductGridProps) {
+  const { viewMode } = useView();
   if (!products || products.length === 0) {
     return (
       <div className="text-center py-12">
@@ -18,6 +21,10 @@ export default function ProductGrid({ products }: ProductGridProps) {
         <p className="text-gray-600">Try adjusting your search or filter criteria</p>
       </div>
     );
+  }
+
+  if (viewMode === "list") {
+    return <ProductList products={products} />;
   }
 
   return (

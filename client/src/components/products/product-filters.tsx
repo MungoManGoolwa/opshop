@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Grid, List } from "lucide-react";
+import { useView } from "@/contexts/ViewContext";
 
 export default function ProductFilters() {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const { viewMode, setViewMode } = useView();
   const [filters, setFilters] = useState({
     category: "all",
     condition: "any",
