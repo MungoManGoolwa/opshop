@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import PageHeader from "@/components/layout/page-header";
 import { 
   CheckCircle, 
   XCircle, 
@@ -18,7 +19,8 @@ import {
   Calendar,
   DollarSign,
   AlertCircle,
-  Eye
+  Eye,
+  Settings
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -193,14 +195,28 @@ export default function AdminBuyback() {
     );
   }
 
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin/dashboard" },
+    { label: "Buyback Management" },
+  ];
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Buyback Offer Management</h1>
-        <p className="text-gray-600">
-          Review and manage AI-generated buyback offers from users
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <PageHeader
+        title="Buyback Offer Management"
+        description="Review and manage AI-generated buyback offers from users"
+        breadcrumbs={breadcrumbs}
+        actions={
+          <Button asChild variant="outline">
+            <a href="/admin/dashboard" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Admin Dashboard
+            </a>
+          </Button>
+        }
+      />
+
+      <div className="container mx-auto px-4 py-8">
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
@@ -439,6 +455,7 @@ export default function AdminBuyback() {
           </Card>
         </div>
       )}
+      </div>
     </div>
   );
 }

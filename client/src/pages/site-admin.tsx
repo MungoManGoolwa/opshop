@@ -5,6 +5,7 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
 import ProtectedRoute from "@/components/ui/protected-route";
+import PageHeader from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,8 @@ import {
   Plus,
   Download,
   Upload,
-  RefreshCw
+  RefreshCw,
+  Home
 } from "lucide-react";
 
 interface User {
@@ -97,6 +99,11 @@ export default function SiteAdmin() {
   useEffect(() => {
     document.title = "Site Administrator - Opshop Online";
   }, []);
+
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin/dashboard" },
+    { label: "Site Administration" },
+  ];
 
   // Fetch data
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -208,18 +215,30 @@ export default function SiteAdmin() {
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <div className="min-h-screen bg-neutral">
+      <div className="min-h-screen bg-gray-50">
         <Header />
         
+        <PageHeader
+          title="🔧 Site Administrator"
+          description="Full system administration and control panel"
+          breadcrumbs={breadcrumbs}
+          actions={
+            <div className="flex items-center gap-2">
+              <Badge variant="destructive">
+                <ShieldCheck className="w-3 h-3 mr-1" />
+                ADMIN ACCESS
+              </Badge>
+              <Button asChild variant="outline">
+                <a href="/admin/dashboard" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Admin Dashboard
+                </a>
+              </Button>
+            </div>
+          }
+        />
+        
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-red-600">🔧 Site Administrator</h1>
-            <p className="text-gray-600">Full system administration and control panel</p>
-            <Badge variant="destructive" className="mt-2">
-              <ShieldCheck className="w-3 h-3 mr-1" />
-              ADMIN ACCESS
-            </Badge>
-          </div>
 
           {/* System Overview Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

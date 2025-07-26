@@ -15,7 +15,8 @@ import {
   Calendar,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  Settings
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
+import PageHeader from "@/components/layout/page-header";
 
 const userFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -62,6 +64,11 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const breadcrumbs = [
+    { label: "Admin", href: "/admin/dashboard" },
+    { label: "User Management" },
+  ];
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["/api/admin/users"],
@@ -213,7 +220,7 @@ export default function AdminUsers() {
     );
   };
 
-  const filteredUsers = users?.filter((user: any) => {
+  const filteredUsers = Array.isArray(users) ? users.filter((user: any) => {
     const matchesSearch = !searchTerm || 
       user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -223,7 +230,7 @@ export default function AdminUsers() {
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
     
     return matchesSearch && matchesRole;
-  });
+  }) : [];
 
   if (isLoading) {
     return (
@@ -244,15 +251,21 @@ export default function AdminUsers() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
+      <PageHeader
+        title="User Management"
+        description="Manage users, sellers, and shop accounts"
+        breadcrumbs={breadcrumbs}
+        actions={
+          <Button asChild variant="outline">
+            <a href="/admin/dashboard" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Admin Dashboard
+            </a>
+          </Button>
+        }
+      />
+      
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center mb-2">
-            <Users className="mr-3 h-8 w-8" />
-            User Management
-          </h1>
-          <p className="text-gray-600">Manage users, sellers, and shop accounts</p>
-        </div>
-
         {/* Filters and Actions */}
         <Card className="mb-6">
           <CardContent className="pt-6">

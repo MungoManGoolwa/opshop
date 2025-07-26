@@ -5,6 +5,7 @@ import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
 import ProtectedRoute from "@/components/ui/protected-route";
 import PaymentSettings from "@/components/admin/payment-settings";
+import PageHeader from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +18,8 @@ import {
   TrendingUp,
   Shield,
   Flag,
-  Settings
+  Settings,
+  Home
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -39,16 +41,30 @@ export default function AdminDashboard() {
   const totalSales = 2345678;
   const activeListings = Array.isArray(products) ? products.filter((p: any) => p.status === "available").length : 0;
 
+  const breadcrumbs = [
+    { label: "Admin Dashboard" },
+  ];
+
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
-      <div className="min-h-screen bg-neutral">
+      <div className="min-h-screen bg-gray-50">
         <Header />
         
+        <PageHeader
+          title="Admin Dashboard"
+          description="Manage your marketplace platform"
+          breadcrumbs={breadcrumbs}
+          actions={
+            <Button asChild variant="outline">
+              <Link href="/" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Marketplace Home
+              </Link>
+            </Button>
+          }
+        />
+        
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-gray-600">Manage your marketplace platform</p>
-          </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
