@@ -95,6 +95,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             src={mainImage}
             alt={product.title}
             className="w-full h-48 object-cover rounded-t-lg"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&h=300";
+            }}
           />
           <Button
             size="sm"
