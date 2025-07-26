@@ -204,7 +204,7 @@ function ProductListItem({ product }: { product: Product }) {
                   </div>
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-1" />
-                    {new Date(product.createdAt).toLocaleDateString()}
+                    {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'Recently'}
                   </div>
                 </div>
               </div>

@@ -35,7 +35,7 @@ export default function ProductFilters() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories?.map((category) => (
+                {Array.isArray(categories) && categories.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
                   </SelectItem>

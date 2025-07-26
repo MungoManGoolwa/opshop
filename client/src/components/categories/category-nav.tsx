@@ -31,7 +31,7 @@ export default function CategoryNav() {
         <div className="flex items-center justify-between py-3">
           <div className="flex items-center space-x-6 overflow-x-auto">
             <Link 
-              href="/" 
+              href="/?filter=new-arrivals" 
               className="text-primary font-medium whitespace-nowrap flex items-center space-x-1 hover:text-primary/80"
             >
               <Star className="h-4 w-4 text-accent" />

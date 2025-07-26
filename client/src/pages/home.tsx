@@ -12,15 +12,21 @@ import { Search, X } from "lucide-react";
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterMode, setFilterMode] = useState("");
 
   useEffect(() => {
     document.title = "Home - Opshop Online";
     
-    // Get search query from URL params
+    // Get search query and filter from URL params
     const urlParams = new URLSearchParams(window.location.search);
     const searchParam = urlParams.get('search');
+    const filterParam = urlParams.get('filter');
+    
     if (searchParam) {
       setSearchQuery(searchParam);
+    }
+    if (filterParam) {
+      setFilterMode(filterParam);
     }
   }, []);
 
@@ -28,27 +34,46 @@ export default function Home() {
     queryKey: ["/api/products"],
   });
 
-  // Filter products based on search query
+  // Filter products based on search query and filter mode
   const filteredProducts = useMemo(() => {
-    if (!Array.isArray(products) || !searchQuery.trim()) {
+    if (!Array.isArray(products)) {
       return products;
     }
-    
-    const query = searchQuery.toLowerCase().trim();
-    return products.filter(product => 
-      product.title?.toLowerCase().includes(query) ||
-      product.description?.toLowerCase().includes(query) ||
-      product.brand?.toLowerCase().includes(query) ||
-      product.color?.toLowerCase().includes(query) ||
-      product.material?.toLowerCase().includes(query)
-    );
-  }, [products, searchQuery]);
+
+    let filtered = products;
+
+    // Apply filter mode first
+    if (filterMode === 'new-arrivals') {
+      // Sort by creation date, newest first
+      filtered = [...products].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+
+    // Then apply search query if present
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(product => 
+        product.title?.toLowerCase().includes(query) ||
+        product.description?.toLowerCase().includes(query) ||
+        product.brand?.toLowerCase().includes(query) ||
+        product.color?.toLowerCase().includes(query) ||
+        product.material?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [products, searchQuery, filterMode]);
 
   const clearSearch = () => {
     setSearchQuery("");
-    // Remove search param from URL
+    setFilterMode("");
+    // Remove search and filter params from URL
     const url = new URL(window.location.href);
     url.searchParams.delete('search');
+    url.searchParams.delete('filter');
     window.history.replaceState({}, '', url.toString());
   };
 
@@ -90,7 +115,9 @@ export default function Home() {
           
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold">
-              {searchQuery ? 'Search Results' : 'Recent Listings'}
+              {searchQuery ? 'Search Results' : 
+               filterMode === 'new-arrivals' ? 'New Arrivals' : 
+               'Recent Listings'}
             </h2>
             <span className="text-gray-600">
               {Array.isArray(filteredProducts) ? filteredProducts.length : 0} items found
