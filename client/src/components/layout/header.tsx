@@ -15,7 +15,8 @@ import {
   HelpCircle,
   Store,
   UserCircle,
-  Sparkles
+  Sparkles,
+  MessageCircle
 } from "lucide-react";
 
 export default function Header() {
@@ -110,6 +111,12 @@ export default function Header() {
               <Link href="/instant-buyback" className="text-green-600 hover:text-green-700 font-medium">
                 <Sparkles className="inline h-4 w-4 mr-1" />
                 Instant Buyback
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link href="/messages" className="text-gray-600 hover:text-primary">
+                <MessageCircle className="inline h-4 w-4 mr-1" />
+                Messages
               </Link>
             )}
             {isAuthenticated && ((user as any)?.role === 'seller' || (user as any)?.role === 'business' || (user as any)?.role === 'admin') && (

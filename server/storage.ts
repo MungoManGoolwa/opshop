@@ -27,7 +27,7 @@ import {
   type InsertReview,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, like, gte, lte, desc, sql, or } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -62,9 +62,11 @@ export interface IStorage {
   removeFromWishlist(userId: string, productId: number): Promise<void>;
   
   // Message operations
-  getConversation(senderId: string, receiverId: string, productId?: number): Promise<Message[]>;
+  getConversations(userId: string): Promise<any[]>;
+  getConversation(userId: string, otherUserId: string): Promise<Message[]>;
   sendMessage(message: InsertMessage): Promise<Message>;
-  markMessageAsRead(id: number): Promise<void>;
+  markMessagesAsRead(senderId: string, receiverId: string): Promise<void>;
+  getUsersForMessaging(currentUserId: string): Promise<User[]>;
   
   // Commission operations
   createCommission(commission: InsertCommission): Promise<Commission>;
@@ -226,30 +228,82 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Message operations
-  async getConversation(senderId: string, receiverId: string, productId?: number): Promise<Message[]> {
-    const conditions = [
-      sql`(${messages.senderId} = ${senderId} AND ${messages.receiverId} = ${receiverId}) OR
-          (${messages.senderId} = ${receiverId} AND ${messages.receiverId} = ${senderId})`
-    ];
+  async getConversations(userId: string): Promise<any[]> {
+    // Get all unique users that have messaged with the current user
+    const conversationUsers = await db
+      .select({
+        otherUserId: sql<string>`CASE 
+          WHEN ${messages.senderId} = ${userId} THEN ${messages.receiverId}
+          ELSE ${messages.senderId}
+        END`,
+        lastMessageId: sql<number>`MAX(${messages.id})`,
+        unreadCount: sql<number>`COUNT(CASE 
+          WHEN ${messages.receiverId} = ${userId} AND ${messages.isRead} = false THEN 1 
+          END)`,
+      })
+      .from(messages)
+      .where(
+        sql`${messages.senderId} = ${userId} OR ${messages.receiverId} = ${userId}`
+      )
+      .groupBy(sql`CASE 
+        WHEN ${messages.senderId} = ${userId} THEN ${messages.receiverId}
+        ELSE ${messages.senderId}
+      END`)
+      .orderBy(sql`MAX(${messages.createdAt}) DESC`);
 
-    if (productId) {
-      conditions.push(eq(messages.productId, productId));
+    // Get user details and last messages
+    const conversations = [];
+    for (const conv of conversationUsers) {
+      const [otherUser] = await db.select().from(users).where(eq(users.id, conv.otherUserId));
+      const [lastMessage] = await db.select().from(messages).where(eq(messages.id, conv.lastMessageId));
+      
+      if (otherUser) {
+        conversations.push({
+          otherUser,
+          lastMessage,
+          unreadCount: conv.unreadCount,
+        });
+      }
     }
 
-    return await db.select().from(messages)
-      .where(and(...conditions))
-      .orderBy(desc(messages.createdAt));
+    return conversations;
   }
 
-  async sendMessage(messageData: InsertMessage): Promise<Message> {
-    const [message] = await db.insert(messages).values(messageData).returning();
-    return message;
+  async getConversation(userId: string, otherUserId: string): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(
+        sql`(${messages.senderId} = ${userId} AND ${messages.receiverId} = ${otherUserId}) 
+            OR (${messages.senderId} = ${otherUserId} AND ${messages.receiverId} = ${userId})`
+      )
+      .orderBy(messages.createdAt);
   }
 
-  async markMessageAsRead(id: number): Promise<void> {
-    await db.update(messages)
+  async sendMessage(message: InsertMessage): Promise<Message> {
+    const [newMessage] = await db.insert(messages).values(message).returning();
+    return newMessage;
+  }
+
+  async markMessagesAsRead(senderId: string, receiverId: string): Promise<void> {
+    await db
+      .update(messages)
       .set({ isRead: true })
-      .where(eq(messages.id, id));
+      .where(
+        and(
+          eq(messages.senderId, senderId),
+          eq(messages.receiverId, receiverId),
+          eq(messages.isRead, false)
+        )
+      );
+  }
+
+  async getUsersForMessaging(currentUserId: string): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(sql`${users.id} != ${currentUserId} AND ${users.isActive} = true`)
+      .orderBy(users.email);
   }
 
   // Commission operations
