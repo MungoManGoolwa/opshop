@@ -49,6 +49,7 @@ export const users = pgTable("users", {
   abn: varchar("abn"),
   isActive: boolean("is_active").default(true),
   isVerified: boolean("is_verified").default(false),
+  storeCredit: decimal("store_credit", { precision: 10, scale: 2 }).default("0.00"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   stripeCustomerId: varchar("stripe_customer_id"),
@@ -73,6 +74,7 @@ export const products = pgTable("products", {
   originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
   condition: varchar("condition").notNull(), // new, excellent, good, fair
   status: varchar("status").notNull().default("available"), // available, reserved, sold
+  isBuybackItem: boolean("is_buyback_item").default(false), // Items purchased by system via buyback
   categoryId: integer("category_id").references(() => categories.id),
   sellerId: varchar("seller_id").references(() => users.id),
   brand: varchar("brand"),
@@ -205,6 +207,56 @@ export const insertWishlistSchema = createInsertSchema(wishlists).omit({
   createdAt: true,
 });
 export type InsertWishlist = z.infer<typeof insertWishlistSchema>;
+
+// Buyback offers from AI evaluation
+export const buybackOffers = pgTable("buyback_offers", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  itemTitle: varchar("item_title").notNull(),
+  itemDescription: text("item_description"),
+  itemCondition: varchar("item_condition").notNull(),
+  itemAge: varchar("item_age"),
+  itemBrand: varchar("item_brand"),
+  itemCategory: varchar("item_category"),
+  images: text("images").array(), // Array of image URLs
+  aiEvaluatedRetailPrice: decimal("ai_evaluated_retail_price", { precision: 10, scale: 2 }).notNull(),
+  buybackOfferPrice: decimal("buyback_offer_price", { precision: 10, scale: 2 }).notNull(), // 50% of retail
+  aiEvaluationData: jsonb("ai_evaluation_data"), // Full AI response for audit
+  status: varchar("status").notNull().default("pending"), // pending, accepted, rejected, expired
+  expiresAt: timestamp("expires_at").notNull(), // Offers expire after 24 hours
+  acceptedAt: timestamp("accepted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Store credit transactions
+export const storeCreditTransactions = pgTable("store_credit_transactions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  type: varchar("type").notNull(), // "earned", "spent", "refund", "buyback"
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  referenceId: varchar("reference_id"), // Links to buyback_offer_id, order_id, etc.
+  referenceType: varchar("reference_type"), // "buyback_offer", "order", "refund"
+  balanceBefore: decimal("balance_before", { precision: 10, scale: 2 }).notNull(),
+  balanceAfter: decimal("balance_after", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Export new types
+export type BuybackOffer = typeof buybackOffers.$inferSelect;
+export type StoreCreditTransaction = typeof storeCreditTransactions.$inferSelect;
+
+export const insertBuybackOfferSchema = createInsertSchema(buybackOffers).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertBuybackOffer = z.infer<typeof insertBuybackOfferSchema>;
+
+export const insertStoreCreditTransactionSchema = createInsertSchema(storeCreditTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertStoreCreditTransaction = z.infer<typeof insertStoreCreditTransactionSchema>;
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,

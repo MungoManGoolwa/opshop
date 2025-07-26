@@ -12,6 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+import { buybackService } from "./buyback-service";
 import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -788,6 +789,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error updating system settings:", error);
       res.status(400).json({ message: error.message || "Failed to update system settings" });
+    }
+  });
+
+  // ===== BUYBACK SYSTEM ROUTES =====
+  
+  // Create a new buyback offer using AI evaluation
+  app.post('/api/buyback/offer', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { itemTitle, itemDescription, itemCondition, itemAge, itemBrand, itemCategory, images } = req.body;
+
+      if (!itemTitle || !itemCondition) {
+        return res.status(400).json({ message: "Item title and condition are required" });
+      }
+
+      const result = await buybackService.createBuybackOffer({
+        userId,
+        itemTitle,
+        itemDescription,
+        itemCondition,
+        itemAge,
+        itemBrand,
+        itemCategory,
+        images,
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error creating buyback offer:", error);
+      res.status(500).json({ message: error.message || "Failed to create buyback offer" });
+    }
+  });
+
+  // Accept a buyback offer
+  app.post('/api/buyback/offer/:offerId/accept', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const offerId = parseInt(req.params.offerId);
+
+      const result = await buybackService.acceptBuybackOffer(offerId, userId);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error accepting buyback offer:", error);
+      res.status(500).json({ message: error.message || "Failed to accept buyback offer" });
+    }
+  });
+
+  // Reject a buyback offer
+  app.post('/api/buyback/offer/:offerId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const offerId = parseInt(req.params.offerId);
+
+      const result = await buybackService.rejectBuybackOffer(offerId, userId);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error rejecting buyback offer:", error);
+      res.status(500).json({ message: error.message || "Failed to reject buyback offer" });
+    }
+  });
+
+  // Get user's buyback offers
+  app.get('/api/buyback/offers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const offers = await buybackService.getUserBuybackOffers(userId);
+      res.json(offers);
+    } catch (error: any) {
+      console.error("Error fetching buyback offers:", error);
+      res.status(500).json({ message: "Failed to fetch buyback offers" });
+    }
+  });
+
+  // Get user's store credit balance
+  app.get('/api/store-credit/balance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const balance = await buybackService.getUserStoreCredit(userId);
+      res.json({ balance });
+    } catch (error: any) {
+      console.error("Error fetching store credit balance:", error);
+      res.status(500).json({ message: "Failed to fetch store credit balance" });
+    }
+  });
+
+  // Get user's store credit transactions
+  app.get('/api/store-credit/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const transactions = await buybackService.getUserStoreCreditTransactions(userId);
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching store credit transactions:", error);
+      res.status(500).json({ message: "Failed to fetch store credit transactions" });
+    }
+  });
+
+  // ===== ADMIN BUYBACK ROUTES =====
+  
+  // Get all buyback offers (admin only)
+  app.get('/api/admin/buyback/offers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const offers = await buybackService.getAllBuybackOffers(page, limit);
+      res.json(offers);
+    } catch (error: any) {
+      console.error("Error fetching admin buyback offers:", error);
+      res.status(500).json({ message: "Failed to fetch buyback offers" });
+    }
+  });
+
+  // Get buyback analytics (admin only)
+  app.get('/api/admin/buyback/analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const analytics = await buybackService.getBuybackAnalytics();
+      res.json(analytics);
+    } catch (error: any) {
+      console.error("Error fetching buyback analytics:", error);
+      res.status(500).json({ message: "Failed to fetch buyback analytics" });
     }
   });
 
