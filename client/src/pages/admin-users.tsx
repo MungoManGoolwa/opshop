@@ -34,6 +34,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import PageHeader from "@/components/layout/page-header";
+import UserImpersonationButton from "@/components/admin/user-impersonation-button";
 
 const userFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -685,6 +686,8 @@ export default function AdminUsers() {
                         </div>
                       )}
                     </div>
+                    
+                    <UserImpersonationButton user={user} />
                     
                     <Button
                       size="sm"

@@ -18,6 +18,7 @@ import {
   Sparkles,
   MessageCircle
 } from "lucide-react";
+import ImpersonationControl from "@/components/admin/impersonation-control";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -95,13 +96,17 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        {/* Top Bar */}
-        <div className="flex items-center justify-between py-2 text-sm border-b border-gray-100">
-          <div className="flex items-center space-x-4">
-            <span className="text-primary font-medium">🇦🇺 Australian Marketplace</span>
-          </div>
+    <>
+      {/* Impersonation Control - shown when admin is impersonating */}
+      <ImpersonationControl />
+      
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="container mx-auto px-4">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between py-2 text-sm border-b border-gray-100">
+            <div className="flex items-center space-x-4">
+              <span className="text-primary font-medium">🇦🇺 Australian Marketplace</span>
+            </div>
           <div className="flex items-center space-x-4">
             <Link href="/about" className="text-gray-600 hover:text-primary">
               <HelpCircle className="inline h-4 w-4 mr-1" />
@@ -252,5 +257,6 @@ export default function Header() {
         </div>
       </div>
     </header>
+    </>
   );
 }
