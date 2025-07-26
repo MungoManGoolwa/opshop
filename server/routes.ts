@@ -12,7 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
-import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -464,6 +464,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Webhook error:", error);
       res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  });
+
+  // Review routes
+  app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const reviewerId = req.user?.claims?.sub;
+      const reviewData = insertReviewSchema.parse({
+        ...req.body,
+        reviewerId,
+      });
+
+      // Verify user can leave this review
+      if (reviewData.orderId) {
+        const canReview = await storage.canUserReview(reviewerId, reviewData.orderId);
+        if (!canReview) {
+          return res.status(403).json({ message: "Cannot review this order" });
+        }
+      }
+
+      const review = await storage.createReview(reviewData);
+      res.json(review);
+    } catch (error: any) {
+      console.error("Error creating review:", error);
+      res.status(400).json({ message: error.message || "Failed to create review" });
+    }
+  });
+
+  app.get('/api/reviews/user/:userId', async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const reviews = await storage.getReviewsByUser(userId);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  app.get('/api/reviews/stats/:userId', async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const stats = await storage.getReviewStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching review stats:", error);
+      res.status(500).json({ message: "Failed to fetch review stats" });
+    }
+  });
+
+  app.get('/api/reviews/product/:productId', async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const reviews = await storage.getProductReviews(productId);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching product reviews:", error);
+      res.status(500).json({ message: "Failed to fetch product reviews" });
+    }
+  });
+
+  app.post('/api/reviews/:id/helpful', isAuthenticated, async (req: any, res) => {
+    try {
+      const reviewId = parseInt(req.params.id);
+      await storage.markReviewHelpful(reviewId);
+      res.json({ message: "Review marked as helpful" });
+    } catch (error) {
+      console.error("Error marking review helpful:", error);
+      res.status(500).json({ message: "Failed to mark review helpful" });
     }
   });
 

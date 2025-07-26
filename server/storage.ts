@@ -349,6 +349,98 @@ export class DatabaseStorage implements IStorage {
     
     return true;
   }
+
+  // Review operations
+  async createReview(reviewData: InsertReview): Promise<Review> {
+    const [review] = await db.insert(reviews).values(reviewData).returning();
+    return review;
+  }
+
+  async getReviewsByUser(userId: string): Promise<(Review & { reviewer: User; product?: Product })[]> {
+    const result = await db.select()
+      .from(reviews)
+      .innerJoin(users, eq(reviews.reviewerId, users.id))
+      .leftJoin(products, eq(reviews.productId, products.id))
+      .where(eq(reviews.revieweeId, userId))
+      .orderBy(desc(reviews.createdAt));
+
+    return result.map(row => ({
+      ...row.reviews,
+      reviewer: row.users,
+      product: row.products || undefined,
+    }));
+  }
+
+  async getReviewStats(userId: string): Promise<{
+    averageRating: number;
+    totalReviews: number;
+    ratingBreakdown: { [key: number]: number };
+  }> {
+    const reviewStats = await db.select({
+      rating: reviews.rating,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(reviews)
+    .where(eq(reviews.revieweeId, userId))
+    .groupBy(reviews.rating);
+
+    const totalReviews = reviewStats.reduce((sum, stat) => sum + stat.count, 0);
+    const totalRating = reviewStats.reduce((sum, stat) => sum + (stat.rating * stat.count), 0);
+    const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
+
+    const ratingBreakdown: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    reviewStats.forEach(stat => {
+      ratingBreakdown[stat.rating] = stat.count;
+    });
+
+    return {
+      averageRating: Math.round(averageRating * 10) / 10,
+      totalReviews,
+      ratingBreakdown,
+    };
+  }
+
+  async getProductReviews(productId: number): Promise<(Review & { reviewer: User })[]> {
+    const result = await db.select()
+      .from(reviews)
+      .innerJoin(users, eq(reviews.reviewerId, users.id))
+      .where(eq(reviews.productId, productId))
+      .orderBy(desc(reviews.createdAt));
+
+    return result.map(row => ({
+      ...row.reviews,
+      reviewer: row.users,
+    }));
+  }
+
+  async canUserReview(reviewerId: string, orderId: number): Promise<boolean> {
+    // Check if user has purchased the item and hasn't already reviewed
+    const [order] = await db.select()
+      .from(orders)
+      .where(and(
+        eq(orders.id, orderId),
+        or(eq(orders.buyerId, reviewerId), eq(orders.sellerId, reviewerId)),
+        eq(orders.paymentStatus, "completed")
+      ));
+
+    if (!order) return false;
+
+    // Check if already reviewed
+    const [existingReview] = await db.select()
+      .from(reviews)
+      .where(and(
+        eq(reviews.orderId, orderId),
+        eq(reviews.reviewerId, reviewerId)
+      ));
+
+    return !existingReview;
+  }
+
+  async markReviewHelpful(reviewId: number): Promise<void> {
+    await db.update(reviews)
+      .set({ helpfulCount: sql`${reviews.helpfulCount} + 1` })
+      .where(eq(reviews.id, reviewId));
+  }
 }
 
 export const storage = new DatabaseStorage();

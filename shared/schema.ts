@@ -139,6 +139,22 @@ export const paymentSettings = pgTable("payment_settings", {
   updatedBy: varchar("updated_by").references(() => users.id),
 });
 
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id),
+  reviewerId: varchar("reviewer_id").references(() => users.id).notNull(),
+  revieweeId: varchar("reviewee_id").references(() => users.id).notNull(),
+  productId: integer("product_id").references(() => products.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  title: varchar("title", { length: 200 }),
+  comment: text("comment"),
+  reviewType: varchar("review_type").notNull(), // "seller", "buyer", "product"
+  isVerified: boolean("is_verified").default(false), // verified purchase
+  helpfulCount: integer("helpful_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Schema types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -167,6 +183,16 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
+
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  helpfulCount: true,
+  isVerified: true,
+});
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = typeof reviews.$inferSelect;
 
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
