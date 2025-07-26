@@ -19,6 +19,7 @@ import ShopUpgradeSuccess from "@/pages/shop-upgrade-success";
 import LoginSuccess from "@/pages/login-success";
 import LoginManual from "@/pages/login-manual";
 import Category from "@/pages/category";
+import CreateListing from "@/pages/create-listing";
 
 function Router() {
   const { isAuthenticated, isLoading, error } = useAuth();
@@ -60,6 +61,7 @@ function Router() {
           <Route path="/shop-upgrade" component={ShopUpgrade} />
           <Route path="/shop-upgrade/success" component={ShopUpgradeSuccess} />
           <Route path="/seller/dashboard" component={SellerDashboard} />
+          <Route path="/seller/create" component={CreateListing} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
         </>

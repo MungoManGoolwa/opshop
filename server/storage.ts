@@ -7,6 +7,7 @@ import {
   commissions,
   orders,
   paymentSettings,
+  reviews,
   type User,
   type UpsertUser,
   type Category,
@@ -22,6 +23,8 @@ import {
   type Order,
   type InsertOrder,
   type PaymentSettings,
+  type Review,
+  type InsertReview,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, desc, sql } from "drizzle-orm";

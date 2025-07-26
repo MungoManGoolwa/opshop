@@ -168,12 +168,20 @@ export const reviews = pgTable("reviews", {
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
+export type Category = typeof categories.$inferSelect;
+export type Product = typeof products.$inferSelect;
+export type Wishlist = typeof wishlists.$inferSelect;
+export type Message = typeof messages.$inferSelect;
+export type Commission = typeof commissions.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type PaymentSettings = typeof paymentSettings.$inferSelect;
+export type Review = typeof reviews.$inferSelect;
+
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
   createdAt: true,
 });
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
-export type Category = typeof categories.$inferSelect;
 
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
@@ -183,7 +191,32 @@ export const insertProductSchema = createInsertSchema(products).omit({
   likes: true,
 });
 export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Product = typeof products.$inferSelect;
+
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  helpfulCount: true,
+});
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+
+export const insertWishlistSchema = createInsertSchema(wishlists).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertWishlist = z.infer<typeof insertWishlistSchema>;
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+export const insertCommissionSchema = createInsertSchema(commissions).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCommission = z.infer<typeof insertCommissionSchema>;
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
@@ -191,37 +224,5 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   updatedAt: true,
 });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
-export type Order = typeof orders.$inferSelect;
-
-export const insertReviewSchema = createInsertSchema(reviews).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  helpfulCount: true,
-  isVerified: true,
-});
-export type InsertReview = z.infer<typeof insertReviewSchema>;
-export type Review = typeof reviews.$inferSelect;
-
-export const insertMessageSchema = createInsertSchema(messages).omit({
-  id: true,
-  createdAt: true,
-});
-export type InsertMessage = z.infer<typeof insertMessageSchema>;
-export type Message = typeof messages.$inferSelect;
-
-export const insertWishlistSchema = createInsertSchema(wishlists).omit({
-  id: true,
-  createdAt: true,
-});
-export type InsertWishlist = z.infer<typeof insertWishlistSchema>;
-export type Wishlist = typeof wishlists.$inferSelect;
-
-export const insertCommissionSchema = createInsertSchema(commissions).omit({
-  id: true,
-  createdAt: true,
-});
-export type InsertCommission = z.infer<typeof insertCommissionSchema>;
-export type Commission = typeof commissions.$inferSelect;
 
 export type PaymentSettings = typeof paymentSettings.$inferSelect;
