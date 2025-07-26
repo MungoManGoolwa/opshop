@@ -204,7 +204,9 @@ export default function Landing() {
                 reviews: 312,
                 description: "Curated vintage clothing and accessories from Melbourne",
                 items: 234,
-                responseRate: "99%"
+                responseRate: "99%",
+                image: "https://images.unsplash.com/photo-1494790108755-2616b332c371?w=400&h=400&fit=crop&crop=face&auto=format",
+                icon: "👗"
               },
               {
                 name: "Tech Revival Sydney",
@@ -212,7 +214,9 @@ export default function Landing() {
                 reviews: 189,
                 description: "Refurbished electronics and gadgets with warranty",
                 items: 156,
-                responseRate: "100%"
+                responseRate: "100%",
+                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face&auto=format",
+                icon: "💻"
               },
               {
                 name: "Home & Garden Adelaide",
@@ -220,12 +224,23 @@ export default function Landing() {
                 reviews: 278,
                 description: "Quality furniture and home decor pieces",
                 items: 89,
-                responseRate: "98%"
+                responseRate: "98%",
+                image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face&auto=format",
+                icon: "🏠"
               }
             ].map((seller, index) => (
               <Card key={index} className="text-center">
                 <CardContent className="pt-6">
-                  <div className="w-20 h-20 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                  <div className="relative w-20 h-20 mx-auto mb-4">
+                    <img 
+                      src={seller.image}
+                      alt={seller.name}
+                      className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md">
+                      <span className="text-lg">{seller.icon}</span>
+                    </div>
+                  </div>
                   <h3 className="font-semibold mb-1">{seller.name}</h3>
                   <div className="flex items-center justify-center space-x-1 mb-2">
                     <Star className="h-4 w-4 text-yellow-400 fill-current" />
