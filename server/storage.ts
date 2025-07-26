@@ -81,6 +81,14 @@ export interface IStorage {
   // Payment settings operations
   getPaymentSettings(): Promise<PaymentSettings | undefined>;
   updatePaymentSettings(settings: Partial<PaymentSettings>, updatedBy: string): Promise<PaymentSettings>;
+
+  // Admin operations
+  getAllUsers(): Promise<User[]>;
+  getAllProducts(): Promise<Product[]>;
+  getAllOrders(): Promise<Order[]>;
+  createAdminUser(userData: any): Promise<User>;
+  deleteUser(userId: string): Promise<void>;
+  updateUserProfile(userId: string, userData: any): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -504,6 +512,43 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(userId: string): Promise<void> {
     // Note: In production, you might want to soft delete or handle related records
     await db.delete(users).where(eq(users.id, userId));
+  }
+
+  // Admin operations
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllProducts(): Promise<Product[]> {
+    return await db.select().from(products).orderBy(desc(products.createdAt));
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return await db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async createAdminUser(userData: any): Promise<User> {
+    const [user] = await db.insert(users).values({
+      id: userData.id || sql`gen_random_uuid()`,
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      role: userData.role || "customer",
+      accountType: userData.accountType || "seller",
+      phone: userData.phone,
+      address: userData.address,
+      city: userData.city,
+      state: userData.state,
+      postcode: userData.postcode,
+      country: userData.country || "Australia",
+      bio: userData.bio,
+      businessName: userData.businessName,
+      abn: userData.abn,
+      isActive: userData.isActive !== false,
+      isVerified: userData.isVerified || false,
+      maxListings: userData.maxListings || 10,
+    }).returning();
+    return user;
   }
 }
 

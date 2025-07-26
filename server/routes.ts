@@ -647,6 +647,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin products management
+  app.get('/api/admin/products', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const products = await storage.getAllProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching admin products:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.put('/api/admin/products/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const productId = parseInt(req.params.id);
+      const productData = req.body;
+      const updatedProduct = await storage.updateProduct(productId, productData);
+      res.json(updatedProduct);
+    } catch (error: any) {
+      console.error("Error updating product:", error);
+      res.status(400).json({ message: error.message || "Failed to update product" });
+    }
+  });
+
+  // Admin orders management
+  app.get('/api/admin/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const orders = await storage.getAllOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching admin orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Admin system statistics
+  app.get('/api/admin/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Mock system statistics - in real app, calculate from database
+      const stats = {
+        totalUsers: 50123,
+        newUsersThisMonth: 2341,
+        totalProducts: 12435,
+        newProductsThisMonth: 1876,
+        totalOrders: 8765,
+        ordersThisMonth: 543,
+        totalRevenue: 234567.89,
+        revenueThisMonth: 12345.67,
+        averageOrderValue: 67.43,
+        conversionRate: 3.2,
+        topCategories: [
+          { name: "Fashion", count: 3421 },
+          { name: "Electronics", count: 2134 },
+          { name: "Home & Garden", count: 1876 }
+        ],
+        userGrowth: "+15%",
+        productGrowth: "+23%",
+        revenueGrowth: "+18%"
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  });
+
+  // Admin system settings
+  app.get('/api/admin/system-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Mock system settings - in real app, fetch from database
+      const settings = {
+        siteName: "Opshop Online",
+        siteDescription: "Australia's Sustainable Marketplace",
+        maintenanceMode: false,
+        registrationEnabled: true,
+        commissionRate: 10,
+        maxFileSize: 5,
+        emailNotifications: true,
+        smsNotifications: false,
+        autoApprove: false
+      };
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching system settings:", error);
+      res.status(500).json({ message: "Failed to fetch system settings" });
+    }
+  });
+
+  app.put('/api/admin/system-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const settings = req.body;
+      // In real app, save to database
+      console.log("System settings updated:", settings);
+      
+      res.json({ message: "System settings updated successfully", settings });
+    } catch (error: any) {
+      console.error("Error updating system settings:", error);
+      res.status(400).json({ message: error.message || "Failed to update system settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

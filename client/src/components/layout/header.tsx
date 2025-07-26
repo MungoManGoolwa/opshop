@@ -32,7 +32,7 @@ export default function Header() {
     
     switch ((user as any)?.role) {
       case "admin":
-        return "/admin/dashboard";
+        return "/admin/site";  // Site administrator with full access
       case "seller":
       case "business":
         return "/seller/dashboard";

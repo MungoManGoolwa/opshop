@@ -13,6 +13,7 @@ import ProductDetail from "@/pages/product-detail";
 import SellerDashboard from "@/pages/seller-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminUsers from "@/pages/admin-users";
+import SiteAdmin from "@/pages/site-admin";
 import Checkout from "@/pages/checkout";
 import ShopUpgrade from "@/pages/shop-upgrade";
 import ShopUpgradeSuccess from "@/pages/shop-upgrade-success";
@@ -65,6 +66,7 @@ function Router() {
           <Route path="/seller/create" component={CreateListing} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/site" component={SiteAdmin} />
           <Route path="/profile" component={Profile} />
         </>
       )}
