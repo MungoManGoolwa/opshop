@@ -67,6 +67,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
   app.get('/api/products', async (req, res) => {
     try {
+      // If specific product ID is requested
+      if (req.query.id) {
+        const product = await storage.getProduct(parseInt(req.query.id as string));
+        if (!product) {
+          return res.status(404).json({ message: "Product not found" });
+        }
+        return res.json(product);
+      }
+
       const filters = {
         categoryId: req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined,
         condition: req.query.condition as string,
@@ -81,6 +90,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching products:", error);
       res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.get('/api/products/:id', async (req, res) => {
+    try {
+      const product = await storage.getProduct(parseInt(req.params.id));
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Increment view count
+      await storage.incrementProductViews(parseInt(req.params.id));
+      
+      res.json(product);
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({ message: "Failed to fetch product" });
     }
   });
 
@@ -194,6 +220,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching seller commissions:", error);
       res.status(500).json({ message: "Failed to fetch seller commissions" });
+    }
+  });
+
+  // Wishlist routes
+  app.get('/api/wishlist', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const wishlist = await storage.getUserWishlist(userId);
+      res.json(wishlist);
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+      res.status(500).json({ message: "Failed to fetch wishlist" });
     }
   });
 

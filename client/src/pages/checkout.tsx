@@ -134,8 +134,8 @@ export default function Checkout() {
   const loadProductAndCreatePaymentIntent = async () => {
     try {
       // Fetch product details
-      const productResponse = await apiRequest("GET", `/api/products/${productId}`);
-      setProduct(productResponse);
+      const productResponse = await apiRequest("GET", `/api/products?id=${productId}`);
+      setProduct(Array.isArray(productResponse) ? productResponse[0] : productResponse);
 
       const totalAmount = parseFloat((productResponse as any).price) + (parseFloat((productResponse as any).shippingCost) || 0);
 
