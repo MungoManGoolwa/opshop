@@ -1,0 +1,131 @@
+# Opshop Online - Australia's Sustainable Marketplace
+
+## Overview
+
+Opshop Online is a modern full-stack marketplace application built for buying and selling second-hand goods in Australia. The application follows a monorepo structure with a React frontend and Express.js backend, designed to facilitate sustainable commerce through pre-loved item transactions.
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Monorepo Structure
+The application uses a unified TypeScript codebase with three main directories:
+- `client/` - React frontend with Vite build system
+- `server/` - Express.js backend API
+- `shared/` - Common schemas and types used by both frontend and backend
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite for fast development and optimized production builds
+- **UI Library**: Radix UI components with shadcn/ui design system
+- **Styling**: Tailwind CSS with custom color scheme supporting light/dark modes
+- **State Management**: TanStack Query (React Query) for server state management
+- **Routing**: Wouter for lightweight client-side routing
+- **Forms**: React Hook Form with Zod validation
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js framework
+- **Language**: TypeScript with ES modules
+- **Database ORM**: Drizzle ORM for type-safe database operations
+- **Database**: PostgreSQL (configured for Neon serverless)
+- **Authentication**: Replit Auth integration with OpenID Connect
+- **Session Storage**: PostgreSQL-backed sessions using connect-pg-simple
+
+## Key Components
+
+### Authentication System
+- **Provider**: Replit Auth with OpenID Connect
+- **Session Management**: Server-side sessions stored in PostgreSQL
+- **Authorization**: Role-based access control (admin, moderator, customer, seller, business)
+- **Security**: HTTP-only cookies with secure flags
+
+### Database Schema
+- **Users**: Profile management with role-based permissions
+- **Products**: Listings with categories, conditions, pricing, and media
+- **Categories**: Hierarchical product categorization
+- **Wishlists**: User favorite items tracking
+- **Messages**: Communication between buyers and sellers
+- **Commissions**: Transaction fee tracking
+- **Sessions**: Authentication session storage
+
+### API Design
+- **RESTful endpoints**: Standard HTTP methods for CRUD operations
+- **Route organization**: Grouped by feature (auth, products, categories, etc.)
+- **Middleware**: Request logging, error handling, and authentication checks
+- **Data validation**: Zod schemas for request/response validation
+
+### UI Components
+- **Design System**: shadcn/ui with Radix UI primitives
+- **Responsive Design**: Mobile-first approach with responsive layouts
+- **Component Library**: Reusable UI components (buttons, cards, forms, etc.)
+- **Icon System**: Lucide React icons throughout the interface
+
+## Data Flow
+
+### User Authentication Flow
+1. User clicks login → redirected to Replit Auth
+2. Successful authentication creates/updates user in database
+3. Session stored in PostgreSQL with user information
+4. Frontend receives user data through protected API endpoint
+
+### Product Listing Flow
+1. Authenticated users can create product listings
+2. Data validated using Zod schemas
+3. Products stored with seller information and category association
+4. Images handled through local file storage system
+
+### Search and Discovery
+1. Products fetched through paginated API endpoints
+2. Filtering by category, condition, price range, and location
+3. Real-time search implementation (planned)
+4. Category-based navigation for improved discovery
+
+## External Dependencies
+
+### Core Dependencies
+- **@neondatabase/serverless**: PostgreSQL database driver
+- **drizzle-orm**: Type-safe ORM with PostgreSQL dialect
+- **@tanstack/react-query**: Server state management
+- **@radix-ui/***: Unstyled, accessible UI primitives
+- **tailwindcss**: Utility-first CSS framework
+- **zod**: Schema validation for TypeScript
+
+### Authentication
+- **openid-client**: OpenID Connect client for Replit Auth
+- **passport**: Authentication middleware
+- **express-session**: Session management
+- **connect-pg-simple**: PostgreSQL session store
+
+### Development Tools
+- **vite**: Fast build tool and dev server
+- **typescript**: Type safety and developer experience
+- **esbuild**: Fast JavaScript bundler for production
+- **tsx**: TypeScript execution for development
+
+## Deployment Strategy
+
+### Development Environment
+- **Dev Server**: Vite dev server with HMR for frontend
+- **Backend**: tsx for TypeScript execution with auto-restart
+- **Database**: Replit provides managed PostgreSQL instance
+- **Environment**: Development mode with detailed logging
+
+### Production Build
+- **Frontend**: Vite builds optimized static assets to `dist/public`
+- **Backend**: esbuild bundles server code to `dist/index.js`
+- **Static Serving**: Express serves built frontend assets
+- **Database Migrations**: Drizzle handles schema migrations
+
+### Hosting Considerations
+- **Platform**: Replit-optimized but platform-agnostic
+- **Database**: Configured for Neon serverless PostgreSQL
+- **File Storage**: Local filesystem for uploaded images
+- **Session Store**: PostgreSQL-backed for scalability
+
+### Environment Configuration
+- **DATABASE_URL**: PostgreSQL connection string
+- **SESSION_SECRET**: Secure session encryption key
+- **REPL_ID**: Replit environment identifier for auth
+- **NODE_ENV**: Environment mode (development/production)
