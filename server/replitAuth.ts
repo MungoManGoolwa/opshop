@@ -39,6 +39,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: false, // Set to false for development
+      sameSite: 'lax',
       maxAge: sessionTtl,
     },
   });
