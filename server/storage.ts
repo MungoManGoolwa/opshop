@@ -313,6 +313,42 @@ export class DatabaseStorage implements IStorage {
       return settings;
     }
   }
+
+  // Shop upgrade operations
+  async upgradeToShop(userId: string, upgradeDate: Date, expiryDate: Date): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        accountType: "shop",
+        shopUpgradeDate: upgradeDate,
+        shopExpiryDate: expiryDate,
+        maxListings: 1000,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async checkShopExpiry(userId: string): Promise<boolean> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user || user.accountType !== "shop") return false;
+    
+    if (user.shopExpiryDate && new Date() > user.shopExpiryDate) {
+      // Downgrade expired shop to seller
+      await db
+        .update(users)
+        .set({
+          accountType: "seller",
+          maxListings: 10,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+      return false;
+    }
+    
+    return true;
+  }
 }
 
 export const storage = new DatabaseStorage();

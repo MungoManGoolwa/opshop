@@ -33,11 +33,17 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").notNull().default("customer"), // admin, moderator, customer, seller, business
+  accountType: varchar("account_type", { length: 20 }).default("seller").notNull(), // "seller" or "shop"
+  shopUpgradeDate: timestamp("shop_upgrade_date"),
+  shopExpiryDate: timestamp("shop_expiry_date"),
+  maxListings: integer("max_listings").default(10).notNull(),
   location: varchar("location"),
   phone: varchar("phone"),
   isVerified: boolean("is_verified").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
 });
 
 export const categories = pgTable("categories", {

@@ -2,6 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import Stripe from "stripe";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
+});
 import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema } from "@shared/schema";
@@ -288,16 +296,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const commissionAmount = (salePrice * parseFloat(commissionRate.toString())) / 100;
         const sellerAmount = salePrice - commissionAmount;
 
-        await storage.createCommission({
-          orderId: order.id,
-          productId: order.productId,
-          sellerId: order.sellerId,
-          salePrice: order.totalAmount,
-          commissionRate,
-          commissionAmount: commissionAmount.toString(),
-          sellerAmount: sellerAmount.toString(),
-          status: 'pending',
-        });
+        if (order.sellerId) {
+          await storage.createCommission({
+            orderId: order.id,
+            productId: order.productId,
+            sellerId: order.sellerId,
+            salePrice: order.totalAmount,
+            commissionRate,
+            commissionAmount: commissionAmount.toString(),
+            sellerAmount: sellerAmount.toString(),
+            status: 'pending',
+          });
+        }
       }
       
       res.json(order);
@@ -380,6 +390,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error updating payment settings:", error);
       res.status(400).json({ message: error.message || "Failed to update payment settings" });
+    }
+  });
+
+  // Shop upgrade routes
+  app.post("/api/shop-upgrade/create-payment", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.accountType === "shop") {
+        return res.status(400).json({ message: "Already a shop account" });
+      }
+
+      // Create Stripe checkout session for shop upgrade
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        success_url: `${req.protocol}://${req.hostname}/shop-upgrade/success`,
+        cancel_url: `${req.protocol}://${req.hostname}/shop-upgrade`,
+        customer_email: user.email,
+        metadata: {
+          userId: userId,
+          upgrade_type: 'shop'
+        },
+        line_items: [
+          {
+            price_data: {
+              currency: 'aud',
+              product_data: {
+                name: 'Shop Account Upgrade',
+                description: 'Annual shop account with up to 1,000 listings and premium features',
+              },
+              unit_amount: 50000, // $500 AUD in cents
+            },
+            quantity: 1,
+          },
+        ],
+      });
+
+      res.json({ checkoutUrl: session.url });
+    } catch (error: any) {
+      console.error("Shop upgrade error:", error);
+      res.status(500).json({ message: "Failed to create upgrade payment" });
+    }
+  });
+
+  app.post("/api/shop-upgrade/webhook", async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    try {
+      const event = stripe.webhooks.constructEvent(req.body, sig!, process.env.STRIPE_WEBHOOK_SECRET!);
+      
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as any;
+        const userId = session.metadata.userId;
+        
+        if (session.metadata.upgrade_type === 'shop') {
+          // Upgrade user to shop account
+          const upgradeDate = new Date();
+          const expiryDate = new Date();
+          expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 year from now
+          
+          await storage.upgradeToShop(userId, upgradeDate, expiryDate);
+        }
+      }
+      
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("Webhook error:", error);
+      res.status(400).send(`Webhook Error: ${error.message}`);
     }
   });
 

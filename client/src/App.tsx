@@ -12,6 +12,8 @@ import ProductDetail from "@/pages/product-detail";
 import SellerDashboard from "@/pages/seller-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import Checkout from "@/pages/checkout";
+import ShopUpgrade from "@/pages/shop-upgrade";
+import ShopUpgradeSuccess from "@/pages/shop-upgrade-success";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -30,6 +32,8 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/product/:id" component={ProductDetail} />
           <Route path="/checkout" component={Checkout} />
+          <Route path="/shop-upgrade" component={ShopUpgrade} />
+          <Route path="/shop-upgrade/success" component={ShopUpgradeSuccess} />
           <Route path="/seller/dashboard" component={SellerDashboard} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
         </>
