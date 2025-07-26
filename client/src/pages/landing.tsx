@@ -38,7 +38,7 @@ export default function Landing() {
                 <Button 
                   size="lg" 
                   className="bg-accent hover:bg-accent/90 text-white"
-                  onClick={() => window.location.href = "/api/login"}
+                  onClick={() => window.location.href = "/login"}
                 >
                   <ShoppingBag className="mr-2 h-5 w-5" />
                   Start Shopping
@@ -47,7 +47,7 @@ export default function Landing() {
                   size="lg" 
                   variant="outline" 
                   className="border-white text-white hover:bg-white hover:text-primary"
-                  onClick={() => window.location.href = "/api/login"}
+                  onClick={() => window.location.href = "/login"}
                 >
                   <Plus className="mr-2 h-5 w-5" />
                   Start Selling
@@ -142,7 +142,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="bg-primary hover:bg-primary/90"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
             >
               View All Items
             </Button>
@@ -271,7 +271,7 @@ export default function Landing() {
             <Button 
               size="lg" 
               className="bg-accent hover:bg-accent/90 text-white"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
             >
               <ShoppingBag className="mr-2 h-5 w-5" />
               Start Shopping
@@ -280,7 +280,7 @@ export default function Landing() {
               size="lg" 
               variant="outline" 
               className="border-white text-white hover:bg-white hover:text-primary"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
             >
               <Plus className="mr-2 h-5 w-5" />
               Start Selling

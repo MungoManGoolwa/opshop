@@ -31,16 +31,20 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: true,
     saveUninitialized: true,
     rolling: true,
+    name: 'opshop.sid',
     cookie: {
       httpOnly: true,
-      secure: false, // Set to false for development
-      sameSite: 'lax',
+      secure: isProduction, // Use HTTPS in production
+      sameSite: isProduction ? 'none' : 'lax',
+      domain: isProduction ? '.opshop.online' : undefined,
       maxAge: sessionTtl,
     },
   });

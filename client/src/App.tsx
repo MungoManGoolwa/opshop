@@ -16,6 +16,7 @@ import Checkout from "@/pages/checkout";
 import ShopUpgrade from "@/pages/shop-upgrade";
 import ShopUpgradeSuccess from "@/pages/shop-upgrade-success";
 import LoginSuccess from "@/pages/login-success";
+import LoginManual from "@/pages/login-manual";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -33,6 +34,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/login" component={LoginManual} />
       {!isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
