@@ -292,11 +292,11 @@ export default function Landing() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold mb-6 text-stone-800 dark:text-stone-200">
-              Need Cash Fast? We'll Buy Your Items Instantly
+              Need Store Credit Fast? We'll Buy Your Items Instantly
             </h2>
             <p className="text-lg mb-8 text-stone-600 dark:text-stone-400">
               Can't wait for a buyer? Our AI technology instantly evaluates your items and offers 
-              you a fair cash price on the spot. Get paid immediately without the wait.
+              you store credit on the spot. Start shopping immediately with your credit.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
               <div className="text-center p-6 bg-stone-50 dark:bg-stone-900 rounded-lg">
@@ -315,16 +315,17 @@ export default function Landing() {
               </div>
               <div className="text-center p-6 bg-stone-50 dark:bg-stone-900 rounded-lg">
                 <div className="text-2xl font-bold text-green-600 mb-2">3</div>
-                <h3 className="font-semibold mb-2 text-stone-800 dark:text-stone-200">Get Paid</h3>
+                <h3 className="font-semibold mb-2 text-stone-800 dark:text-stone-200">Get Store Credit</h3>
                 <p className="text-sm text-stone-600 dark:text-stone-400">
-                  Accept our offer and get paid instantly to your account
+                  Accept our offer and receive instant store credit to shop with
                 </p>
               </div>
             </div>
             <div className="mt-8 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <p className="text-sm text-green-700 dark:text-green-300">
                 <strong>Fair pricing guaranteed:</strong> Our AI considers current market trends, 
-                item condition, and demand to offer you a competitive price.
+                item condition, and demand to offer you competitive store credit that you can use 
+                immediately on any items in our marketplace.
               </p>
             </div>
           </div>
