@@ -14,6 +14,7 @@ import ProductDetail from "@/pages/product-detail";
 import SellerDashboard from "@/pages/seller-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminUsers from "@/pages/admin-users";
+import AdminBuyback from "@/pages/admin-buyback";
 import SiteAdmin from "@/pages/site-admin";
 import InstantBuyback from "@/pages/instant-buyback";
 import Messages from "@/pages/messages";
@@ -69,6 +70,7 @@ function Router() {
           <Route path="/seller/create" component={CreateListing} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/buyback" component={AdminBuyback} />
           <Route path="/admin/site" component={SiteAdmin} />
           <Route path="/instant-buyback" component={InstantBuyback} />
           <Route path="/messages" component={Messages} />

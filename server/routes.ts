@@ -946,6 +946,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Approve buyback offer
+  app.post('/api/admin/buyback/offer/:offerId/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const offerId = parseInt(req.params.offerId);
+      const { notes } = req.body;
+
+      const result = await buybackService.approveBuybackOffer(offerId, userId, notes);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error approving buyback offer:", error);
+      res.status(500).json({ message: error.message || "Failed to approve buyback offer" });
+    }
+  });
+
+  // Admin: Reject buyback offer
+  app.post('/api/admin/buyback/offer/:offerId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const offerId = parseInt(req.params.offerId);
+      const { reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+
+      const result = await buybackService.rejectBuybackOffer(offerId, userId, reason);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error rejecting buyback offer:", error);
+      res.status(500).json({ message: error.message || "Failed to reject buyback offer" });
+    }
+  });
+
+  // Admin: Get all buyback offers for review
+  app.get('/api/admin/buyback/offers/review', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const status = req.query.status as string;
+      const offers = await buybackService.getAllBuybackOffersForAdmin(status);
+      res.json(offers);
+    } catch (error: any) {
+      console.error("Error fetching buyback offers for review:", error);
+      res.status(500).json({ message: "Failed to fetch buyback offers" });
+    }
+  });
+
   // Message routes
   app.get('/api/messages/conversations', isAuthenticated, async (req: any, res) => {
     try {

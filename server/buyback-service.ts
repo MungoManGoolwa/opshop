@@ -2,6 +2,7 @@ import { db } from "./db";
 import { users, buybackOffers, storeCreditTransactions, products } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { evaluateItemWithAI, type ItemEvaluation } from "./ai-evaluation";
+import { emailService } from "./email-service";
 
 const SYSTEM_USER_ID = "system"; // Special system user for buyback items
 const OFFER_EXPIRY_HOURS = 24;
@@ -58,6 +59,41 @@ export class BuybackService {
           expiresAt,
         })
         .returning();
+
+      // Get user details for email notification
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, request.userId))
+        .limit(1);
+
+      if (user && user.email) {
+        try {
+          // Send email notification
+          const emailSent = await emailService.sendBuybackOfferNotification(
+            user.email,
+            user.firstName || "User",
+            request.itemTitle,
+            aiResult.estimatedRetailPrice,
+            aiResult.buybackOfferPrice,
+            offer.id
+          );
+
+          // Update offer with email status
+          if (emailSent) {
+            await db
+              .update(buybackOffers)
+              .set({ 
+                emailSent: true, 
+                emailSentAt: new Date() 
+              })
+              .where(eq(buybackOffers.id, offer.id));
+          }
+        } catch (emailError) {
+          console.error("Failed to send buyback offer email:", emailError);
+          // Don't fail the whole process if email fails
+        }
+      }
 
       return {
         success: true,
@@ -261,23 +297,39 @@ export class BuybackService {
     };
   }
 
-  // Reject a buyback offer
-  async rejectBuybackOffer(offerId: number, userId: string) {
-    const result = await db
-      .update(buybackOffers)
-      .set({ status: "rejected" })
-      .where(and(
-        eq(buybackOffers.id, offerId),
-        eq(buybackOffers.userId, userId),
-        eq(buybackOffers.status, "pending")
-      ))
-      .returning();
+  // Admin: Reject a buyback offer (overridden method)
+  async rejectBuybackOffer(offerId: number, adminUserId: string, reason?: string) {
+    const [offer] = await db
+      .select()
+      .from(buybackOffers)
+      .where(eq(buybackOffers.id, offerId))
+      .limit(1);
 
-    if (!result.length) {
-      throw new Error("Offer not found or cannot be rejected");
+    if (!offer) {
+      throw new Error("Buyback offer not found");
     }
 
-    return { success: true, message: "Offer rejected successfully" };
+    if (offer.status !== "pending") {
+      throw new Error("Offer is not pending approval");
+    }
+
+    // Update offer status to rejected
+    const [updatedOffer] = await db
+      .update(buybackOffers)
+      .set({
+        status: "rejected",
+        reviewedBy: adminUserId,
+        reviewedAt: new Date(),
+        adminNotes: reason || "Rejected by admin",
+      })
+      .where(eq(buybackOffers.id, offerId))
+      .returning();
+
+    return {
+      success: true,
+      offer: updatedOffer,
+      message: "Buyback offer rejected",
+    };
   }
 
   // Expire old offers (run via cron job)
@@ -294,6 +346,74 @@ export class BuybackService {
       .returning();
 
     return { expiredCount: result.length };
+  }
+  // Admin: Approve a buyback offer
+  async approveBuybackOffer(offerId: number, adminUserId: string, notes?: string) {
+    const [offer] = await db
+      .select()
+      .from(buybackOffers)
+      .where(eq(buybackOffers.id, offerId))
+      .limit(1);
+
+    if (!offer) {
+      throw new Error("Buyback offer not found");
+    }
+
+    if (offer.status !== "pending") {
+      throw new Error("Offer is not pending approval");
+    }
+
+    // Update offer status to approved
+    const [updatedOffer] = await db
+      .update(buybackOffers)
+      .set({
+        status: "approved",
+        reviewedBy: adminUserId,
+        reviewedAt: new Date(),
+        adminNotes: notes,
+      })
+      .where(eq(buybackOffers.id, offerId))
+      .returning();
+
+    return {
+      success: true,
+      offer: updatedOffer,
+      message: "Buyback offer approved successfully",
+    };
+  }
+
+  // Admin: Get all buyback offers for review
+  async getAllBuybackOffersForAdmin(status?: string) {
+    const query = db
+      .select({
+        id: buybackOffers.id,
+        userId: buybackOffers.userId,
+        itemTitle: buybackOffers.itemTitle,
+        itemDescription: buybackOffers.itemDescription,
+        itemCondition: buybackOffers.itemCondition,
+        aiEvaluatedRetailPrice: buybackOffers.aiEvaluatedRetailPrice,
+        buybackOfferPrice: buybackOffers.buybackOfferPrice,
+        status: buybackOffers.status,
+        adminNotes: buybackOffers.adminNotes,
+        reviewedBy: buybackOffers.reviewedBy,
+        reviewedAt: buybackOffers.reviewedAt,
+        emailSent: buybackOffers.emailSent,
+        emailSentAt: buybackOffers.emailSentAt,
+        expiresAt: buybackOffers.expiresAt,
+        createdAt: buybackOffers.createdAt,
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+      })
+      .from(buybackOffers)
+      .leftJoin(users, eq(buybackOffers.userId, users.id))
+      .orderBy(desc(buybackOffers.createdAt));
+
+    if (status) {
+      return await query.where(eq(buybackOffers.status, status));
+    }
+
+    return await query;
   }
 }
 

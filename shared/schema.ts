@@ -224,6 +224,11 @@ export const buybackOffers = pgTable("buyback_offers", {
   buybackOfferPrice: decimal("buyback_offer_price", { precision: 10, scale: 2 }).notNull(), // 50% of retail
   aiEvaluationData: jsonb("ai_evaluation_data"), // Full AI response for audit
   status: varchar("status").notNull().default("pending"), // pending, accepted, rejected, expired
+  adminNotes: text("admin_notes"),
+  reviewedBy: varchar("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  emailSent: boolean("email_sent").default(false),
+  emailSentAt: timestamp("email_sent_at"),
   expiresAt: timestamp("expires_at").notNull(), // Offers expire after 24 hours
   acceptedAt: timestamp("accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
