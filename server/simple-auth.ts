@@ -29,7 +29,7 @@ export async function setupSimpleAuth(app: Express) {
       const testUser = {
         id: "test-user-1",
         email: "test@opshop.com",
-        firstName: "Test",
+        firstName: "Demo",
         lastName: "User",
         profileImageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
         role: "admin" as const,
