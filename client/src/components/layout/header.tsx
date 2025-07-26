@@ -21,8 +21,10 @@ export default function Header() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement search functionality
-    console.log("Search query:", searchQuery);
+    if (searchQuery.trim()) {
+      // Navigate to home page with search query
+      window.location.href = `/?search=${encodeURIComponent(searchQuery.trim())}`;
+    }
   };
 
   const getDashboardRoute = () => {
