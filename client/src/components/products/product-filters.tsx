@@ -7,10 +7,10 @@ import { Grid, List } from "lucide-react";
 export default function ProductFilters() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filters, setFilters] = useState({
-    category: "",
-    condition: "",
-    priceRange: "",
-    location: "",
+    category: "all",
+    condition: "any",
+    priceRange: "any",
+    location: "australia",
     sortBy: "recent"
   });
 
@@ -33,7 +33,7 @@ export default function ProductFilters() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories?.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -47,7 +47,7 @@ export default function ProductFilters() {
                 <SelectValue placeholder="Any Condition" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Condition</SelectItem>
+                <SelectItem value="any">Any Condition</SelectItem>
                 <SelectItem value="excellent">Like New</SelectItem>
                 <SelectItem value="good">Good</SelectItem>
                 <SelectItem value="fair">Fair</SelectItem>
@@ -59,7 +59,7 @@ export default function ProductFilters() {
                 <SelectValue placeholder="Price Range" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Price</SelectItem>
+                <SelectItem value="any">Any Price</SelectItem>
                 <SelectItem value="0-25">Under $25</SelectItem>
                 <SelectItem value="25-100">$25 - $100</SelectItem>
                 <SelectItem value="100-500">$100 - $500</SelectItem>
@@ -72,7 +72,7 @@ export default function ProductFilters() {
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Australia Wide</SelectItem>
+                <SelectItem value="australia">Australia Wide</SelectItem>
                 <SelectItem value="10km">Within 10km</SelectItem>
                 <SelectItem value="25km">Within 25km</SelectItem>
                 <SelectItem value="50km">Within 50km</SelectItem>
