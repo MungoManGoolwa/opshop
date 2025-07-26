@@ -28,7 +28,7 @@ export default function Home() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold">Recent Listings</h2>
             <span className="text-gray-600">
-              {products?.length || 0} items found
+              {Array.isArray(products) ? products.length : 0} items found
             </span>
           </div>
           
@@ -43,7 +43,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : products && products.length > 0 ? (
+          ) : Array.isArray(products) && products.length > 0 ? (
             <ProductGrid products={products} />
           ) : (
             <div className="text-center py-12">

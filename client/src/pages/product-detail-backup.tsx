@@ -46,8 +46,6 @@ export default function ProductDetail() {
 
   // Type guard to check if product data is loaded
   const isProductLoaded = product && typeof product === 'object' && 'id' in product;
-  // Cast product to any to avoid TypeScript errors while maintaining functionality
-  const productData = isProductLoaded ? (product as any) : null;
 
   const addToWishlistMutation = useMutation({
     mutationFn: async () => {
@@ -101,7 +99,7 @@ export default function ProductDetail() {
     );
   }
 
-  if (error || !isProductLoaded || !productData) {
+  if (error || !isProductLoaded) {
     return (
       <div className="min-h-screen bg-neutral">
         <Header />
@@ -120,11 +118,14 @@ export default function ProductDetail() {
     );
   }
 
+  // Cast product to any to avoid TypeScript errors while maintaining functionality
+  const productData = product as any;
+  
   const images = productData.images || [];
   const currentImage = images[currentImageIndex] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&h=600";
 
   const getConditionColor = (condition: string) => {
-    switch (condition?.toLowerCase()) {
+    switch (condition.toLowerCase()) {
       case "excellent":
       case "like new":
         return "bg-success";
@@ -167,27 +168,57 @@ export default function ProductDetail() {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
+            <div className="relative aspect-square rounded-lg overflow-hidden bg-white">
               <img
                 src={currentImage}
-                alt={productData.title}
+                alt={product.title}
                 className="w-full h-full object-cover"
               />
+              <div className="absolute top-4 left-4 flex space-x-2">
+                <Badge className={`${getConditionColor(product.condition)} text-white`}>
+                  {product.condition}
+                </Badge>
+                {product.isVerified && (
+                  <Badge className="bg-accent text-white">
+                    ✓ Verified
+                  </Badge>
+                )}
+              </div>
+              <div className="absolute top-4 right-4 flex space-x-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/90"
+                  onClick={() => {/* Share functionality */}}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/90"
+                  onClick={handleAddToWishlist}
+                  disabled={addToWishlistMutation.isPending}
+                >
+                  <Heart className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             
+            {/* Thumbnail images */}
             {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((image: string, index: number) => (
+              <div className="flex space-x-2 overflow-x-auto">
+                {images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentImageIndex(index)}
-                    className={`aspect-square overflow-hidden rounded border-2 ${
-                      index === currentImageIndex ? 'border-primary' : 'border-gray-200'
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                      index === currentImageIndex ? "border-primary" : "border-gray-200"
                     }`}
                   >
                     <img
                       src={image}
-                      alt={`${productData.title} ${index + 1}`}
+                      alt={`${product.title} ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -199,152 +230,147 @@ export default function ProductDetail() {
           {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-start justify-between mb-2">
-                <h1 className="text-3xl font-bold">{productData.title}</h1>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={handleAddToWishlist}
-                  disabled={addToWishlistMutation.isPending}
-                >
-                  <Heart className="h-5 w-5" />
-                </Button>
-              </div>
-              
-              <div className="flex items-center space-x-2 mb-4">
-                <Badge className={getConditionColor(productData.condition)}>
-                  {productData.condition}
-                </Badge>
-                {productData.isVerified && (
-                  <Badge variant="outline" className="text-success border-success">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Verified
-                  </Badge>
-                )}
-              </div>
-
-              <p className="text-gray-600 leading-relaxed">
-                {productData.description}
-              </p>
+              <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
+              <p className="text-gray-600">{product.description}</p>
             </div>
 
-            {/* Price */}
-            <div className="space-y-2">
-              <div className="flex items-baseline space-x-2">
-                <span className="text-3xl font-bold text-primary">${productData.price}</span>
-                {productData.originalPrice && (
-                  <span className="text-lg text-gray-500 line-through">
-                    ${productData.originalPrice}
-                  </span>
-                )}
-              </div>
-              {productData.originalPrice && (
-                <p className="text-sm text-success">
-                  Save ${(parseFloat(productData.originalPrice || '0') - parseFloat(productData.price || '0')).toFixed(2)}
-                </p>
+            <div className="flex items-baseline space-x-4">
+              <span className="text-3xl font-bold text-primary">${product.price}</span>
+              {product.originalPrice && (
+                <span className="text-lg text-gray-500 line-through">
+                  Was ${product.originalPrice}
+                </span>
               )}
             </div>
 
             {/* Product Details */}
-            <div className="grid grid-cols-2 gap-4 py-4 border-t border-b">
-              {productData.brand && (
-                <div>
-                  <span className="text-sm text-gray-600">Brand</span>
-                  <p className="font-medium">{productData.brand}</p>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {product.brand && (
+                    <div>
+                      <span className="font-medium">Brand:</span>
+                      <span className="ml-2 text-gray-600">{product.brand}</span>
+                    </div>
+                  )}
+                  {product.size && (
+                    <div>
+                      <span className="font-medium">Size:</span>
+                      <span className="ml-2 text-gray-600">{product.size}</span>
+                    </div>
+                  )}
+                  {product.color && (
+                    <div>
+                      <span className="font-medium">Color:</span>
+                      <span className="ml-2 text-gray-600">{product.color}</span>
+                    </div>
+                  )}
+                  {product.material && (
+                    <div>
+                      <span className="font-medium">Material:</span>
+                      <span className="ml-2 text-gray-600">{product.material}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {productData.size && (
-                <div>
-                  <span className="text-sm text-gray-600">Size</span>
-                  <p className="font-medium">{productData.size}</p>
-                </div>
-              )}
-              {productData.color && (
-                <div>
-                  <span className="text-sm text-gray-600">Color</span>
-                  <p className="font-medium">{productData.color}</p>
-                </div>
-              )}
-              {productData.material && (
-                <div>
-                  <span className="text-sm text-gray-600">Material</span>
-                  <p className="font-medium">{productData.material}</p>
-                </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Shipping Info */}
-            <div className="flex items-center space-x-2 text-sm">
-              <MapPin className="h-4 w-4 text-gray-500" />
-              <span>Ships from {productData.location}</span>
-              <span className="text-gray-400">•</span>
-              <Truck className="h-4 w-4 text-gray-500" />
-              <span>
-                {productData.shippingCost && parseFloat(productData.shippingCost) > 0
-                  ? `$${productData.shippingCost} shipping`
-                  : 'Free shipping'
-                }
-              </span>
+            {/* Location & Shipping */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <MapPin className="h-4 w-4" />
+                <span>{product.location}</span>
+              </div>
+              {product.shippingCost && (
+                <div className="flex items-center space-x-2 text-gray-600">
+                  <Truck className="h-4 w-4" />
+                  <span>Shipping: ${product.shippingCost}</span>
+                </div>
+              )}
             </div>
 
             {/* Stats */}
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
+            <div className="flex items-center space-x-6 text-sm text-gray-600">
               <div className="flex items-center space-x-1">
                 <Eye className="h-4 w-4" />
-                <span>{productData.views} views</span>
+                <span>{product.views || 0} views</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Heart className="h-4 w-4" />
-                <span>{productData.likes} likes</span>
+                <span>{product.likes || 0} likes</span>
               </div>
             </div>
+
+            <Separator />
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <BuyButton
-                productId={productData.id}
-                sellerId={productData.sellerId}
-                amount={productData.price}
-                shippingCost={productData.shippingCost}
-                status={productData.status}
-                className="w-full"
-              />
-              
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="w-full">
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Message Seller
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
-              </div>
+              {isAuthenticated && user?.id !== product.sellerId ? (
+                <>
+                  <BuyButton 
+                    productId={product.id}
+                    price={product.price}
+                    shippingCost={product.shippingCost}
+                    isAvailable={product.status === "available"}
+                  />
+                  <Button size="lg" variant="outline" className="w-full">
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Contact Seller
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleAddToWishlist}
+                    disabled={addToWishlistMutation.isPending}
+                  >
+                    <Heart className="mr-2 h-5 w-5" />
+                    Add to Wishlist
+                  </Button>
+                </>
+              ) : !isAuthenticated ? (
+                <div className="space-y-3">
+                  <BuyButton 
+                    productId={product.id}
+                    price={product.price}
+                    shippingCost={product.shippingCost}
+                    isAvailable={product.status === "available"}
+                  />
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => window.location.href = "/api/login"}
+                  >
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Contact Seller
+                  </Button>
+                  <p className="text-sm text-gray-600 text-center">
+                    Sign in to contact the seller and make purchases
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-gray-100 p-4 rounded-lg text-center">
+                  <p className="text-gray-600">This is your own listing</p>
+                </div>
+              )}
             </div>
 
-            {/* Quick Purchase */}
+            {/* Trust & Safety */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Quick Purchase</h3>
-                <BuyButton
-                  productId={productData.id}
-                  sellerId={productData.sellerId}
-                  amount={productData.price}
-                  shippingCost={productData.shippingCost}
-                  status={productData.status}
-                  variant="outline"
-                  className="w-full"
-                />
+                <div className="flex items-center space-x-2 mb-3">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <span className="font-medium">Trust & Safety</span>
+                </div>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Secure payment processing</li>
+                  <li>• Buyer protection guarantee</li>
+                  <li>• Verified seller program</li>
+                  <li>• 30-day return policy</li>
+                </ul>
               </CardContent>
             </Card>
-          </div>
-        </div>
-
-        {/* Similar Items */}
-        <div className="mt-16">
-          <h2 className="text-2xl font-bold mb-6">You might also like</h2>
-          <div className="text-center py-8 text-gray-500">
-            <p>Similar items feature coming soon</p>
           </div>
         </div>
 
@@ -356,16 +382,16 @@ export default function ProductDetail() {
             {/* Seller Reviews */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Seller Reviews</h3>
-              <ReviewSummary userId={productData.sellerId} showTitle={false} />
+              <ReviewSummary userId={product.sellerId} showTitle={false} />
               <div className="mt-6">
-                <ReviewList userId={productData.sellerId} limit={3} />
+                <ReviewList userId={product.sellerId} limit={3} />
               </div>
             </div>
 
             {/* Product Reviews */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Product Reviews</h3>
-              <ReviewList productId={productData.id} limit={5} />
+              <ReviewList productId={product.id} limit={5} />
             </div>
           </div>
         </div>
