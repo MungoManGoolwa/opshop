@@ -60,7 +60,47 @@ export async function setupSimpleAuth(app: Express) {
           return res.status(500).json({ message: "Session save failed" });
         }
         console.log("Session saved successfully for user:", testUser.id);
-        res.redirect("/login-success");
+        
+        // Send HTML page that will handle redirect and auth refresh
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Login Success - Opshop Online</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+              .container { text-align: center; background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-width: 400px; }
+              .spinner { width: 40px; height: 40px; border: 4px solid #f3f4f6; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+              h1 { color: #111827; margin-bottom: 0.5rem; }
+              p { color: #6b7280; margin-bottom: 1rem; }
+              .countdown { font-size: 1.25rem; font-weight: bold; color: #667eea; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="spinner"></div>
+              <h1>Login Successful!</h1>
+              <p>Welcome to Opshop Online marketplace</p>
+              <p class="countdown">Redirecting in <span id="countdown">3</span> seconds...</p>
+            </div>
+            <script>
+              let count = 3;
+              const countdownEl = document.getElementById('countdown');
+              const timer = setInterval(() => {
+                count--;
+                countdownEl.textContent = count;
+                if (count <= 0) {
+                  clearInterval(timer);
+                  window.location.href = '/';
+                }
+              }, 1000);
+            </script>
+          </body>
+          </html>
+        `);
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -79,22 +119,16 @@ export async function setupSimpleAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.session?.user;
 
-  console.log("Auth check - Session ID:", req.sessionID);
-  console.log("Auth check - Session user exists:", !!user);
-
   if (!user || !user.expires_at) {
-    console.log("No user or expires_at in session");
     return res.status(401).json({ message: "Unauthorized" });
   }
 
   const now = Math.floor(Date.now() / 1000);
   if (now > user.expires_at) {
-    console.log("Session expired");
     return res.status(401).json({ message: "Session expired" });
   }
 
   // Attach user to request
   (req as any).user = user;
-  console.log("Auth check passed for user:", user.claims.sub);
   next();
 };
