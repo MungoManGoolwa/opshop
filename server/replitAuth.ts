@@ -27,7 +27,7 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
@@ -38,7 +38,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: false, // Set to false for development
       maxAge: sessionTtl,
     },
   });
@@ -84,8 +84,9 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
+  // Register strategy for each domain and localhost
+  const domains = process.env.REPLIT_DOMAINS!.split(",");
+  for (const domain of domains) {
     const strategy = new Strategy(
       {
         name: `replitauth:${domain}`,
@@ -97,19 +98,53 @@ export async function setupAuth(app: Express) {
     );
     passport.use(strategy);
   }
+  
+  // Also register a localhost strategy for development
+  const localhostStrategy = new Strategy(
+    {
+      name: `replitauth:localhost`,
+      config,
+      scope: "openid email profile offline_access",
+      callbackURL: `https://${domains[0]}/api/callback`, // Use the actual domain for callback
+    },
+    verify,
+  );
+  passport.use(localhostStrategy);
 
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const hostname = req.hostname;
+    let strategyName;
+    
+    if (hostname === 'localhost') {
+      strategyName = 'replitauth:localhost';
+    } else {
+      const domains = process.env.REPLIT_DOMAINS!.split(",");
+      const matchingDomain = domains.find(domain => domain.includes(hostname));
+      strategyName = matchingDomain ? `replitauth:${matchingDomain}` : `replitauth:${domains[0]}`;
+    }
+    
+    passport.authenticate(strategyName, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const hostname = req.hostname;
+    let strategyName;
+    
+    if (hostname === 'localhost') {
+      strategyName = 'replitauth:localhost';
+    } else {
+      const domains = process.env.REPLIT_DOMAINS!.split(",");
+      const matchingDomain = domains.find(domain => domain.includes(hostname));
+      strategyName = matchingDomain ? `replitauth:${matchingDomain}` : `replitauth:${domains[0]}`;
+    }
+    
+    passport.authenticate(strategyName, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
