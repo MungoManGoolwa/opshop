@@ -32,7 +32,6 @@ export default function Header() {
         <div className="flex items-center justify-between py-2 text-sm border-b border-gray-100">
           <div className="flex items-center space-x-4">
             <span className="text-primary font-medium">🇦🇺 Australian Marketplace</span>
-            <span className="text-gray-600 hidden sm:block">Free shipping on orders over $50</span>
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/about" className="text-gray-600 hover:text-primary">
