@@ -441,6 +441,67 @@ export class DatabaseStorage implements IStorage {
       .set({ helpfulCount: sql`${reviews.helpfulCount} + 1` })
       .where(eq(reviews.id, reviewId));
   }
+
+  // Admin user management operations
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async createAdminUser(userData: any): Promise<User> {
+    const [user] = await db.insert(users).values({
+      id: userData.id || sql`gen_random_uuid()`,
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      role: userData.role || 'customer',
+      accountType: userData.accountType || 'seller',
+      phone: userData.phone,
+      address: userData.address,
+      city: userData.city,
+      state: userData.state,
+      postcode: userData.postcode,
+      country: userData.country || 'Australia',
+      bio: userData.bio,
+      businessName: userData.businessName,
+      abn: userData.abn,
+      isActive: userData.isActive !== false,
+      maxListings: userData.maxListings || 10,
+      shopExpiryDate: userData.shopExpiryDate ? new Date(userData.shopExpiryDate) : null,
+    }).returning();
+    return user;
+  }
+
+  async updateUserProfile(userId: string, userData: any): Promise<User> {
+    const [user] = await db.update(users)
+      .set({
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: userData.role,
+        accountType: userData.accountType,
+        phone: userData.phone,
+        address: userData.address,
+        city: userData.city,
+        state: userData.state,
+        postcode: userData.postcode,
+        country: userData.country,
+        bio: userData.bio,
+        businessName: userData.businessName,
+        abn: userData.abn,
+        isActive: userData.isActive,
+        maxListings: userData.maxListings,
+        shopExpiryDate: userData.shopExpiryDate ? new Date(userData.shopExpiryDate) : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    // Note: In production, you might want to soft delete or handle related records
+    await db.delete(users).where(eq(users.id, userId));
+  }
 }
 
 export const storage = new DatabaseStorage();

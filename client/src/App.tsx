@@ -11,6 +11,7 @@ import About from "@/pages/about";
 import ProductDetail from "@/pages/product-detail";
 import SellerDashboard from "@/pages/seller-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminUsers from "@/pages/admin-users";
 import Checkout from "@/pages/checkout";
 import ShopUpgrade from "@/pages/shop-upgrade";
 import ShopUpgradeSuccess from "@/pages/shop-upgrade-success";
@@ -36,6 +37,7 @@ function Router() {
           <Route path="/shop-upgrade/success" component={ShopUpgradeSuccess} />
           <Route path="/seller/dashboard" component={SellerDashboard} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin/users" component={AdminUsers} />
         </>
       )}
       <Route component={NotFound} />

@@ -173,9 +173,15 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="text-center py-8">
                     <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">User management interface would be implemented here.</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Features: User verification, role management, account suspension, etc.
+                    <p className="text-gray-600 mb-4">Comprehensive user management interface</p>
+                    <Button asChild>
+                      <Link href="/admin/users">
+                        <Users className="mr-2 h-4 w-4" />
+                        Open User Management
+                      </Link>
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-4">
+                      Features: User profiles, role management, account settings, seller upgrades
                     </p>
                   </div>
                 </CardContent>
