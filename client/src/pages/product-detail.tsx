@@ -9,8 +9,8 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
 import BuyButton from "@/components/ui/buy-button";
-import ReviewSummary from "@/components/reviews/review-summary";
-import ReviewList from "@/components/reviews/review-list";
+// import ReviewSummary from "@/components/reviews/review-summary";
+// import ReviewList from "@/components/reviews/review-list";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -368,26 +368,19 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Reviews Section */}
+        {/* Reviews Section - Coming Soon */}
         <div className="mt-16 space-y-8">
           <h2 className="text-2xl font-bold">Reviews & Ratings</h2>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Seller Reviews */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Seller Reviews</h3>
-              <ReviewSummary userId={product.sellerId} showTitle={false} />
-              <div className="mt-6">
-                <ReviewList userId={product.sellerId} limit={3} />
-              </div>
-            </div>
-
-            {/* Product Reviews */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Product Reviews</h3>
-              <ReviewList productId={product.id} limit={5} />
-            </div>
-          </div>
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <Star className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">Review system will be available soon</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Buyers will be able to rate sellers and products after purchase
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

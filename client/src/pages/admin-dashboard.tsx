@@ -8,6 +8,8 @@ import PaymentSettings from "@/components/admin/payment-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import { 
   Users, 
   Package, 
@@ -33,9 +35,9 @@ export default function AdminDashboard() {
 
   // Mock admin statistics (in real app, these would come from dedicated admin endpoints)
   const totalUsers = 50123;
-  const totalProducts = products?.length || 0;
+  const totalProducts = Array.isArray(products) ? products.length : 0;
   const totalSales = 2345678;
-  const activeListings = products?.filter(p => p.status === "available").length || 0;
+  const activeListings = Array.isArray(products) ? products.filter((p: any) => p.status === "available").length : 0;
 
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
@@ -207,12 +209,12 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                     </div>
-                  ) : products && products.length > 0 ? (
+                  ) : Array.isArray(products) && products.length > 0 ? (
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600 mb-4">
                         Showing {Math.min(10, products.length)} of {products.length} products
                       </p>
-                      {products.slice(0, 10).map((product) => (
+                      {products.slice(0, 10).map((product: any) => (
                         <div key={product.id} className="flex items-center space-x-4 p-3 border rounded-lg">
                           <img
                             src={product.images?.[0] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=100&h=100"}
@@ -253,9 +255,9 @@ export default function AdminDashboard() {
                         <Skeleton key={i} className="h-12 w-full" />
                       ))}
                     </div>
-                  ) : categories && categories.length > 0 ? (
+                  ) : Array.isArray(categories) && categories.length > 0 ? (
                     <div className="space-y-3">
-                      {categories.map((category) => (
+                      {categories.map((category: any) => (
                         <div key={category.id} className="flex items-center justify-between p-3 border rounded-lg">
                           <div>
                             <h4 className="font-medium">{category.name}</h4>
