@@ -10,6 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **January 27, 2025**: LOCATION-BASED RADIUS SEARCH SYSTEM FULLY IMPLEMENTED
+  - Transformed static "Goolwa" location dropdown into comprehensive Australian suburb search system
+  - Created Australian suburbs database with 60+ major cities and coordinates for all states
+  - Built LocationSearch component with fuzzy search, radius selection (5km-250km), and real-time filtering
+  - Extended database schema with location fields (suburb, latitude, longitude) for users and products
+  - Implemented radius-based product filtering using Haversine formula for accurate distance calculations
+  - Added location-based API parameters (latitude, longitude, radius) to product search endpoints
+  - Created complete backup: opshop-complete-backup-20250727-004412.tar.gz (4.3MB)
+  - Fixed instant buyback page text from "50% of market value" to "a buy price" for flexibility
+  - Resolved routing issues to make instant buyback accessible to all users
+
 - **January 26, 2025**: COMPREHENSIVE BUYBACK APPROVAL WORKFLOW AND EMAIL NOTIFICATIONS IMPLEMENTED
   - Added complete admin approval/denial system for all buyback offers at /admin/buyback
   - Implemented professional email notification service that sends beautifully formatted emails when offers are created
