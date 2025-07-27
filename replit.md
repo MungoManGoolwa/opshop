@@ -10,6 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **January 27, 2025**: CATEGORY AND LOCATION FILTERING SYSTEM FULLY INTEGRATED AND WORKING
+  - Fixed category dropdown on front page - now properly filters products when category selected
+  - Connected ProductFilters component to home page with proper state management and API integration
+  - Integrated location-based radius search with product filtering system
+  - Location state now managed at home page level and passed through CategoryNav to LocationSearch
+  - Both category and location filtering work end-to-end with backend API parameters
+  - Users can now select suburb + radius and see filtered results immediately
+  - Fixed TypeScript interface issues and property name conflicts for seamless functionality
+  - Created full backup: opshop-online-backup-YYYYMMDD-HHMMSS.tar.gz
+
 - **January 27, 2025**: LOCATION-BASED RADIUS SEARCH SYSTEM FULLY IMPLEMENTED
   - Transformed static "Goolwa" location dropdown into comprehensive Australian suburb search system
   - Created Australian suburbs database with 60+ major cities and coordinates for all states
