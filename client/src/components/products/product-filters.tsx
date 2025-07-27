@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Grid, List } from "lucide-react";
 import { useView } from "@/contexts/ViewContext";
 
-export default function ProductFilters() {
+interface ProductFiltersProps {
+  onFiltersChange?: (filters: any) => void;
+}
+
+export default function ProductFilters({ onFiltersChange }: ProductFiltersProps) {
   const { viewMode, setViewMode } = useView();
   const [filters, setFilters] = useState({
     category: "all",
@@ -20,8 +24,28 @@ export default function ProductFilters() {
   });
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    // TODO: Implement actual filtering logic
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    
+    // Convert filters to the format expected by the API
+    const apiFilters: any = {};
+    
+    if (newFilters.category !== "all") {
+      apiFilters.categoryId = parseInt(newFilters.category);
+    }
+    
+    if (newFilters.condition !== "any") {
+      apiFilters.condition = newFilters.condition;
+    }
+    
+    if (newFilters.priceRange !== "any") {
+      const [min, max] = newFilters.priceRange.split("-");
+      if (min && min !== "0") apiFilters.minPrice = parseFloat(min);
+      if (max && max !== "+") apiFilters.maxPrice = parseFloat(max.replace("+", ""));
+    }
+    
+    // Call the parent callback with the new filters
+    onFiltersChange?.(apiFilters);
   };
 
   return (

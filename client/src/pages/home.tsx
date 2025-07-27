@@ -10,9 +10,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 
+interface ProductFilterState {
+  categoryId?: number;
+  condition?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  location?: string;
+  search?: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState("");
+  const [filters, setFilters] = useState<ProductFilterState>({});
 
   useEffect(() => {
     document.title = "Home - Opshop Online";
@@ -30,8 +43,22 @@ export default function Home() {
     }
   }, []);
 
+  // Build query parameters for products API
+  const queryParams = new URLSearchParams();
+  if (filters.categoryId) queryParams.append('categoryId', filters.categoryId.toString());
+  if (filters.condition && filters.condition !== 'any') queryParams.append('condition', filters.condition);
+  if (filters.minPrice) queryParams.append('minPrice', filters.minPrice.toString());
+  if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice.toString());
+  if (searchQuery.trim()) queryParams.append('search', searchQuery.trim());
+
   const { data: products, isLoading } = useQuery({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products", queryParams.toString()],
+    queryFn: async () => {
+      const url = `/api/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
   });
 
   // Filter products based on search query and filter mode
@@ -81,7 +108,7 @@ export default function Home() {
     <div className="min-h-screen bg-neutral">
       <Header />
       <CategoryNav />
-      <ProductFilters />
+      <ProductFilters onFiltersChange={setFilters} />
 
       <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
