@@ -3,18 +3,18 @@ import { Link } from "wouter";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import LocationSearch from "@/components/location/LocationSearch";
-import { useState } from "react";
 import type { Suburb } from "@/lib/australianSuburbs";
 
-export default function CategoryNav() {
-  const [selectedLocation, setSelectedLocation] = useState<{ suburb: Suburb; radius: number } | null>(null);
+interface CategoryNavProps {
+  selectedLocation?: { suburb: Suburb; radius: number } | null;
+  onLocationChange?: (location: { suburb: Suburb; radius: number } | null) => void;
+}
+
+export default function CategoryNav({ selectedLocation, onLocationChange }: CategoryNavProps) {
   
   const { data: categories, isLoading } = useQuery({
     queryKey: ["/api/categories"],
   });
-
-  // TODO: Use selectedLocation to filter products in product listings
-  // This will be passed down to product components that need location filtering
 
   if (isLoading) {
     return (
@@ -59,7 +59,7 @@ export default function CategoryNav() {
           
           <LocationSearch 
             selectedLocation={selectedLocation}
-            onLocationChange={setSelectedLocation}
+            onLocationChange={onLocationChange || (() => {})}
           />
         </div>
       </div>

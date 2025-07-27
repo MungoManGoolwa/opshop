@@ -9,6 +9,7 @@ import ProductFilters from "@/components/products/product-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
+import type { Suburb } from "@/lib/australianSuburbs";
 
 interface ProductFilterState {
   categoryId?: number;
@@ -26,6 +27,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState("");
   const [filters, setFilters] = useState<ProductFilterState>({});
+  const [selectedLocation, setSelectedLocation] = useState<{ suburb: Suburb; radius: number } | null>(null);
 
   useEffect(() => {
     document.title = "Home - Opshop Online";
@@ -50,6 +52,13 @@ export default function Home() {
   if (filters.minPrice) queryParams.append('minPrice', filters.minPrice.toString());
   if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice.toString());
   if (searchQuery.trim()) queryParams.append('search', searchQuery.trim());
+  
+  // Add location-based filtering
+  if (selectedLocation) {
+    queryParams.append('latitude', selectedLocation.suburb.latitude.toString());
+    queryParams.append('longitude', selectedLocation.suburb.longitude.toString());
+    queryParams.append('radius', selectedLocation.radius.toString());
+  }
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["/api/products", queryParams.toString()],
@@ -107,7 +116,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-neutral">
       <Header />
-      <CategoryNav />
+      <CategoryNav 
+        selectedLocation={selectedLocation}
+        onLocationChange={setSelectedLocation}
+      />
       <ProductFilters onFiltersChange={setFilters} />
 
       <section className="py-12 bg-gray-50">
