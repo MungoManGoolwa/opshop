@@ -46,7 +46,7 @@ export default function CategoryNav() {
               <span>New Arrivals</span>
             </Link>
             
-            {categories?.slice(1).map((category) => (
+            {Array.isArray(categories) && categories.slice(1).map((category: any) => (
               <Link
                 key={category.id}
                 href={`/category/${category.slug}`}
