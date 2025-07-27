@@ -1188,6 +1188,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== WALLET API ENDPOINTS =====
+  
+  // Get user wallet metrics and overview
+  app.get('/api/wallet/metrics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get purchase metrics
+      const purchases = await storage.getUserPurchases(userId);
+      const totalPurchases = Array.isArray(purchases) ? purchases.length : 0;
+      const totalSpent = Array.isArray(purchases) ? 
+        purchases.reduce((sum, p) => sum + parseFloat(p.totalAmount), 0).toFixed(2) : "0.00";
+
+      // Get sales metrics
+      const sales = await storage.getUserSales(userId);
+      const totalSales = Array.isArray(sales) ? sales.length : 0;
+      const totalEarned = Array.isArray(sales) ? 
+        sales.reduce((sum, s) => sum + parseFloat(s.sellerAmount || "0"), 0).toFixed(2) : "0.00";
+      const totalCommissions = Array.isArray(sales) ? 
+        sales.reduce((sum, s) => sum + parseFloat(s.commissionAmount || "0"), 0).toFixed(2) : "0.00";
+
+      // Get buyback metrics
+      const buybackOffers = await buybackService.getUserBuybackOffers(userId);
+      const activeBuybackOffers = Array.isArray(buybackOffers) ? 
+        buybackOffers.filter(o => o.status === 'pending').length : 0;
+
+      // Get listing count
+      const userProducts = await storage.getUserProducts(userId);
+      const totalListings = Array.isArray(userProducts) ? userProducts.length : 0;
+
+      const metrics = {
+        totalPurchases,
+        totalSpent,
+        totalSales,
+        totalEarned,
+        totalCommissions,
+        activeBuybackOffers,
+        storeCreditBalance: user.storeCredit || "0.00",
+        memberSince: user.createdAt,
+        totalListings,
+        accountType: user.accountType || "seller"
+      };
+
+      res.json(metrics);
+    } catch (error: any) {
+      console.error("Error fetching wallet metrics:", error);
+      res.status(500).json({ message: "Failed to fetch wallet metrics" });
+    }
+  });
+
+  // Get user's store credit transactions
+  app.get('/api/wallet/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const transactions = await buybackService.getUserStoreCreditTransactions(userId);
+      res.json(transactions);
+    } catch (error: any) {
+      console.error("Error fetching wallet transactions:", error);
+      res.status(500).json({ message: "Failed to fetch wallet transactions" });
+    }
+  });
+
+  // Get user's purchase history
+  app.get('/api/wallet/purchases', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const purchases = await storage.getUserPurchases(userId);
+      res.json(purchases);
+    } catch (error: any) {
+      console.error("Error fetching purchase history:", error);
+      res.status(500).json({ message: "Failed to fetch purchase history" });
+    }
+  });
+
+  // Get user's sales history
+  app.get('/api/wallet/sales', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const sales = await storage.getUserSales(userId);
+      res.json(sales);
+    } catch (error: any) {
+      console.error("Error fetching sales history:", error);
+      res.status(500).json({ message: "Failed to fetch sales history" });
+    }
+  });
+
+  // Get user's buyback offers for wallet
+  app.get('/api/wallet/buyback-offers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const offers = await buybackService.getUserBuybackOffers(userId);
+      res.json(offers);
+    } catch (error: any) {
+      console.error("Error fetching buyback offers:", error);
+      res.status(500).json({ message: "Failed to fetch buyback offers" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

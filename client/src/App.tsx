@@ -26,6 +26,7 @@ import LoginManual from "@/pages/login-manual";
 import Category from "@/pages/category";
 import CreateListing from "@/pages/create-listing";
 import Profile from "@/pages/profile";
+import Wallet from "@/pages/wallet";
 
 function Router() {
   const { isAuthenticated, isLoading, error } = useAuth();
@@ -75,6 +76,7 @@ function Router() {
           <Route path="/instant-buyback" component={InstantBuyback} />
           <Route path="/messages" component={Messages} />
           <Route path="/profile" component={Profile} />
+          <Route path="/wallet" component={Wallet} />
         </>
       )}
       <Route component={NotFound} />

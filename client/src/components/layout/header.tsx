@@ -16,7 +16,8 @@ import {
   Store,
   UserCircle,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  CreditCard
 } from "lucide-react";
 import ImpersonationControl from "@/components/admin/impersonation-control";
 
@@ -116,6 +117,12 @@ export default function Header() {
               <Link href="/instant-buyback" className="text-green-600 hover:text-green-700 font-medium">
                 <Sparkles className="inline h-4 w-4 mr-1" />
                 Instant Buyback
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link href="/wallet" className="text-gray-600 hover:text-primary">
+                <CreditCard className="inline h-4 w-4 mr-1" />
+                Wallet
               </Link>
             )}
             {isAuthenticated && (

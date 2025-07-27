@@ -80,6 +80,11 @@ export interface IStorage {
   getSellerOrders(sellerId: string): Promise<Order[]>;
   updateOrder(id: number, updates: Partial<InsertOrder>): Promise<Order>;
   
+  // Wallet operations for detailed purchase/sales history
+  getUserPurchases(userId: string): Promise<any[]>;
+  getUserSales(userId: string): Promise<any[]>;
+  getUserProducts(userId: string): Promise<Product[]>;
+  
   // Payment settings operations
   getPaymentSettings(): Promise<PaymentSettings | undefined>;
   updatePaymentSettings(settings: Partial<PaymentSettings>, updatedBy: string): Promise<PaymentSettings>;
@@ -603,6 +608,92 @@ export class DatabaseStorage implements IStorage {
       maxListings: userData.maxListings || 10,
     }).returning();
     return user;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async updateUserProfile(userId: string, userData: any): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...userData,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  // Wallet operations implementation
+  async getUserPurchases(userId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: orders.id,
+        orderId: orders.orderId,
+        product: {
+          id: products.id,
+          title: products.title,
+          images: products.images,
+        },
+        seller: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+        totalAmount: orders.totalAmount,
+        shippingCost: orders.shippingCost,
+        paymentGateway: orders.paymentGateway,
+        paymentStatus: orders.paymentStatus,
+        orderStatus: orders.orderStatus,
+        createdAt: orders.createdAt,
+      })
+      .from(orders)
+      .leftJoin(products, eq(orders.productId, products.id))
+      .leftJoin(users, eq(orders.sellerId, users.id))
+      .where(eq(orders.buyerId, userId))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async getUserSales(userId: string): Promise<any[]> {
+    return await db
+      .select({
+        id: orders.id,
+        orderId: orders.orderId,
+        product: {
+          id: products.id,
+          title: products.title,
+          images: products.images,
+        },
+        buyer: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        },
+        totalAmount: orders.totalAmount,
+        commissionAmount: commissions.commissionAmount,
+        sellerAmount: commissions.sellerAmount,
+        paymentStatus: orders.paymentStatus,
+        orderStatus: orders.orderStatus,
+        createdAt: orders.createdAt,
+      })
+      .from(orders)
+      .leftJoin(products, eq(orders.productId, products.id))
+      .leftJoin(users, eq(orders.buyerId, users.id))
+      .leftJoin(commissions, eq(orders.id, commissions.orderId))
+      .where(eq(orders.sellerId, userId))
+      .orderBy(desc(orders.createdAt));
+  }
+
+  async getUserProducts(userId: string): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(eq(products.sellerId, userId))
+      .orderBy(desc(products.createdAt));
   }
 }
 
