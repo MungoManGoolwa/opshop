@@ -35,33 +35,33 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Shop</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><Link href="/" className="hover:text-white">New Arrivals</Link></li>
-              <li><a href="#" className="hover:text-white">Clothing</a></li>
-              <li><a href="#" className="hover:text-white">Electronics</a></li>
-              <li><a href="#" className="hover:text-white">Furniture</a></li>
-              <li><a href="#" className="hover:text-white">Homewares</a></li>
+              <li><Link href="/?filter=new-arrivals" className="hover:text-white">New Arrivals</Link></li>
+              <li><Link href="/category/clothing" className="hover:text-white">Clothing</Link></li>
+              <li><Link href="/category/electronics" className="hover:text-white">Electronics</Link></li>
+              <li><Link href="/category/furniture" className="hover:text-white">Furniture</Link></li>
+              <li><Link href="/category/homewares" className="hover:text-white">Homewares</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold mb-4">Sell</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white">Start Selling</a></li>
+              <li><Link href="/sell" className="hover:text-white">Start Selling</Link></li>
               <li><Link href="/seller/dashboard" className="hover:text-white">Seller Dashboard</Link></li>
-              <li><a href="#" className="hover:text-white">Pricing Guide</a></li>
-              <li><a href="#" className="hover:text-white">Shipping Guide</a></li>
-              <li><a href="#" className="hover:text-white">Seller Success Tips</a></li>
+              <li><Link href="/pricing-guide" className="hover:text-white">Pricing Guide</Link></li>
+              <li><Link href="/instant-buyback" className="hover:text-white">Instant Buyback</Link></li>
+              <li><Link href="/seller/create" className="hover:text-white">Create Listing</Link></li>
             </ul>
           </div>
           
           <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <ul className="space-y-2 text-gray-400">
-              <li><a href="#" className="hover:text-white">Help Center</a></li>
-              <li><a href="#" className="hover:text-white">Contact Us</a></li>
-              <li><a href="#" className="hover:text-white">Safety Guidelines</a></li>
-              <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+              <li><Link href="/help-center" className="hover:text-white">Help Center</Link></li>
+              <li><Link href="/contact" className="hover:text-white">Contact Us</Link></li>
+              <li><Link href="/safety-guidelines" className="hover:text-white">Safety Guidelines</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-white">Privacy Policy</Link></li>
+              <li><Link href="/terms-of-service" className="hover:text-white">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

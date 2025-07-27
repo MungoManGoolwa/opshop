@@ -27,6 +27,15 @@ import Category from "@/pages/category";
 import CreateListing from "@/pages/create-listing";
 import Profile from "@/pages/profile";
 import Wallet from "@/pages/wallet";
+import Search from "@/pages/search";
+import Sell from "@/pages/sell";
+import Wishlist from "@/pages/wishlist";
+import HelpCenter from "@/pages/help-center";
+import Contact from "@/pages/contact";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import TermsOfService from "@/pages/terms-of-service";
+import PricingGuide from "@/pages/pricing-guide";
+import SafetyGuidelines from "@/pages/safety-guidelines";
 
 function Router() {
   const { isAuthenticated, isLoading, error } = useAuth();
@@ -58,6 +67,15 @@ function Router() {
           <Route path="/category/:slug" component={Category} />
           <Route path="/product/:id" component={ProductDetail} />
           <Route path="/instant-buyback" component={InstantBuyback} />
+          <Route path="/search" component={Search} />
+          <Route path="/sell" component={Sell} />
+          <Route path="/wishlist" component={Wishlist} />
+          <Route path="/help-center" component={HelpCenter} />
+          <Route path="/contact" component={Contact} />
+          <Route path="/privacy-policy" component={PrivacyPolicy} />
+          <Route path="/terms-of-service" component={TermsOfService} />
+          <Route path="/pricing-guide" component={PricingGuide} />
+          <Route path="/safety-guidelines" component={SafetyGuidelines} />
         </>
       ) : (
         <>
@@ -78,6 +96,15 @@ function Router() {
           <Route path="/messages" component={Messages} />
           <Route path="/profile" component={Profile} />
           <Route path="/wallet" component={Wallet} />
+          <Route path="/search" component={Search} />
+          <Route path="/sell" component={Sell} />
+          <Route path="/wishlist" component={Wishlist} />
+          <Route path="/help-center" component={HelpCenter} />
+          <Route path="/contact" component={Contact} />
+          <Route path="/privacy-policy" component={PrivacyPolicy} />
+          <Route path="/terms-of-service" component={TermsOfService} />
+          <Route path="/pricing-guide" component={PricingGuide} />
+          <Route path="/safety-guidelines" component={SafetyGuidelines} />
         </>
       )}
       <Route component={NotFound} />
