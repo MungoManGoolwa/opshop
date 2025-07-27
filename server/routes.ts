@@ -455,6 +455,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin business settings routes
+  app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const settings = await storage.getBusinessSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching business settings:", error);
+      res.status(500).json({ message: "Failed to fetch business settings" });
+    }
+  });
+
+  app.put('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const settingsData = { ...req.body, updatedBy: userId };
+      const settings = await storage.updateBusinessSettings(settingsData);
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Error updating business settings:", error);
+      res.status(400).json({ message: error.message || "Failed to update business settings" });
+    }
+  });
+
+  // Public settings endpoint for contact page
+  app.get('/api/settings', async (req, res) => {
+    try {
+      const settings = await storage.getBusinessSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching business settings:", error);
+      res.status(500).json({ message: "Failed to fetch business settings" });
+    }
+  });
+
   // Shop upgrade routes
   app.post("/api/shop-upgrade/create-payment", isAuthenticated, async (req: any, res) => {
     try {

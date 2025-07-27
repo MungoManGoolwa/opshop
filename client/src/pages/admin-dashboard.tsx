@@ -312,6 +312,27 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Business Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Manage business information and contact details</p>
+                    <Button asChild className="mb-4">
+                      <Link href="/admin/settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Open Business Settings
+                      </Link>
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-4">
+                      Features: Contact information, business hours, address, phone numbers
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              
               <PaymentSettings />
             </TabsContent>
           </Tabs>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -31,6 +32,12 @@ export default function Contact() {
   useEffect(() => {
     document.title = "Contact Us - Opshop Online";
   }, []);
+
+  // Fetch business settings for contact information
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["/api/settings"],
+    retry: false,
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +93,8 @@ export default function Contact() {
                     <p className="text-gray-600 mb-2">
                       General inquiries and support
                     </p>
-                    <a href="mailto:support@opshop.online" className="text-primary hover:underline">
-                      support@opshop.online
+                    <a href={`mailto:${settings?.email || 'info@opshop.online'}`} className="text-primary hover:underline">
+                      {settings?.email || 'info@opshop.online'}
                     </a>
                   </CardContent>
                 </Card>
@@ -103,8 +110,8 @@ export default function Contact() {
                     <p className="text-gray-600 mb-2">
                       For urgent matters
                     </p>
-                    <a href="tel:+611800123456" className="text-primary hover:underline">
-                      1800 123 456
+                    <a href={`tel:${settings?.phone?.replace(/\s/g, '') || '+611800123456'}`} className="text-primary hover:underline">
+                      {settings?.phone || '1800 123 456'}
                     </a>
                   </CardContent>
                 </Card>
@@ -118,9 +125,7 @@ export default function Contact() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-600">
-                      123 Sustainable Street<br />
-                      Goolwa, SA 5214<br />
-                      Australia
+                      {settings?.address || '123 Sustainable Street, Goolwa, SA 5214, Australia'}
                     </p>
                   </CardContent>
                 </Card>
@@ -133,10 +138,8 @@ export default function Contact() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-gray-600">
-                      <p><strong>Monday - Friday:</strong> 9:00 AM - 6:00 PM ACDT</p>
-                      <p><strong>Saturday:</strong> 10:00 AM - 4:00 PM ACDT</p>
-                      <p><strong>Sunday:</strong> Closed</p>
+                    <div className="text-gray-600 whitespace-pre-line">
+                      {settings?.businessHours || 'Monday - Friday: 9:00 AM - 6:00 PM ACDT\nSaturday: 10:00 AM - 4:00 PM ACDT\nSunday: Closed'}
                     </div>
                   </CardContent>
                 </Card>

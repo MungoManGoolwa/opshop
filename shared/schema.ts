@@ -288,4 +288,28 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
 });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
-export type PaymentSettings = typeof paymentSettings.$inferSelect;
+// Business settings table for admin configuration
+export const businessSettings = pgTable("business_settings", {
+  id: serial("id").primaryKey(),
+  businessName: varchar("business_name").notNull().default("Opshop Online"),
+  abn: varchar("abn").notNull().default("12 345 678 901"),
+  address: text("address").notNull().default("123 Sustainable Street, Goolwa, SA 5214, Australia"),
+  phone: varchar("phone").notNull().default("1800 123 456"),
+  email: varchar("email").notNull().default("info@opshop.online"),
+  supportEmail: varchar("support_email").notNull().default("support@opshop.online"),
+  website: varchar("website").default("https://opshop.online"),
+  description: text("description").notNull().default("Australia's most sustainable marketplace for pre-loved goods. Based in Goolwa, South Australia."),
+  businessHours: text("business_hours").notNull().default("Monday - Friday: 9:00 AM - 6:00 PM ACDT\nSaturday: 10:00 AM - 4:00 PM ACDT\nSunday: Closed"),
+  emergencyContact: varchar("emergency_contact").default("000"),
+  socialMedia: jsonb("social_media").default({}),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
+export type BusinessSettings = typeof businessSettings.$inferSelect;
+
+export const insertBusinessSettingsSchema = createInsertSchema(businessSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+export type InsertBusinessSettings = z.infer<typeof insertBusinessSettingsSchema>;

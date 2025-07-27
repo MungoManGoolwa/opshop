@@ -8,6 +8,7 @@ import {
   orders,
   paymentSettings,
   reviews,
+  businessSettings,
   type User,
   type UpsertUser,
   type Category,
@@ -25,6 +26,8 @@ import {
   type PaymentSettings,
   type Review,
   type InsertReview,
+  type BusinessSettings,
+  type InsertBusinessSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, desc, sql, or } from "drizzle-orm";
@@ -91,6 +94,10 @@ export interface IStorage {
   // Payment settings operations
   getPaymentSettings(): Promise<PaymentSettings | undefined>;
   updatePaymentSettings(settings: Partial<PaymentSettings>, updatedBy: string): Promise<PaymentSettings>;
+
+  // Business settings operations
+  getBusinessSettings(): Promise<BusinessSettings>;
+  updateBusinessSettings(settings: Partial<InsertBusinessSettings>): Promise<BusinessSettings>;
 
   // Admin operations
   getAllUsers(): Promise<User[]>;
@@ -715,6 +722,34 @@ export class DatabaseStorage implements IStorage {
       .from(products)
       .where(eq(products.sellerId, userId))
       .orderBy(desc(products.createdAt));
+  }
+
+  // Business settings operations
+  async getBusinessSettings(): Promise<BusinessSettings> {
+    const [settings] = await db.select().from(businessSettings).limit(1);
+    if (settings) {
+      return settings;
+    }
+    
+    // If no settings exist, create default settings
+    const [defaultSettings] = await db.insert(businessSettings).values({}).returning();
+    return defaultSettings;
+  }
+
+  async updateBusinessSettings(settingsData: Partial<InsertBusinessSettings>): Promise<BusinessSettings> {
+    // Get existing settings or create if none exist
+    const existingSettings = await this.getBusinessSettings();
+    
+    const [updatedSettings] = await db
+      .update(businessSettings)
+      .set({
+        ...settingsData,
+        updatedAt: new Date(),
+      })
+      .where(eq(businessSettings.id, existingSettings.id))
+      .returning();
+    
+    return updatedSettings;
   }
 }
 
