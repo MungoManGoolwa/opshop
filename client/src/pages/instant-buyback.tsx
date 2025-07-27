@@ -64,11 +64,11 @@ export default function InstantBuyback() {
       const response = await apiRequest("POST", "/api/buyback/offer", formData);
       return response;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setCurrentOffer(data.offer);
       toast({
         title: "AI Evaluation Complete!",
-        description: `We can offer you $${data.offer.buybackOfferPrice} in store credit for your item.`,
+        description: `We can offer you $${data.offer?.buybackOfferPrice} in store credit for your item.`,
       });
     },
     onError: (error) => {
@@ -96,13 +96,13 @@ export default function InstantBuyback() {
     mutationFn: async (offerId: number) => {
       return await apiRequest("POST", `/api/buyback/offer/${offerId}/accept`, {});
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/store-credit/balance"] });
       queryClient.invalidateQueries({ queryKey: ["/api/buyback/offers"] });
       
       toast({
         title: "Offer Accepted!",
-        description: `$${data.storeCreditAdded} has been added to your store credit.`,
+        description: `$${data.storeCreditAdded || data.creditAdded} has been added to your store credit.`,
       });
       
       setCurrentOffer(null);
@@ -193,7 +193,7 @@ export default function InstantBuyback() {
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Get immediate store credit for your items. Our AI technology evaluates your items 
-              and offers you 50% of market value as instant store credit.
+              and offers you a buy price as instant store credit.
             </p>
           </div>
 
@@ -202,7 +202,7 @@ export default function InstantBuyback() {
             <Alert className="mb-6 bg-green-50 border-green-200">
               <CreditCard className="h-4 w-4" />
               <AlertDescription>
-                Your current store credit balance: <strong>${creditBalance.balance}</strong>
+                Your current store credit balance: <strong>${(creditBalance as any)?.balance || '0.00'}</strong>
               </AlertDescription>
             </Alert>
           )}
@@ -453,7 +453,7 @@ export default function InstantBuyback() {
           </div>
 
           {/* Previous Offers */}
-          {previousOffers && previousOffers.length > 0 && (
+          {previousOffers && Array.isArray(previousOffers) && previousOffers.length > 0 && (
             <Card className="mt-8">
               <CardHeader>
                 <CardTitle>Previous Offers</CardTitle>
@@ -461,7 +461,7 @@ export default function InstantBuyback() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {previousOffers.slice(0, 5).map((offer: any) => (
+                  {(Array.isArray(previousOffers) ? previousOffers : []).slice(0, 5).map((offer: any) => (
                     <div key={offer.id} className="flex justify-between items-center p-3 border rounded">
                       <div>
                         <h4 className="font-medium">{offer.itemTitle}</h4>

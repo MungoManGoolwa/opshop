@@ -57,6 +57,7 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/category/:slug" component={Category} />
           <Route path="/product/:id" component={ProductDetail} />
+          <Route path="/instant-buyback" component={InstantBuyback} />
         </>
       ) : (
         <>
