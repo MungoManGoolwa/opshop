@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   MessageCircle, 
   Send, 
@@ -75,6 +77,8 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [messageContent, setMessageContent] = useState("");
 
   useEffect(() => {
     document.title = "Messages - Opshop Online";
@@ -96,7 +100,7 @@ export default function Messages() {
   }, [isAuthenticated, isLoading, toast]);
 
   // Fetch conversations
-  const { data: conversations, isLoading: conversationsLoading } = useQuery({
+  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
     queryKey: ["/api/messages/conversations"],
     enabled: isAuthenticated,
     refetchInterval: 30000, // Refresh every 30 seconds
@@ -104,7 +108,7 @@ export default function Messages() {
   });
 
   // Fetch messages for selected conversation
-  const { data: messages, isLoading: messagesLoading } = useQuery({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ["/api/messages", selectedConversation],
     enabled: isAuthenticated && !!selectedConversation,
     refetchInterval: 5000, // Refresh every 5 seconds for real-time feel
@@ -112,7 +116,7 @@ export default function Messages() {
   });
 
   // Fetch all users for new message
-  const { data: allUsers } = useQuery({
+  const { data: allUsers = [] } = useQuery({
     queryKey: ["/api/users/search"],
     enabled: isAuthenticated && showNewMessageModal,
     retry: false,
@@ -162,12 +166,56 @@ export default function Messages() {
     },
   });
 
+  // New message mutation
+  const startNewMessageMutation = useMutation({
+    mutationFn: async ({ receiverId, content }: { receiverId: string; content: string }) => {
+      return apiRequest("POST", "/api/messages", { receiverId, content });
+    },
+    onSuccess: () => {
+      setMessageContent("");
+      setSelectedUserId("");
+      setShowNewMessageModal(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
+      toast({
+        title: "Message sent",
+        description: "Your message has been sent successfully",
+      });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSendMessage = () => {
     if (!newMessage.trim() || !selectedConversation) return;
     
     sendMessageMutation.mutate({
       receiverId: selectedConversation,
       content: newMessage.trim(),
+    });
+  };
+
+  const handleStartNewMessage = () => {
+    if (!messageContent.trim() || !selectedUserId) return;
+    
+    startNewMessageMutation.mutate({
+      receiverId: selectedUserId,
+      content: messageContent.trim(),
     });
   };
 
@@ -186,10 +234,10 @@ export default function Messages() {
     return user.email.split('@')[0];
   };
 
-  const filteredConversations = conversations?.filter((conv: Conversation) =>
+  const filteredConversations = Array.isArray(conversations) ? conversations.filter((conv: Conversation) =>
     getUserDisplayName(conv.otherUser).toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.otherUser.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) : [];
 
   if (isLoading) {
     return (
@@ -306,8 +354,8 @@ export default function Messages() {
               <>
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    {conversations?.find((c: Conversation) => c.otherUser.id === selectedConversation) && 
-                      getUserDisplayName(conversations.find((c: Conversation) => c.otherUser.id === selectedConversation).otherUser)
+                    {Array.isArray(conversations) && conversations.find((c: Conversation) => c.otherUser.id === selectedConversation) && 
+                      getUserDisplayName(conversations.find((c: Conversation) => c.otherUser.id === selectedConversation)!.otherUser)
                     }
                   </CardTitle>
                 </CardHeader>
@@ -318,16 +366,16 @@ export default function Messages() {
                       <div className="flex items-center justify-center p-8">
                         <div className="animate-spin w-6 h-6 border-4 border-primary border-t-transparent rounded-full" />
                       </div>
-                    ) : messages?.length > 0 ? (
+                    ) : Array.isArray(messages) && messages.length > 0 ? (
                       <div className="space-y-4">
                         {messages.map((message: Message) => (
                           <div
                             key={message.id}
-                            className={`flex ${message.senderId === user?.id ? "justify-end" : "justify-start"}`}
+                            className={`flex ${message.senderId === (user as any)?.id ? "justify-end" : "justify-start"}`}
                           >
                             <div
                               className={`max-w-[70%] rounded-lg p-3 ${
-                                message.senderId === user?.id
+                                message.senderId === (user as any)?.id
                                   ? "bg-primary text-primary-foreground"
                                   : "bg-gray-100"
                               }`}
@@ -337,7 +385,7 @@ export default function Messages() {
                                 <p className="text-xs opacity-70">
                                   {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                                 </p>
-                                {message.senderId === user?.id && (
+                                {message.senderId === (user as any)?.id && (
                                   <div className="text-xs opacity-70">
                                     {message.isRead ? (
                                       <CheckCircle className="h-3 w-3" />
@@ -398,6 +446,72 @@ export default function Messages() {
           </Card>
         </div>
       </div>
+
+      {/* New Message Modal */}
+      <Dialog open={showNewMessageModal} onOpenChange={setShowNewMessageModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Start New Conversation</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="user-select" className="text-sm font-medium">
+                Select User
+              </label>
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a user to message" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.isArray(allUsers) && allUsers.map((user: any) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={user.profileImageUrl} />
+                          <AvatarFallback>
+                            {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>
+                          {user.firstName && user.lastName 
+                            ? `${user.firstName} ${user.lastName}` 
+                            : user.email}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="message-content" className="text-sm font-medium">
+                Message
+              </label>
+              <Textarea
+                id="message-content"
+                placeholder="Type your message here..."
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowNewMessageModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleStartNewMessage}
+                disabled={!selectedUserId || !messageContent.trim() || startNewMessageMutation.isPending}
+              >
+                {startNewMessageMutation.isPending ? "Sending..." : "Send Message"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
