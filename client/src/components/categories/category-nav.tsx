@@ -1,12 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Star, MapPin, ChevronDown } from "lucide-react";
+import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import LocationSearch from "@/components/location/LocationSearch";
+import { useState } from "react";
+import type { Suburb } from "@/lib/australianSuburbs";
 
 export default function CategoryNav() {
+  const [selectedLocation, setSelectedLocation] = useState<{ suburb: Suburb; radius: number } | null>(null);
+  
   const { data: categories, isLoading } = useQuery({
     queryKey: ["/api/categories"],
   });
+
+  // TODO: Use selectedLocation to filter products in product listings
+  // This will be passed down to product components that need location filtering
 
   if (isLoading) {
     return (
@@ -49,11 +57,10 @@ export default function CategoryNav() {
             ))}
           </div>
           
-          <button className="flex items-center space-x-1 text-gray-600 hover:text-primary transition-colors">
-            <MapPin className="h-4 w-4" />
-            <span className="hidden sm:block">Goolwa, SA</span>
-            <ChevronDown className="h-3 w-3" />
-          </button>
+          <LocationSearch 
+            selectedLocation={selectedLocation}
+            onLocationChange={setSelectedLocation}
+          />
         </div>
       </div>
     </nav>

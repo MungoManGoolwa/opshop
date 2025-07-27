@@ -48,6 +48,9 @@ export interface IStorage {
     maxPrice?: number;
     location?: string;
     search?: string;
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
   }): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   getProductsBySeller(sellerId: string): Promise<Product[]>;
@@ -144,6 +147,9 @@ export class DatabaseStorage implements IStorage {
     maxPrice?: number;
     location?: string;
     search?: string;
+    latitude?: number;
+    longitude?: number;
+    radius?: number;
   }): Promise<Product[]> {
     const conditions = [eq(products.status, 'available')];
 
@@ -167,6 +173,21 @@ export class DatabaseStorage implements IStorage {
         sql`(${products.title} ILIKE ${'%' + filters.search + '%'} OR 
             ${products.description} ILIKE ${'%' + filters.search + '%'} OR 
             ${products.brand} ILIKE ${'%' + filters.search + '%'})`
+      );
+    }
+
+    // Location-based radius search using Haversine formula
+    if (filters?.latitude && filters?.longitude && filters?.radius) {
+      conditions.push(
+        sql`(
+          6371 * acos(
+            cos(radians(${filters.latitude})) * 
+            cos(radians(${products.latitude})) * 
+            cos(radians(${products.longitude}) - radians(${filters.longitude})) + 
+            sin(radians(${filters.latitude})) * 
+            sin(radians(${products.latitude}))
+          )
+        ) <= ${filters.radius}`
       );
     }
 

@@ -80,6 +80,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
         location: req.query.location as string,
         search: req.query.search as string,
+        // Location-based radius search
+        latitude: req.query.latitude ? parseFloat(req.query.latitude as string) : undefined,
+        longitude: req.query.longitude ? parseFloat(req.query.longitude as string) : undefined,
+        radius: req.query.radius ? parseInt(req.query.radius as string) : undefined,
       };
       
       const products = await storage.getProducts(filters);
