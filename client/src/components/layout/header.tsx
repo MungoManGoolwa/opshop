@@ -20,6 +20,7 @@ import {
   CreditCard
 } from "lucide-react";
 import ImpersonationControl from "@/components/admin/impersonation-control";
+import LogoutDropdown from "@/components/auth/logout-dropdown";
 
 export default function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -135,12 +136,23 @@ export default function Header() {
                 <span className="text-gray-600">
                   {(user as any)?.firstName || "User"}
                 </span>
-                <button 
-                  onClick={() => window.location.href = "/api/logout"}
-                  className="text-gray-600 hover:text-primary"
-                >
-                  Logout
-                </button>
+                <div className="flex items-center space-x-1">
+                  <button 
+                    onClick={() => window.location.href = "/api/logout"}
+                    className="text-gray-600 hover:text-primary text-sm"
+                    title="Switch user (keep logged in to Replit)"
+                  >
+                    Switch User
+                  </button>
+                  <span className="text-gray-400">|</span>
+                  <button 
+                    onClick={() => window.location.href = "/api/logout?force=true"}
+                    className="text-gray-600 hover:text-red-600 text-sm"
+                    title="Complete logout from all accounts"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
             ) : (
               <button 
@@ -213,24 +225,27 @@ export default function Header() {
               )}
             </Button>
             {isAuthenticated ? (
-              <Link href={getDashboardRoute()}>
-                <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-gray-100">
-                  {(user as any)?.profileImageUrl ? (
-                    <img 
-                      src={(user as any).profileImageUrl} 
-                      alt="Profile" 
-                      className="w-8 h-8 rounded-full object-cover" 
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                      <UserCircle className="h-5 w-5 text-gray-600" />
-                    </div>
-                  )}
-                  <span className="hidden lg:block">
-                    {(user as any)?.firstName || "User"}
-                  </span>
-                </Button>
-              </Link>
+              <div className="flex items-center space-x-2">
+                <Link href={getDashboardRoute()}>
+                  <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-gray-100">
+                    {(user as any)?.profileImageUrl ? (
+                      <img 
+                        src={(user as any).profileImageUrl} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full object-cover" 
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                        <UserCircle className="h-5 w-5 text-gray-600" />
+                      </div>
+                    )}
+                    <span className="hidden lg:block">
+                      Dashboard
+                    </span>
+                  </Button>
+                </Link>
+                <LogoutDropdown />
+              </div>
             ) : (
               <Button 
                 onClick={() => window.location.href = "/api/login"}
