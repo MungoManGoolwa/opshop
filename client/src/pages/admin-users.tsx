@@ -702,7 +702,7 @@ export default function AdminUsers() {
                         <Badge className={getRoleBadgeColor(user.role)}>
                           {user.role}
                         </Badge>
-                        {getAccountTypeBadge(user.accountType)}
+                        {user.accountType === "shop" && getAccountTypeBadge(user.accountType)}
                         {!user.isActive && <Badge variant="destructive">Inactive</Badge>}
                       </div>
                       
