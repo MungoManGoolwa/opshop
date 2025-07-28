@@ -9,6 +9,7 @@ import {
   paymentSettings,
   reviews,
   businessSettings,
+  listingSettings,
   type User,
   type UpsertUser,
   type Category,
@@ -28,6 +29,7 @@ import {
   type InsertReview,
   type BusinessSettings,
   type InsertBusinessSettings,
+  type ListingSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, gte, lte, desc, sql, or } from "drizzle-orm";
@@ -106,6 +108,10 @@ export interface IStorage {
   createAdminUser(userData: any): Promise<User>;
   deleteUser(userId: string): Promise<void>;
   updateUserProfile(userId: string, userData: any): Promise<User>;
+  
+  // Listing Settings operations
+  getListingSettings(): Promise<ListingSettings>;
+  updateListingSettings(settings: Partial<ListingSettings>): Promise<ListingSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -588,6 +594,7 @@ export class DatabaseStorage implements IStorage {
         abn: userData.abn,
         isActive: userData.isActive,
         maxListings: userData.maxListings,
+        useDefaultMaxListings: userData.useDefaultMaxListings,
         shopExpiryDate: userData.shopExpiryDate ? new Date(userData.shopExpiryDate) : null,
         commissionRate: userData.commissionRate?.toString() || "10.00",
         updatedAt: new Date(),
@@ -711,6 +718,41 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedSettings;
+  }
+  
+  // Listing Settings operations
+  async getListingSettings(): Promise<ListingSettings> {
+    const [settings] = await db.select().from(listingSettings).limit(1);
+    
+    if (!settings) {
+      // Create default settings if none exist
+      const [newSettings] = await db
+        .insert(listingSettings)
+        .values({
+          defaultCustomerMaxListings: 10,
+          defaultBusinessMaxListings: 100,
+          defaultSellerMaxListings: 25,
+        })
+        .returning();
+      return newSettings;
+    }
+    
+    return settings;
+  }
+
+  async updateListingSettings(settingsData: Partial<ListingSettings>): Promise<ListingSettings> {
+    const existingSettings = await this.getListingSettings();
+    
+    const [settings] = await db
+      .update(listingSettings)
+      .set({
+        ...settingsData,
+        updatedAt: new Date(),
+      })
+      .where(eq(listingSettings.id, existingSettings.id))
+      .returning();
+    
+    return settings;
   }
 }
 

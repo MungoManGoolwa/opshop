@@ -55,6 +55,7 @@ const userFormSchema = z.object({
   shopExpiryDate: z.string().optional(),
   maxListings: z.number().min(1).max(10000),
   commissionRate: z.number().min(0).max(50).default(10), // Commission rate percentage (0-50%)
+  useDefaultMaxListings: z.boolean().default(true), // Whether to use system default or custom value
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -96,6 +97,7 @@ export default function AdminUsers() {
       isActive: true,
       maxListings: 10,
       commissionRate: 10,
+      useDefaultMaxListings: true,
     },
   });
 
@@ -196,6 +198,7 @@ export default function AdminUsers() {
       shopExpiryDate: user.shopExpiryDate ? new Date(user.shopExpiryDate).toISOString().split('T')[0] : "",
       maxListings: user.maxListings || 10,
       commissionRate: parseFloat(user.commissionRate) || 10,
+      useDefaultMaxListings: user.useDefaultMaxListings !== false,
     });
     setIsDialogOpen(true);
   };
@@ -572,21 +575,47 @@ export default function AdminUsers() {
 
                           <FormField
                             control={form.control}
-                            name="maxListings"
+                            name="useDefaultMaxListings"
                             render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Max Listings</FormLabel>
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                  <FormLabel className="text-base">Use Default Max Listings</FormLabel>
+                                  <div className="text-sm text-gray-500">
+                                    Use system default limits (Customer: 10, Seller: 25, Business: 100)
+                                  </div>
+                                </div>
                                 <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
                                   />
                                 </FormControl>
-                                <FormMessage />
                               </FormItem>
                             )}
                           />
+                          
+                          {!form.watch("useDefaultMaxListings") && (
+                            <FormField
+                              control={form.control}
+                              name="maxListings"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Custom Max Listings</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <div className="text-sm text-gray-500">
+                                    Custom listing limit for this user
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
 
                           <FormField
                             control={form.control}

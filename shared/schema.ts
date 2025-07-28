@@ -37,6 +37,7 @@ export const users = pgTable("users", {
   shopUpgradeDate: timestamp("shop_upgrade_date"),
   shopExpiryDate: timestamp("shop_expiry_date"),
   maxListings: integer("max_listings").default(10).notNull(),
+  useDefaultMaxListings: boolean("use_default_max_listings").default(true),
   location: varchar("location"),
   suburb: varchar("suburb"),
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
@@ -157,6 +158,15 @@ export const paymentSettings = pgTable("payment_settings", {
   updatedBy: varchar("updated_by").references(() => users.id),
 });
 
+export const listingSettings = pgTable("listing_settings", {
+  id: serial("id").primaryKey(),
+  defaultCustomerMaxListings: integer("default_customer_max_listings").notNull().default(10),
+  defaultBusinessMaxListings: integer("default_business_max_listings").notNull().default(100),
+  defaultSellerMaxListings: integer("default_seller_max_listings").notNull().default(25),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
 export const reviews = pgTable("reviews", {
   id: serial("id").primaryKey(),
   orderId: integer("order_id").references(() => orders.id),
@@ -184,6 +194,7 @@ export type Message = typeof messages.$inferSelect;
 export type Commission = typeof commissions.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type PaymentSettings = typeof paymentSettings.$inferSelect;
+export type ListingSettings = typeof listingSettings.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 
 export const insertCategorySchema = createInsertSchema(categories).omit({

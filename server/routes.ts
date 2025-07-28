@@ -1391,6 +1391,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Listing settings API routes
+  app.get('/api/admin/listing-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const settings = await storage.getListingSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching listing settings:', error);
+      res.status(500).json({ message: 'Failed to fetch listing settings' });
+    }
+  });
+
+  app.post('/api/admin/listing-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const updatedSettings = await storage.updateListingSettings(req.body);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error('Error updating listing settings:', error);
+      res.status(500).json({ message: 'Failed to update listing settings' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
