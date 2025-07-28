@@ -10,6 +10,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **January 28, 2025**: PERSONALIZED WELCOME BACK SPLASH FEATURE FULLY IMPLEMENTED
+  - Created comprehensive welcome splash modal with personalized greeting and user profile display
+  - Built intelligent timing system showing splash after 2+ hours or 24+ hours since last visit
+  - Integrated user activity stats (listings count, orders, sales, wishlist items, total views)
+  - Added quick action buttons for Instant Buyback, Wishlist, Browse Products, and Wallet
+  - Enhanced user switching system with dropdown menu showing "Switch User" and "Complete Logout"
+  - Added per-user localStorage tracking for personalized welcome timing and last visit tracking
+  - Created useWelcomeSplash hook with configurable cooldown periods and visit detection
+  - Built professional welcome UI with user avatar, role display, and personalized greeting based on time of day
+  - Added seamless integration with authentication system and proper mobile responsiveness
+
 - **January 27, 2025**: AUTOMATED COMMISSION CALCULATIONS AND PAYOUT SYSTEM FULLY IMPLEMENTED
   - Completed comprehensive commission service with automated calculations including processing fees (2.9% default)
   - Enhanced database schema with payouts and payoutSettings tables for complete transaction tracking

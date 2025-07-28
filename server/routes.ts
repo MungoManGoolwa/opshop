@@ -33,6 +33,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User stats endpoint for welcome splash
+  app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user's activity stats
+      const stats = await storage.getUserStats(userId);
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
   // Category routes
   app.get('/api/categories', async (req, res) => {
     try {

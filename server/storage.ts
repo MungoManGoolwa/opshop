@@ -12,6 +12,7 @@ import {
   reviews,
   businessSettings,
   listingSettings,
+  storeCreditTransactions,
   type User,
   type UpsertUser,
   type Category,
@@ -44,6 +45,7 @@ export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getUserStats(userId: string): Promise<any>;
   
   // Category operations
   getCategories(): Promise<Category[]>;
@@ -152,6 +154,39 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getUserStats(userId: string): Promise<any> {
+    try {
+      // Get user's product listings count
+      const userProducts = await db.select().from(products).where(eq(products.sellerId, userId));
+      
+      // Get user's orders count (as buyer)  
+      const userOrders = await db.select().from(orders).where(eq(orders.buyerId, userId));
+      
+      // Get user's sales count (as seller)
+      const userSales = await db.select().from(orders).where(eq(orders.sellerId, userId));
+      
+      // Get user's wishlist count
+      const userWishlist = await db.select().from(wishlists).where(eq(wishlists.userId, userId));
+      
+      return {
+        listingsCount: userProducts.length,
+        ordersCount: userOrders.length,
+        salesCount: userSales.length,
+        wishlistCount: userWishlist.length,
+        totalViews: userProducts.reduce((total, product) => total + (product.views || 0), 0),
+      };
+    } catch (error) {
+      console.error("Error getting user stats:", error);
+      return {
+        listingsCount: 0,
+        ordersCount: 0,
+        salesCount: 0,
+        wishlistCount: 0,
+        totalViews: 0,
+      };
+    }
   }
 
   // Category operations

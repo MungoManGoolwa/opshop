@@ -1,11 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
 import CategoryNav from "@/components/categories/category-nav";
 import ProductGrid from "@/components/products/product-grid";
 import ProductFilters from "@/components/products/product-filters";
+import WelcomeSplash from "@/components/ui/welcome-splash";
+import { useWelcomeSplash } from "@/hooks/useWelcomeSplash";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
@@ -24,6 +27,8 @@ interface ProductFilterState {
 }
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
+  const { showSplash, closeSplash } = useWelcomeSplash();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState("");
   const [filters, setFilters] = useState<ProductFilterState>({});
@@ -121,6 +126,11 @@ export default function Home() {
         onLocationChange={setSelectedLocation}
       />
       <ProductFilters onFiltersChange={setFilters} />
+      
+      {/* Welcome Back Splash for authenticated users */}
+      {isAuthenticated && showSplash && (
+        <WelcomeSplash onClose={closeSplash} />
+      )}
 
       <section className="py-12 bg-gray-50">
         <div className="container mx-auto px-4">
