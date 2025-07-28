@@ -110,8 +110,7 @@ export default function Header() {
             </div>
           <div className="flex items-center space-x-4">
             <Link href="/about" className="text-gray-600 hover:text-primary">
-              <HelpCircle className="inline h-4 w-4 mr-1" />
-              Help
+              About Us
             </Link>
             {isAuthenticated && (
               <Link href="/instant-buyback" className="text-green-600 hover:text-green-700 font-medium">
