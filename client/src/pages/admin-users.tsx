@@ -174,6 +174,7 @@ export default function AdminUsers() {
   };
 
   const handleEdit = (user: any) => {
+    console.log("Editing user:", user);
     setEditingUser(user);
     form.reset({
       firstName: user.firstName || "",
@@ -194,6 +195,7 @@ export default function AdminUsers() {
       shopExpiryDate: user.shopExpiryDate ? new Date(user.shopExpiryDate).toISOString().split('T')[0] : "",
       maxListings: user.maxListings || 10,
     });
+    console.log("Setting dialog open to true");
     setIsDialogOpen(true);
   };
 
