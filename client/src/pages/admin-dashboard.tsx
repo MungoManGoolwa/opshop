@@ -194,7 +194,6 @@ export default function AdminDashboard() {
                     <p className="text-gray-600 mb-4">Comprehensive user management interface</p>
                     <Button asChild>
                       <Link href="/admin/users">
-                        <Users className="mr-2 h-4 w-4" />
                         Open User Management
                       </Link>
                     </Button>
