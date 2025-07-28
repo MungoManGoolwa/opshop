@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ViewProvider } from "@/contexts/ViewContext";
 import NotFound from "@/pages/not-found";
@@ -40,6 +41,7 @@ import SafetyGuidelines from "@/pages/safety-guidelines";
 
 function Router() {
   const { isAuthenticated, isLoading, error } = useAuth();
+  useScrollToTop(); // Automatically scroll to top on route changes
 
   // Always show landing page if not authenticated to prevent white screen
   if (!isLoading && !isAuthenticated) {
