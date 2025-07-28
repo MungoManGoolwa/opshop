@@ -53,6 +53,7 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").default(true),
   isVerified: boolean("is_verified").default(false),
   storeCredit: decimal("store_credit", { precision: 10, scale: 2 }).default("0.00"),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).default("10.00"), // Individual commission rate for this user
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   stripeCustomerId: varchar("stripe_customer_id"),

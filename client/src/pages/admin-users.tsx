@@ -54,6 +54,7 @@ const userFormSchema = z.object({
   isActive: z.boolean().default(true),
   shopExpiryDate: z.string().optional(),
   maxListings: z.number().min(1).max(10000),
+  commissionRate: z.number().min(0).max(50).default(10), // Commission rate percentage (0-50%)
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -94,6 +95,7 @@ export default function AdminUsers() {
       abn: "",
       isActive: true,
       maxListings: 10,
+      commissionRate: 10,
     },
   });
 
@@ -174,7 +176,6 @@ export default function AdminUsers() {
   };
 
   const handleEdit = (user: any) => {
-    console.log("Editing user:", user);
     setEditingUser(user);
     form.reset({
       firstName: user.firstName || "",
@@ -194,8 +195,8 @@ export default function AdminUsers() {
       isActive: user.isActive !== false,
       shopExpiryDate: user.shopExpiryDate ? new Date(user.shopExpiryDate).toISOString().split('T')[0] : "",
       maxListings: user.maxListings || 10,
+      commissionRate: parseFloat(user.commissionRate) || 10,
     });
-    console.log("Setting dialog open to true");
     setIsDialogOpen(true);
   };
 
@@ -600,6 +601,34 @@ export default function AdminUsers() {
                               </FormItem>
                             )}
                           />
+
+                          {/* Commission Rate - only show for sellers and businesses */}
+                          {(form.watch("role") === "seller" || form.watch("role") === "business") && (
+                            <FormField
+                              control={form.control}
+                              name="commissionRate"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Commission Rate (%)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      min="0"
+                                      max="50"
+                                      step="0.5"
+                                      placeholder="10.00"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 10)}
+                                    />
+                                  </FormControl>
+                                  <div className="text-sm text-gray-500">
+                                    Platform commission rate for this user's sales (0-50%)
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
                         </TabsContent>
                       </Tabs>
 
@@ -681,6 +710,9 @@ export default function AdminUsers() {
                   <div className="flex items-center space-x-2">
                     <div className="text-right text-sm text-gray-600">
                       <div>Max Listings: {user.maxListings || 10}</div>
+                      {(user.role === "seller" || user.role === "business") && (
+                        <div>Commission: {parseFloat(user.commissionRate || "10.00").toFixed(1)}%</div>
+                      )}
                       {user.shopExpiryDate && (
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />

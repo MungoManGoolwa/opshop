@@ -589,6 +589,7 @@ export class DatabaseStorage implements IStorage {
         isActive: userData.isActive,
         maxListings: userData.maxListings,
         shopExpiryDate: userData.shopExpiryDate ? new Date(userData.shopExpiryDate) : null,
+        commissionRate: userData.commissionRate?.toString() || "10.00",
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId))
