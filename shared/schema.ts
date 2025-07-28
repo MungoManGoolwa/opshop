@@ -228,10 +228,16 @@ export const buybackOffers = pgTable("buyback_offers", {
   aiEvaluatedRetailPrice: decimal("ai_evaluated_retail_price", { precision: 10, scale: 2 }).notNull(),
   buybackOfferPrice: decimal("buyback_offer_price", { precision: 10, scale: 2 }).notNull(), // 50% of retail
   aiEvaluationData: jsonb("ai_evaluation_data"), // Full AI response for audit
-  status: varchar("status").notNull().default("pending"), // pending, accepted, rejected, expired
+  status: varchar("status").notNull().default("pending_admin_review"), // pending_admin_review, admin_approved, admin_rejected, admin_revised, pending_seller, accepted, rejected, expired
   adminNotes: text("admin_notes"),
   reviewedBy: varchar("reviewed_by"),
   reviewedAt: timestamp("reviewed_at"),
+  adminDecision: varchar("admin_decision"), // approved, rejected, revised
+  revisedOfferPrice: decimal("revised_offer_price", { precision: 10, scale: 2 }),
+  adminReviewExpiresAt: timestamp("admin_review_expires_at"), // Admin has 24 hours to review
+  sendleTrackingNumber: varchar("sendle_tracking_number"),
+  sendleLabelUrl: varchar("sendle_label_url"),
+  shippingStatus: varchar("shipping_status").default("not_shipped"), // not_shipped, label_created, in_transit, delivered
   emailSent: boolean("email_sent").default(false),
   emailSentAt: timestamp("email_sent_at"),
   expiresAt: timestamp("expires_at").notNull(), // Offers expire after 24 hours

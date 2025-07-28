@@ -18,6 +18,7 @@ import AdminBuyback from "@/pages/admin-buyback";
 import SiteAdmin from "@/pages/site-admin";
 import InstantBuyback from "@/pages/instant-buyback";
 import Messages from "@/pages/messages";
+import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
 import ShopUpgrade from "@/pages/shop-upgrade";
 import ShopUpgradeSuccess from "@/pages/shop-upgrade-success";
@@ -70,6 +71,7 @@ function Router() {
           <Route path="/search" component={Search} />
           <Route path="/sell" component={Sell} />
           <Route path="/wishlist" component={Wishlist} />
+          <Route path="/cart" component={Cart} />
           <Route path="/help-center" component={HelpCenter} />
           <Route path="/contact" component={Contact} />
           <Route path="/privacy-policy" component={PrivacyPolicy} />
@@ -99,6 +101,7 @@ function Router() {
           <Route path="/search" component={Search} />
           <Route path="/sell" component={Sell} />
           <Route path="/wishlist" component={Wishlist} />
+          <Route path="/cart" component={Cart} />
           <Route path="/help-center" component={HelpCenter} />
           <Route path="/contact" component={Contact} />
           <Route path="/privacy-policy" component={PrivacyPolicy} />

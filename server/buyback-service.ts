@@ -41,7 +41,11 @@ export class BuybackService {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + OFFER_EXPIRY_HOURS);
 
-      // Create buyback offer in database
+      // Create admin review expiry date (24 hours from now)
+      const adminReviewExpiresAt = new Date();
+      adminReviewExpiresAt.setHours(adminReviewExpiresAt.getHours() + 24);
+
+      // Create buyback offer in database with pending admin review status
       const [offer] = await db
         .insert(buybackOffers)
         .values({
@@ -56,6 +60,8 @@ export class BuybackService {
           aiEvaluatedRetailPrice: aiResult.estimatedRetailPrice.toString(),
           buybackOfferPrice: aiResult.buybackOfferPrice.toString(),
           aiEvaluationData: aiResult,
+          status: "pending_admin_review",
+          adminReviewExpiresAt,
           expiresAt,
         })
         .returning();
@@ -67,16 +73,20 @@ export class BuybackService {
         .where(eq(users.id, request.userId))
         .limit(1);
 
+      // Send admin notification about new buyback submission
+      try {
+        await emailService.sendAdminBuybackNotification(offer);
+      } catch (emailError) {
+        console.error("Failed to send admin notification:", emailError);
+      }
+
       if (user && user.email) {
         try {
-          // Send email notification
-          const emailSent = await emailService.sendBuybackOfferNotification(
+          // Send submission confirmation to user
+          const emailSent = await emailService.sendBuybackSubmissionConfirmation(
             user.email,
             user.firstName || "User",
-            request.itemTitle,
-            aiResult.estimatedRetailPrice,
-            aiResult.buybackOfferPrice,
-            offer.id
+            offer
           );
 
           // Update offer with email status

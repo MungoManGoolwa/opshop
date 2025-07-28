@@ -70,11 +70,8 @@ export default function Header() {
       }, 1500);
       return;
     }
-    // Create a wishlist page or show wishlist modal
-    toast({
-      title: "Wishlist",
-      description: `You have ${wishlistCount} items in your wishlist.`,
-    });
+    // Redirect directly to wishlist page
+    window.location.href = "/wishlist";
   };
 
   const handleCartClick = () => {
@@ -89,11 +86,8 @@ export default function Header() {
       }, 1500);
       return;
     }
-    // For now, redirect to checkout page
-    toast({
-      title: "Cart",
-      description: "Items are purchased directly from product pages.",
-    });
+    // Redirect directly to cart page
+    window.location.href = "/cart";
   };
 
   return (

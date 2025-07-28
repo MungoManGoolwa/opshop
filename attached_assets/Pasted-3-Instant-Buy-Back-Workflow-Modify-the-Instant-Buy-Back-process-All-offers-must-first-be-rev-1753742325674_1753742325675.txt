@@ -1,0 +1,57 @@
+3. Instant Buy Back Workflow
+	•	Modify the Instant Buy Back process:
+	◦	All offers must first be reviewed and approved by an admin before being sent to the seller.
+	◦	Implement email and/or dashboard notifications for admin when new Instant Buy Back submissions are received.
+	◦	Admin has 24 hours to review and if not reviewed within 24 hours, the item is automatically rejected
+	◦	Admin must be able to approve, reject, or propose a revised offer.
+	•	Integrate Sendle delivery for Instant Buy Back items:
+	◦	Automatically generate a prepaid Sendle label when the seller accepts the offer.
+	◦	Shipping address for all buy backs:
+Opshop.Online  
+22 Billabong Rd  
+Goolwa South SA 5214  
+Attention: Opshop.Online
+	◦	Opshop.Online covers the cost of inbound shipping for these items.
+	•	Define and document a Returns Policy for Instant Buy Back:
+	◦	If an item does not meet the described condition, a partial refund of 75% of the agreed price is issued to the seller.
+	◦	The remaining 25% is retained for admin and postage costs.
+	◦	Opshop.Online will send item back to seller if condition not aligned with description
+	◦	Include this policy clearly in the Help/FAQ/Terms sections.
+4. Wishlist and Cart Behavior
+	•	When the heart icon (Wishlist) is clicked, redirect the user directly to their Wishlist page, instead of showing a bottom popup.
+	•	When the cart icon is clicked, redirect the user directly to their Cart page, instead of showing a bottom popup.
+5. Navigation & Search Improvements
+	•	Remove the “All Locations” menu item from the main navigation bar.
+	•	Add a “Location” filter field:
+	◦	Supports type-ahead/autocomplete for Australian states, suburbs, towns, and postcodes.
+	•	Add a “Radius” filter field (shown next to the Location filter):
+	◦	Options: 0 km (search all), 5 km, 10 km, 25 km, 50 km, 100 km, 250 km.
+	◦	Selecting 0 km disables the location filter and searches all locations.
+6. Sorting and Filtering
+	•	The “Sort By” dropdown is currently non-functional. Investigate and fix to support sorting by:
+	◦	Newest
+	◦	Price (Low to High / High to Low)
+	◦	Most Popular
+	◦	Closest (if location filtering is enabled)
+7. Admin Panel Enhancements
+	•	Provide functionality for admin to add, edit, or remove product categories.
+	•	Enable admin to set commission split rates:
+	◦	Globally (default for all sellers)
+	◦	Per individual seller or store
+8. Page Load Behavior
+	•	Ensure that when navigating to a new page (e.g., from a link), the page automatically scrolls to the top upon load.
+9. Login Process
+	•	After a user logs out, then logs in again, the same user name is logged in – users should be able to change accounts after they log out
+10. User Management
+	•	Edit user icon does not work
+	•	Include a button next to each user (near the delete, edit, etc buttons) in the user management section of the admin control panel for admin to be able to impersonate any user (for troubleshooting and debugging)
+	•	Both orange “Edit Profile” button in the user profile section does not function
+	•	The Orange “Preferences” button in the user profile section does not function
+	•	The Orange “View Wishlist” button in the user profile section does not function
+	•	Items flagged for wish list do not appear in the user’s wish list
+11. Messaging
+	•	Whilst the messaging section is there and users can write messages, not messages go through to recipients – the messaging section does not send and receive messages.
+12. Listings
+ 
+	•	In the listings section, the green “Buy Now” button provides a bogus price – it does not show the correct price. – When clicked, there is an error “invalid amount”
+	•	Some items are verified and some are not. Create a verification process and document this in the help/support section

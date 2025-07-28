@@ -66,6 +66,8 @@ export default function LocationSearch({
 
   const clearLocation = () => {
     onLocationChange(null);
+    setIsOpen(false);
+    setSearchQuery("");
   };
 
   return (
@@ -141,31 +143,49 @@ export default function LocationSearch({
 
             {/* Search Results */}
             <div className="max-h-60 overflow-y-auto">
-              {searchResults.length > 0 ? (
-                <div className="space-y-1">
-                  {searchResults.map((suburb, index) => (
-                    <button
-                      key={`${suburb.name}-${suburb.state}-${index}`}
-                      onClick={() => handleSuburbSelect(suburb)}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{suburb.name}</div>
-                          <div className="text-sm text-gray-500">
-                            {suburb.state} {suburb.postcode}
-                          </div>
-                        </div>
-                        <MapPin className="h-4 w-4 text-gray-400" />
+              <div className="space-y-1">
+                {/* All locations option always shown first */}
+                <button
+                  onClick={clearLocation}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors border-b border-gray-100"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">All locations</div>
+                      <div className="text-sm text-gray-500">
+                        View products from all areas
                       </div>
-                    </button>
-                  ))}
-                </div>
-              ) : searchQuery ? (
+                    </div>
+                    <MapPin className="h-4 w-4 text-gray-400" />
+                  </div>
+                </button>
+                
+                {searchResults.length > 0 && searchResults.map((suburb, index) => (
+                  <button
+                    key={`${suburb.name}-${suburb.state}-${index}`}
+                    onClick={() => handleSuburbSelect(suburb)}
+                    className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{suburb.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {suburb.state} {suburb.postcode}
+                        </div>
+                      </div>
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              {searchQuery && searchResults.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   No suburbs found for "{searchQuery}"
                 </div>
-              ) : (
+              )}
+              
+              {!searchQuery && searchResults.length === 0 && (
                 <div className="text-center py-4 text-gray-500">
                   Start typing to search suburbs
                 </div>
