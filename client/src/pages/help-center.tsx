@@ -1,10 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
   MessageCircle, 
@@ -17,9 +19,39 @@ import {
 } from "lucide-react";
 
 export default function HelpCenter() {
+  const { toast } = useToast();
+  
   useEffect(() => {
     document.title = "Help Center - Opshop Online";
   }, []);
+
+  // Fetch business settings for live chat status
+  const { data: settings } = useQuery({
+    queryKey: ["/api/admin/business-settings"],
+  });
+
+  const handleContactSupport = () => {
+    const subject = encodeURIComponent("Support Request - Opshop Online");
+    const body = encodeURIComponent("Hi,\n\nI need help with:\n\n[Please describe your issue here]\n\nThank you!");
+    window.location.href = `mailto:brendan@opshop.online?subject=${subject}&body=${body}`;
+  };
+
+  const handleLiveChat = () => {
+    if (settings?.liveChatEnabled) {
+      // TODO: Implement actual live chat functionality
+      toast({
+        title: "Live Chat",
+        description: "Live chat feature coming soon! Please email us for now.",
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Live Chat Unavailable",
+        description: settings?.liveChatDisabledMessage || "Live chat is currently unavailable. Please email us at brendan@opshop.online for support.",
+        variant: "default",
+      });
+    }
+  };
 
   const categories = [
     {
@@ -130,11 +162,11 @@ export default function HelpCenter() {
               Can't find what you're looking for? Our support team is here to help you with any questions about Opshop Online.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button>
+              <Button onClick={handleContactSupport}>
                 <Mail className="mr-2 h-4 w-4" />
                 Contact Support
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleLiveChat}>
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Live Chat
               </Button>

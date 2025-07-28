@@ -302,6 +302,8 @@ export const businessSettings = pgTable("business_settings", {
   businessHours: text("business_hours").notNull().default("Monday - Friday: 9:00 AM - 6:00 PM ACDT\nSaturday: 10:00 AM - 4:00 PM ACDT\nSunday: Closed"),
   emergencyContact: varchar("emergency_contact").default("000"),
   socialMedia: jsonb("social_media").default({}),
+  liveChatEnabled: boolean("live_chat_enabled").default(false),
+  liveChatDisabledMessage: text("live_chat_disabled_message").default("Live chat is currently unavailable. Please email us at brendan@opshop.online for support."),
   updatedAt: timestamp("updated_at").defaultNow(),
   updatedBy: varchar("updated_by").references(() => users.id),
 });

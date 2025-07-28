@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -25,7 +26,8 @@ import {
   Mail, 
   Building,
   Save,
-  Globe
+  Globe,
+  MessageCircle
 } from "lucide-react";
 
 const settingsSchema = z.object({
@@ -39,6 +41,8 @@ const settingsSchema = z.object({
   description: z.string().min(1, "Business description is required"),
   businessHours: z.string().min(1, "Business hours are required"),
   emergencyContact: z.string().optional(),
+  liveChatEnabled: z.boolean().optional(),
+  liveChatDisabledMessage: z.string().optional(),
   socialMedia: z.object({
     facebook: z.string().optional(),
     instagram: z.string().optional(),
@@ -75,6 +79,8 @@ export default function AdminSettings() {
       description: "Australia's most sustainable marketplace for pre-loved goods. Based in Goolwa, South Australia.",
       businessHours: "Monday - Friday: 9:00 AM - 6:00 PM ACDT\nSaturday: 10:00 AM - 4:00 PM ACDT\nSunday: Closed",
       emergencyContact: "000",
+      liveChatEnabled: false,
+      liveChatDisabledMessage: "Live chat is currently unavailable. Please email us at brendan@opshop.online for support.",
       socialMedia: {
         facebook: "https://facebook.com/opshop.online",
         instagram: "https://instagram.com/opshop.online",
@@ -140,9 +146,10 @@ export default function AdminSettings() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Tabs defaultValue="business" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="business">Business Info</TabsTrigger>
                     <TabsTrigger value="contact">Contact Details</TabsTrigger>
+                    <TabsTrigger value="support">Support</TabsTrigger>
                     <TabsTrigger value="social">Social Media</TabsTrigger>
                   </TabsList>
 
@@ -311,6 +318,63 @@ export default function AdminSettings() {
                               <FormControl>
                                 <Input {...field} type="url" />
                               </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="support" className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <MessageCircle className="mr-2 h-5 w-5" />
+                          Live Chat Settings
+                        </CardTitle>
+                        <CardDescription>
+                          Configure live chat functionality and fallback messages
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="liveChatEnabled"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">Enable Live Chat</FormLabel>
+                                <FormDescription>
+                                  Allow customers to use live chat for support
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="liveChatDisabledMessage"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Disabled Message</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  {...field} 
+                                  placeholder="Message shown when live chat is disabled"
+                                  rows={3}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                This message will be shown to users when live chat is disabled
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}

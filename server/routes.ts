@@ -773,6 +773,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Business settings management
+  app.get('/api/admin/business-settings', async (req, res) => {
+    try {
+      const settings = await storage.getBusinessSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching business settings:", error);
+      res.status(500).json({ message: "Failed to fetch business settings" });
+    }
+  });
+
+  app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const settings = await storage.getBusinessSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching admin settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const settingsData = req.body;
+      const updatedSettings = await storage.updateBusinessSettings({
+        ...settingsData,
+        updatedBy: userId
+      });
+      res.json(updatedSettings);
+    } catch (error: any) {
+      console.error("Error updating business settings:", error);
+      res.status(400).json({ message: error.message || "Failed to update settings" });
+    }
+  });
+
   // Admin system statistics
   app.get('/api/admin/stats', isAuthenticated, async (req: any, res) => {
     try {

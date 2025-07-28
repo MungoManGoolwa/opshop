@@ -222,10 +222,25 @@ export default function Contact() {
                       />
                     </div>
 
-                    <Button type="submit" className="w-full">
-                      <Send className="mr-2 h-4 w-4" />
-                      Send Message
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <Button type="submit" className="flex-1">
+                        <Send className="mr-2 h-4 w-4" />
+                        Send Message
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => {
+                          const subject = encodeURIComponent("Support Request - Opshop Online");
+                          const body = encodeURIComponent("Hi,\n\nI need help with:\n\n[Please describe your issue here]\n\nThank you!");
+                          window.location.href = `mailto:brendan@opshop.online?subject=${subject}&body=${body}`;
+                        }}
+                        className="flex-1"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Contact Support
+                      </Button>
+                    </div>
                   </form>
                 </CardContent>
               </Card>

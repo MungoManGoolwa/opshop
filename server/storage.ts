@@ -614,46 +614,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
-  async createAdminUser(userData: any): Promise<User> {
-    const [user] = await db.insert(users).values({
-      id: userData.id || sql`gen_random_uuid()`,
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      role: userData.role || "customer",
-      accountType: userData.accountType || "seller",
-      phone: userData.phone,
-      address: userData.address,
-      city: userData.city,
-      state: userData.state,
-      postcode: userData.postcode,
-      country: userData.country || "Australia",
-      bio: userData.bio,
-      businessName: userData.businessName,
-      abn: userData.abn,
-      isActive: userData.isActive !== false,
-      isVerified: userData.isVerified || false,
-      maxListings: userData.maxListings || 10,
-    }).returning();
-    return user;
-  }
-
-  async deleteUser(userId: string): Promise<void> {
-    await db.delete(users).where(eq(users.id, userId));
-  }
-
-  async updateUserProfile(userId: string, userData: any): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({
-        ...userData,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    return user;
-  }
-
   // Wallet operations implementation
   async getUserPurchases(userId: string): Promise<any[]> {
     return await db
