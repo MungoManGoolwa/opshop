@@ -6,6 +6,8 @@ import {
   messages,
   commissions,
   orders,
+  payouts,
+  payoutSettings,
   paymentSettings,
   reviews,
   businessSettings,
@@ -24,6 +26,9 @@ import {
   type InsertCommission,
   type Order,
   type InsertOrder,
+  type Payout,
+  type InsertPayout,
+  type PayoutSettings,
   type PaymentSettings,
   type Review,
   type InsertReview,
@@ -79,6 +84,19 @@ export interface IStorage {
   // Commission operations
   createCommission(commission: InsertCommission): Promise<Commission>;
   getSellerCommissions(sellerId: string): Promise<Commission[]>;
+  updateCommissionStatus(commissionId: number, status: string, payoutId?: number): Promise<Commission>;
+  getPendingCommissions(sellerId?: string): Promise<Commission[]>;
+  
+  // Payout operations
+  createPayout(payout: InsertPayout): Promise<Payout>;
+  getSellerPayouts(sellerId: string): Promise<Payout[]>;
+  getAllPayouts(): Promise<Payout[]>;
+  updatePayoutStatus(payoutId: number, status: string, paymentReference?: string, failureReason?: string): Promise<Payout>;
+  getPayoutCommissions(payoutId: number): Promise<(Commission & { order?: Order })[]>;
+  
+  // Payout settings operations
+  getPayoutSettings(): Promise<PayoutSettings>;
+  updatePayoutSettings(settings: Partial<PayoutSettings>, updatedBy: string): Promise<PayoutSettings>;
   
   // Order operations
   createOrder(order: InsertOrder): Promise<Order>;
@@ -355,6 +373,94 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(commissions)
       .where(eq(commissions.sellerId, sellerId))
       .orderBy(desc(commissions.createdAt));
+  }
+
+  async updateCommissionStatus(commissionId: number, status: string, payoutId?: number): Promise<Commission> {
+    const [commission] = await db.update(commissions)
+      .set({ status, payoutId, updatedAt: new Date() })
+      .where(eq(commissions.id, commissionId))
+      .returning();
+    return commission;
+  }
+
+  async getPendingCommissions(sellerId?: string): Promise<Commission[]> {
+    const whereConditions = [eq(commissions.status, "pending")];
+    if (sellerId) {
+      whereConditions.push(eq(commissions.sellerId, sellerId));
+    }
+    
+    return await db.select().from(commissions)
+      .where(and(...whereConditions))
+      .orderBy(desc(commissions.createdAt));
+  }
+
+  // Payout operations
+  async createPayout(payoutData: InsertPayout): Promise<Payout> {
+    const [payout] = await db.insert(payouts).values(payoutData).returning();
+    return payout;
+  }
+
+  async getSellerPayouts(sellerId: string): Promise<Payout[]> {
+    return await db.select().from(payouts)
+      .where(eq(payouts.sellerId, sellerId))
+      .orderBy(desc(payouts.createdAt));
+  }
+
+  async getAllPayouts(): Promise<Payout[]> {
+    return await db.select().from(payouts)
+      .orderBy(desc(payouts.createdAt));
+  }
+
+  async updatePayoutStatus(payoutId: number, status: string, paymentReference?: string, failureReason?: string): Promise<Payout> {
+    const updateData: any = { status, updatedAt: new Date() };
+    
+    if (status === "completed") {
+      updateData.processedDate = new Date();
+      updateData.paymentReference = paymentReference;
+    } else if (status === "failed") {
+      updateData.failureReason = failureReason;
+    }
+    
+    const [payout] = await db.update(payouts)
+      .set(updateData)
+      .where(eq(payouts.id, payoutId))
+      .returning();
+    return payout;
+  }
+
+  async getPayoutCommissions(payoutId: number): Promise<(Commission & { order?: Order })[]> {
+    return await db.select({
+      commission: commissions,
+      order: orders,
+    })
+    .from(commissions)
+    .leftJoin(orders, eq(commissions.orderId, orders.id))
+    .where(eq(commissions.payoutId, payoutId))
+    .orderBy(desc(commissions.createdAt)) as any;
+  }
+
+  // Payout settings operations
+  async getPayoutSettings(): Promise<PayoutSettings> {
+    const [settings] = await db.select().from(payoutSettings)
+      .orderBy(desc(payoutSettings.id))
+      .limit(1);
+    
+    if (!settings) {
+      const [newSettings] = await db.insert(payoutSettings).values({}).returning();
+      return newSettings;
+    }
+    
+    return settings;
+  }
+
+  async updatePayoutSettings(settingsData: Partial<PayoutSettings>, updatedBy: string): Promise<PayoutSettings> {
+    const existingSettings = await this.getPayoutSettings();
+    
+    const [settings] = await db.update(payoutSettings)
+      .set({ ...settingsData, updatedAt: new Date(), updatedBy })
+      .where(eq(payoutSettings.id, existingSettings.id))
+      .returning();
+    return settings;
   }
 
   // Order operations

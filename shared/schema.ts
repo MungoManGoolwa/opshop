@@ -143,8 +143,42 @@ export const commissions = pgTable("commissions", {
   commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).notNull(),
   commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }).notNull(),
   sellerAmount: decimal("seller_amount", { precision: 10, scale: 2 }).notNull(),
-  status: varchar("status").notNull().default("pending"), // pending, paid
+  status: varchar("status").notNull().default("pending"), // pending, processing, paid, failed
+  payoutId: integer("payout_id").references(() => payouts.id),
+  processingFee: decimal("processing_fee", { precision: 10, scale: 2 }).default("0.00"),
+  netSellerAmount: decimal("net_seller_amount", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Payout batches for sellers
+export const payouts = pgTable("payouts", {
+  id: serial("id").primaryKey(),
+  sellerId: varchar("seller_id").references(() => users.id).notNull(),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  totalCommissions: integer("total_commissions").notNull(), // Number of commissions included
+  paymentMethod: varchar("payment_method").notNull(), // stripe, paypal, bank_transfer
+  paymentReference: varchar("payment_reference"), // External payment ID
+  status: varchar("status").notNull().default("pending"), // pending, processing, completed, failed
+  scheduledDate: timestamp("scheduled_date"),
+  processedDate: timestamp("processed_date"),
+  failureReason: text("failure_reason"),
+  metadata: jsonb("metadata"), // Additional payout data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Payout schedules and automation settings
+export const payoutSettings = pgTable("payout_settings", {
+  id: serial("id").primaryKey(),
+  autoPayoutEnabled: boolean("auto_payout_enabled").default(false),
+  payoutFrequency: varchar("payout_frequency").default("weekly"), // daily, weekly, monthly
+  minimumPayoutAmount: decimal("minimum_payout_amount", { precision: 10, scale: 2 }).default("50.00"),
+  payoutDay: integer("payout_day").default(1), // Day of week (1-7) or month (1-31)
+  holdingPeriodDays: integer("holding_period_days").default(7), // Days to hold before payout
+  defaultPaymentMethod: varchar("default_payment_method").default("stripe"), // stripe, paypal, bank_transfer
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
 });
 
 export const paymentSettings = pgTable("payment_settings", {
@@ -196,6 +230,8 @@ export type Order = typeof orders.$inferSelect;
 export type PaymentSettings = typeof paymentSettings.$inferSelect;
 export type ListingSettings = typeof listingSettings.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
+export type Payout = typeof payouts.$inferSelect;
+export type PayoutSettings = typeof payoutSettings.$inferSelect;
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
@@ -296,8 +332,16 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export const insertCommissionSchema = createInsertSchema(commissions).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 export type InsertCommission = z.infer<typeof insertCommissionSchema>;
+
+export const insertPayoutSchema = createInsertSchema(payouts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertPayout = z.infer<typeof insertPayoutSchema>;
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,

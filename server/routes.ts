@@ -13,7 +13,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { buybackService } from "./buyback-service";
-import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema } from "@shared/schema";
+import { commissionService } from "./commission-service";
+import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema, insertPayoutSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -243,6 +244,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== COMMISSION AND PAYOUT AUTOMATION SYSTEM =====
+
+  // Get payout eligibility and amount for seller
+  app.get('/api/seller/payouts/eligibility', isAuthenticated, async (req: any, res) => {
+    try {
+      const sellerId = req.user?.claims?.sub;
+      const payoutData = await commissionService.calculatePayoutAmount(sellerId);
+      
+      res.json({
+        ...payoutData,
+        eligible: payoutData.totalAmount > 0,
+        minimumReached: payoutData.totalAmount >= 50.00 // Configurable minimum
+      });
+    } catch (error) {
+      console.error("Error checking payout eligibility:", error);
+      res.status(500).json({ message: "Failed to check payout eligibility" });
+    }
+  });
+
+  // Get seller payout history  
+  app.get('/api/seller/payouts', isAuthenticated, async (req: any, res) => {
+    try {
+      const sellerId = req.user?.claims?.sub;
+      const payouts = await storage.getSellerPayouts(sellerId);
+      res.json(payouts);
+    } catch (error) {
+      console.error("Error fetching seller payouts:", error);
+      res.status(500).json({ message: "Failed to fetch seller payouts" });
+    }
+  });
+
+  // Create payout request for seller
+  app.post('/api/seller/payouts', isAuthenticated, async (req: any, res) => {
+    try {
+      const sellerId = req.user?.claims?.sub;
+      const { paymentMethod = "stripe" } = req.body;
+      
+      const payout = await commissionService.createPayout(sellerId, paymentMethod);
+      res.json(payout);
+    } catch (error: any) {
+      console.error("Error creating payout:", error);
+      res.status(400).json({ message: error.message || "Failed to create payout" });
+    }
+  });
+
+  // Get detailed commission info for a payout
+  app.get('/api/payouts/:payoutId/commissions', isAuthenticated, async (req: any, res) => {
+    try {
+      const payoutId = parseInt(req.params.payoutId);
+      const commissions = await storage.getPayoutCommissions(payoutId);
+      res.json(commissions);
+    } catch (error) {
+      console.error("Error fetching payout commissions:", error);
+      res.status(500).json({ message: "Failed to fetch payout commissions" });
+    }
+  });
+
+  // ===== ADMIN COMMISSION AND PAYOUT MANAGEMENT =====
+
+  // Get all payouts for admin management
+  app.get('/api/admin/payouts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const payouts = await storage.getAllPayouts();
+      res.json(payouts);
+    } catch (error) {
+      console.error("Error fetching admin payouts:", error);
+      res.status(500).json({ message: "Failed to fetch payouts" });
+    }
+  });
+
+  // Update payout status (admin only)
+  app.patch('/api/admin/payouts/:payoutId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const payoutId = parseInt(req.params.payoutId);
+      const { status, paymentReference, failureReason } = req.body;
+      
+      const updatedPayout = await storage.updatePayoutStatus(payoutId, status, paymentReference, failureReason);
+      res.json(updatedPayout);
+    } catch (error: any) {
+      console.error("Error updating payout status:", error);
+      res.status(400).json({ message: error.message || "Failed to update payout status" });
+    }
+  });
+
+  // Process automated payouts (admin only)  
+  app.post('/api/admin/payouts/process-automated', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const results = await commissionService.processAutomatedPayouts();
+      res.json(results);
+    } catch (error: any) {
+      console.error("Error processing automated payouts:", error);
+      res.status(500).json({ message: error.message || "Failed to process automated payouts" });
+    }
+  });
+
+  // Get payout settings (admin only)
+  app.get('/api/admin/payout-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const settings = await storage.getPayoutSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching payout settings:", error);
+      res.status(500).json({ message: "Failed to fetch payout settings" });
+    }
+  });
+
+  // Update payout settings (admin only)
+  app.put('/api/admin/payout-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const settingsData = req.body;
+      const updatedSettings = await storage.updatePayoutSettings(settingsData, userId);
+      res.json(updatedSettings);
+    } catch (error: any) {
+      console.error("Error updating payout settings:", error);
+      res.status(400).json({ message: error.message || "Failed to update payout settings" });
+    }
+  });
+
+  // Get commission analytics (admin only)
+  app.get('/api/admin/commission-analytics', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const analytics = await commissionService.getCommissionAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching commission analytics:", error);
+      res.status(500).json({ message: "Failed to fetch commission analytics" });
+    }
+  });
+
   // Wishlist routes
   app.get('/api/wishlist', isAuthenticated, async (req: any, res) => {
     try {
@@ -383,26 +555,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const order = await storage.createOrder(orderData);
       
-      // Create commission record
-      const product = await storage.getProduct(order.productId);
-      if (product) {
-        const settings = await storage.getPaymentSettings();
-        const commissionRate = settings?.defaultCommissionRate || "10.00";
-        const salePrice = parseFloat(order.totalAmount.toString());
-        const commissionAmount = (salePrice * parseFloat(commissionRate.toString())) / 100;
-        const sellerAmount = salePrice - commissionAmount;
-
-        if (order.sellerId) {
-          await storage.createCommission({
-            orderId: order.id,
-            productId: order.productId,
-            sellerId: order.sellerId,
-            salePrice: order.totalAmount,
-            commissionRate,
-            commissionAmount: commissionAmount.toString(),
-            sellerAmount: sellerAmount.toString(),
-            status: 'pending',
-          });
+      // Create commission record using enhanced commission service
+      if (order.sellerId) {
+        const seller = await storage.getUser(order.sellerId);
+        if (seller) {
+          await commissionService.createCommissionFromOrder(order, seller);
         }
       }
       
