@@ -297,13 +297,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Message routes
+  app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const conversations = await storage.getConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
   app.get('/api/messages/:receiverId', isAuthenticated, async (req: any, res) => {
     try {
       const senderId = req.user?.claims?.sub;
       const receiverId = req.params.receiverId;
-      const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined;
       
-      const messages = await storage.getConversation(senderId, receiverId, productId);
+      const messages = await storage.getConversation(senderId, receiverId);
       res.json(messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -324,6 +334,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error sending message:", error);
       res.status(400).json({ message: error.message || "Failed to send message" });
+    }
+  });
+
+  app.put('/api/messages/mark-read/:otherUserId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { otherUserId } = req.params;
+      
+      await storage.markMessagesAsRead(otherUserId, userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).json({ message: "Failed to mark messages as read" });
+    }
+  });
+
+  app.get('/api/users/search', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const users = await storage.getUsersForMessaging(userId);
+      res.json(users);
+    } catch (error: any) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 
