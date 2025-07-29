@@ -138,7 +138,7 @@ export const securityMiddleware = (req: Request, res: Response, next: NextFuncti
   const suspiciousUA = suspiciousUserAgents.some(pattern => pattern.test(userAgent));
 
   if (suspicious || suspiciousUA) {
-    console.log(`Suspicious activity detected from IP: ${getClientId(req)}`, {
+    console.log(`Suspicious activity detected from IP: ${req.ip}`, {
       url: req.url,
       userAgent,
       body: req.body,

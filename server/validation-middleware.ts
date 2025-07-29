@@ -188,11 +188,6 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
 };
 
 export default {
-  createRateLimit,
-  authRateLimit,
-  apiRateLimit,
-  uploadRateLimit,
-  searchRateLimit,
   sanitizeRequest,
   validateFileUpload,
   requestId,
