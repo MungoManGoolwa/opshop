@@ -15,6 +15,7 @@ import {
   businessSettings,
   listingSettings,
   storeCreditTransactions,
+  guestCartSessions,
   type User,
   type UpsertUser,
   type Category,
@@ -42,6 +43,7 @@ import {
   type BusinessSettings,
   type InsertBusinessSettings,
   type ListingSettings,
+  type InsertGuestCartSession,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, ilike, gte, lte, desc, asc, sql, or } from "drizzle-orm";
@@ -98,6 +100,14 @@ export interface IStorage {
   // Abandoned cart tracking
   trackCartAbandonment(userId: string): Promise<void>;
   markCartAsRecovered(userId: string): Promise<void>;
+
+  // Guest cart operations  
+  getGuestCartItems(sessionId: string): Promise<(any & { product: Product })[]>;
+  addToGuestCart(guestCartItem: InsertGuestCartSession): Promise<any>;
+  updateGuestCartItemQuantity(sessionId: string, productId: number, quantity: number): Promise<any>;
+  removeFromGuestCart(sessionId: string, productId: number): Promise<void>;
+  clearGuestCart(sessionId: string): Promise<void>;
+  cleanupExpiredGuestCarts(): Promise<void>;
   
   // Message operations
   getConversations(userId: string): Promise<any[]>;
@@ -698,6 +708,84 @@ export class DatabaseStorage implements IStorage {
   async removeSavedItem(userId: string, productId: number): Promise<void> {
     await db.delete(savedItems)
       .where(and(eq(savedItems.userId, userId), eq(savedItems.productId, productId)));
+  }
+
+  // Guest cart operations
+  async getGuestCartItems(sessionId: string): Promise<(any & { product: Product })[]> {
+    return await db.select({
+      id: guestCartSessions.id,
+      sessionId: guestCartSessions.sessionId,
+      quantity: guestCartSessions.quantity,
+      createdAt: guestCartSessions.createdAt,
+      product: products,
+    })
+    .from(guestCartSessions)
+    .innerJoin(products, eq(guestCartSessions.productId, products.id))
+    .where(and(
+      eq(guestCartSessions.sessionId, sessionId),
+      sql`${guestCartSessions.expiresAt} > NOW()`
+    ))
+    .orderBy(desc(guestCartSessions.createdAt));
+  }
+
+  async addToGuestCart(guestCartItem: InsertGuestCartSession): Promise<any> {
+    // Check if item already exists in guest cart
+    const [existingItem] = await db.select()
+      .from(guestCartSessions)
+      .where(and(
+        eq(guestCartSessions.sessionId, guestCartItem.sessionId),
+        eq(guestCartSessions.productId, guestCartItem.productId)
+      ));
+
+    if (existingItem) {
+      // Update quantity if item exists
+      const [updated] = await db.update(guestCartSessions)
+        .set({ 
+          quantity: existingItem.quantity + (guestCartItem.quantity || 1),
+          updatedAt: new Date()
+        })
+        .where(eq(guestCartSessions.id, existingItem.id))
+        .returning();
+      return updated;
+    } else {
+      // Add new item to guest cart
+      const [newItem] = await db.insert(guestCartSessions)
+        .values({
+          ...guestCartItem,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+        })
+        .returning();
+      return newItem;
+    }
+  }
+
+  async updateGuestCartItemQuantity(sessionId: string, productId: number, quantity: number): Promise<any> {
+    const [updated] = await db.update(guestCartSessions)
+      .set({ quantity, updatedAt: new Date() })
+      .where(and(
+        eq(guestCartSessions.sessionId, sessionId),
+        eq(guestCartSessions.productId, productId)
+      ))
+      .returning();
+    return updated;
+  }
+
+  async removeFromGuestCart(sessionId: string, productId: number): Promise<void> {
+    await db.delete(guestCartSessions)
+      .where(and(
+        eq(guestCartSessions.sessionId, sessionId),
+        eq(guestCartSessions.productId, productId)
+      ));
+  }
+
+  async clearGuestCart(sessionId: string): Promise<void> {
+    await db.delete(guestCartSessions)
+      .where(eq(guestCartSessions.sessionId, sessionId));
+  }
+
+  async cleanupExpiredGuestCarts(): Promise<void> {
+    await db.delete(guestCartSessions)
+      .where(sql`${guestCartSessions.expiresAt} < NOW()`);
   }
 
   // Abandoned cart tracking methods

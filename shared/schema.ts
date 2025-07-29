@@ -183,6 +183,17 @@ export const savedItems = pgTable("saved_items", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Guest cart sessions for anonymous users
+export const guestCartSessions = pgTable("guest_cart_sessions", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id").notNull().unique(), // Generated UUID for guest session
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(), // Guest carts expire after 7 days
+});
+
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   senderId: varchar("sender_id").references(() => users.id),
@@ -196,7 +207,7 @@ export const messages = pgTable("messages", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderId: varchar("order_id").notNull().unique(),
-  buyerId: varchar("buyer_id").references(() => users.id),
+  buyerId: varchar("buyer_id").references(() => users.id), // Nullable for guest checkout
   sellerId: varchar("seller_id").references(() => users.id),
   productId: integer("product_id").references(() => products.id),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
@@ -206,6 +217,13 @@ export const orders = pgTable("orders", {
   paymentStatus: varchar("payment_status").notNull().default("pending"), // pending, completed, failed, refunded
   orderStatus: varchar("order_status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
   shippingAddress: jsonb("shipping_address"),
+  
+  // Guest customer information (when buyerId is null)
+  isGuestOrder: boolean("is_guest_order").default(false),
+  guestEmail: varchar("guest_email"),
+  guestName: varchar("guest_name"),
+  guestPhone: varchar("guest_phone"),
+  
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -489,6 +507,13 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   updatedAt: true,
 });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
+
+export const insertGuestCartSessionSchema = createInsertSchema(guestCartSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertGuestCartSession = z.infer<typeof insertGuestCartSessionSchema>;
 
 // Business settings table for admin configuration
 export const businessSettings = pgTable("business_settings", {

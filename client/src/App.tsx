@@ -38,6 +38,7 @@ import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
 import PricingGuide from "@/pages/pricing-guide";
 import SafetyGuidelines from "@/pages/safety-guidelines";
+import GuestCheckout from "@/pages/guest-checkout";
 
 function Router() {
   const { isAuthenticated, isLoading, error } = useAuth();
@@ -80,6 +81,7 @@ function Router() {
           <Route path="/terms-of-service" component={TermsOfService} />
           <Route path="/pricing-guide" component={PricingGuide} />
           <Route path="/safety-guidelines" component={SafetyGuidelines} />
+          <Route path="/guest-checkout" component={GuestCheckout} />
         </>
       ) : (
         <>

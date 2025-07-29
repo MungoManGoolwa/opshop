@@ -57,14 +57,11 @@ export default function Cart() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("cart");
   const abandonmentTrackedRef = useRef(false);
+  
+  // Use unified cart hook for both authenticated and guest users
+  const { cartItems, isLoading: cartLoading, cartCount, guestSessionId } = useCart();
 
-  // Fetch cart items
-  const { data: cartItems = [], isLoading: cartLoading } = useQuery({
-    queryKey: ["/api/cart"],
-    enabled: isAuthenticated,
-  });
-
-  // Fetch saved items
+  // For authenticated users, also fetch saved items
   const { data: savedItems = [], isLoading: savedLoading } = useQuery({
     queryKey: ["/api/saved-items"],
     enabled: isAuthenticated,

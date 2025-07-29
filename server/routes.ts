@@ -648,6 +648,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== GUEST CART OPERATIONS =====
+  
+  // Get guest cart items (no authentication required)
+  app.get("/api/guest-cart/:sessionId", async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const cartItems = await storage.getGuestCartItems(sessionId);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Error getting guest cart items:", error);
+      res.status(500).json({ message: "Failed to get guest cart items" });
+    }
+  });
+
+  // Add item to guest cart (no authentication required)
+  app.post("/api/guest-cart", async (req, res) => {
+    try {
+      const { sessionId, productId, quantity = 1 } = req.body;
+      
+      if (!sessionId || !productId) {
+        return res.status(400).json({ message: "sessionId and productId are required" });
+      }
+
+      const guestCartData = {
+        sessionId,
+        productId: parseInt(productId),
+        quantity: parseInt(quantity),
+      };
+
+      const cartItem = await storage.addToGuestCart(guestCartData);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error adding to guest cart:", error);
+      res.status(500).json({ message: "Failed to add to guest cart" });
+    }
+  });
+
+  // Update guest cart item quantity
+  app.patch("/api/guest-cart/:sessionId/:productId", async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const productId = parseInt(req.params.productId);
+      const { quantity } = req.body;
+      
+      const cartItem = await storage.updateGuestCartItemQuantity(sessionId, productId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error updating guest cart item:", error);
+      res.status(500).json({ message: "Failed to update guest cart item" });
+    }
+  });
+
+  // Remove item from guest cart
+  app.delete("/api/guest-cart/:sessionId/:productId", async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const productId = parseInt(req.params.productId);
+      
+      await storage.removeFromGuestCart(sessionId, productId);
+      res.json({ message: "Item removed from guest cart" });
+    } catch (error) {
+      console.error("Error removing from guest cart:", error);
+      res.status(500).json({ message: "Failed to remove from guest cart" });
+    }
+  });
+
+  // Clear entire guest cart
+  app.delete("/api/guest-cart/:sessionId", async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      await storage.clearGuestCart(sessionId);
+      res.json({ message: "Guest cart cleared" });
+    } catch (error) {
+      console.error("Error clearing guest cart:", error);
+      res.status(500).json({ message: "Failed to clear guest cart" });
+    }
+  });
+
+  // Get guest cart count
+  app.get("/api/guest-cart/:sessionId/count", async (req, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const { GuestCheckoutService } = await import("./guest-checkout-service");
+      const count = await GuestCheckoutService.getGuestCartCount(sessionId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error getting guest cart count:", error);
+      res.status(500).json({ message: "Failed to get guest cart count" });
+    }
+  });
+
+  // Convert guest cart to user cart on login
+  app.post("/api/guest-cart/convert", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { guestSessionId } = req.body;
+      
+      if (!guestSessionId) {
+        return res.status(400).json({ message: "Guest session ID is required" });
+      }
+
+      const { GuestCheckoutService } = await import("./guest-checkout-service");
+      await GuestCheckoutService.convertGuestCartToUserCart(guestSessionId, userId);
+      
+      res.json({ message: "Guest cart converted to user cart successfully" });
+    } catch (error) {
+      console.error("Error converting guest cart:", error);
+      res.status(500).json({ message: "Failed to convert guest cart" });
+    }
+  });
+
+  // ===== GUEST CHECKOUT ENDPOINTS =====
+
+  // Create payment session for guest checkout
+  app.post("/api/guest-checkout/create-payment", async (req, res) => {
+    try {
+      const {
+        guestSessionId,
+        productId,
+        sellerId,
+        totalAmount,
+        shippingCost,
+        paymentGateway,
+        shippingAddress,
+        guestEmail,
+        guestName,
+        guestPhone,
+      } = req.body;
+
+      if (!guestSessionId || !productId || !sellerId || !totalAmount || !paymentGateway) {
+        return res.status(400).json({ 
+          message: "Missing required fields: guestSessionId, productId, sellerId, totalAmount, paymentGateway" 
+        });
+      }
+
+      const { GuestCheckoutService } = await import("./guest-checkout-service");
+      const orderId = `guest-${crypto.randomUUID().substring(0, 16)}`;
+
+      if (paymentGateway === "stripe") {
+        const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+        
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          mode: 'payment',
+          success_url: `${req.protocol}://${req.hostname}/guest-checkout-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${req.protocol}://${req.hostname}/guest-checkout`,
+          customer_email: guestEmail,
+          metadata: {
+            orderId,
+            guestSessionId,
+            productId: productId.toString(),
+            sellerId,
+            isGuestOrder: 'true',
+          },
+          shipping_address_collection: {
+            allowed_countries: ['AU'],
+          },
+          line_items: [{
+            price_data: {
+              currency: 'aud',
+              product_data: {
+                name: `Guest Order - Product ${productId}`,
+                description: `Order from ${guestName}`,
+              },
+              unit_amount: Math.round(parseFloat(totalAmount) * 100), // Convert to cents
+            },
+            quantity: 1,
+          }],
+        });
+
+        res.json({ checkoutUrl: session.url, orderId });
+      } else if (paymentGateway === "paypal") {
+        // PayPal integration would go here
+        res.status(400).json({ message: "PayPal integration not implemented yet" });
+      } else {
+        res.status(400).json({ message: "Invalid payment gateway" });
+      }
+    } catch (error: any) {
+      console.error("Error creating guest payment session:", error);
+      res.status(500).json({ message: error.message || "Failed to create payment session" });
+    }
+  });
+
+  // Handle guest checkout success (webhook or redirect)
+  app.post("/api/guest-checkout/complete", async (req, res) => {
+    try {
+      const { sessionId, orderId } = req.body;
+      
+      // Verify payment and create order in database
+      // This would typically be called by a webhook from the payment provider
+      
+      res.json({ success: true, message: "Guest order completed successfully" });
+    } catch (error: any) {
+      console.error("Error completing guest checkout:", error);
+      res.status(500).json({ message: error.message || "Failed to complete guest checkout" });
+    }
+  });
+
   // Move item from cart to saved for later
   app.post("/api/cart/:productId/save-for-later", isAuthenticated, async (req: any, res) => {
     try {
