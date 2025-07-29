@@ -283,11 +283,40 @@ export class DatabaseStorage implements IStorage {
       conditions.push(like(products.location, `%${filters.location}%`));
     }
     if (filters?.search) {
-      conditions.push(
-        sql`(${products.title} ILIKE ${'%' + filters.search + '%'} OR 
-            ${products.description} ILIKE ${'%' + filters.search + '%'} OR 
-            ${products.brand} ILIKE ${'%' + filters.search + '%'})`
+      // Enhanced fuzzy search with PostgreSQL text search
+      const searchTerm = filters.search.toLowerCase().trim();
+      const searchWords = searchTerm.split(/\s+/);
+      
+      // Build comprehensive search conditions with fuzzy matching
+      const searchConditions = [];
+      
+      // Primary search fields with high priority
+      searchConditions.push(
+        sql`${products.title} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.brand} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.description} ILIKE ${'%' + searchTerm + '%'}`
       );
+      
+      // Secondary search fields for comprehensive matching
+      searchConditions.push(
+        sql`${products.color} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.material} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.model} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.make} ILIKE ${'%' + searchTerm + '%'}`
+      );
+      
+      // Word-based search for better matching
+      for (const word of searchWords) {
+        if (word.length >= 2) {
+          searchConditions.push(
+            sql`${products.title} ILIKE ${'%' + word + '%'}`,
+            sql`${products.brand} ILIKE ${'%' + word + '%'}`,
+            sql`${products.description} ILIKE ${'%' + word + '%'}`
+          );
+        }
+      }
+      
+      conditions.push(sql`(${sql.join(searchConditions, sql` OR `)})`);
     }
 
     // Location-based radius search using Haversine formula
@@ -1099,6 +1128,138 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return settings;
+  }
+  // Product search with fuzzy matching
+  async searchProducts(query: string, limit: number = 20): Promise<Product[]> {
+    try {
+      const searchTerm = query.toLowerCase().trim();
+      const searchWords = searchTerm.split(/\s+/);
+      
+      // Build comprehensive search conditions with fuzzy matching
+      const searchConditions = [];
+      
+      // Primary search fields with high priority
+      searchConditions.push(
+        sql`${products.title} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.brand} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.description} ILIKE ${'%' + searchTerm + '%'}`
+      );
+      
+      // Secondary search fields for comprehensive matching
+      searchConditions.push(
+        sql`${products.color} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.material} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.model} ILIKE ${'%' + searchTerm + '%'}`,
+        sql`${products.make} ILIKE ${'%' + searchTerm + '%'}`
+      );
+      
+      // Word-based search for better matching
+      for (const word of searchWords) {
+        if (word.length >= 2) {
+          searchConditions.push(
+            sql`${products.title} ILIKE ${'%' + word + '%'}`,
+            sql`${products.brand} ILIKE ${'%' + word + '%'}`,
+            sql`${products.description} ILIKE ${'%' + word + '%'}`
+          );
+        }
+      }
+      
+      const results = await db
+        .select({
+          id: products.id,
+          title: products.title,
+          description: products.description,
+          price: products.price,
+          imageUrl: products.imageUrl,
+          brand: products.brand,
+          condition: products.condition,
+          views: products.views,
+          categoryId: products.categoryId,
+          createdAt: products.createdAt
+        })
+        .from(products)
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(
+          and(
+            eq(products.status, 'available'),
+            sql`(${sql.join(searchConditions, sql` OR `)})`
+          )
+        )
+        .orderBy(sql`
+          CASE 
+            WHEN ${products.title} ILIKE ${'%' + searchTerm + '%'} THEN 1
+            WHEN ${products.brand} ILIKE ${'%' + searchTerm + '%'} THEN 2
+            WHEN ${products.description} ILIKE ${'%' + searchTerm + '%'} THEN 3
+            ELSE 4
+          END,
+          ${products.views} DESC,
+          ${products.createdAt} DESC
+        `)
+        .limit(limit);
+
+      return results.map(result => ({
+        ...result,
+        category: categories.name || 'Uncategorized'
+      })) as any[];
+    } catch (error) {
+      console.error("Error searching products:", error);
+      return [];
+    }
+  }
+
+  // Get search suggestions for autocomplete
+  async getSearchSuggestions(): Promise<any[]> {
+    try {
+      // Get popular brands
+      const popularBrands = await db
+        .select({
+          query: products.brand,
+          type: sql`'brand'`,
+          count: sql`COUNT(*)::int`
+        })
+        .from(products)
+        .where(and(
+          eq(products.status, 'available'),
+          isNotNull(products.brand)
+        ))
+        .groupBy(products.brand)
+        .orderBy(sql`COUNT(*) DESC`)
+        .limit(5);
+
+      // Get popular categories
+      const popularCategories = await db
+        .select({
+          query: categories.name,
+          type: sql`'category'`,
+          count: sql`COUNT(*)::int`
+        })
+        .from(categories)
+        .leftJoin(products, eq(categories.id, products.categoryId))
+        .where(eq(products.status, 'available'))
+        .groupBy(categories.name)
+        .orderBy(sql`COUNT(*) DESC`)
+        .limit(5);
+
+      // Get trending searches (mock for now - would track actual searches in production)
+      const trendingSearches = [
+        { query: 'iPhone', type: 'trending', count: 45 },
+        { query: 'Nike shoes', type: 'trending', count: 32 },
+        { query: 'vintage furniture', type: 'trending', count: 28 },
+        { query: 'gaming laptop', type: 'trending', count: 24 }
+      ];
+
+      // Get recent searches from localStorage (handled client-side)
+      const suggestions = [
+        ...trendingSearches,
+        ...popularBrands.map(b => ({ ...b, type: 'brand' })),
+        ...popularCategories.map(c => ({ ...c, type: 'category' }))
+      ];
+
+      return suggestions;
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+      return [];
+    }
   }
 }
 

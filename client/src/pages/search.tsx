@@ -1,147 +1,264 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
-import CategoryNav from "@/components/categories/category-nav";
 import ProductGrid from "@/components/products/product-grid";
 import ProductFilters from "@/components/products/product-filters";
-import { Input } from "@/components/ui/input";
+import LiveSearch from "@/components/search/live-search";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search as SearchIcon, X } from "lucide-react";
+import { Search as SearchIcon, Filter, X, SortAsc, SortDesc } from "lucide-react";
+import type { Suburb } from "@/lib/australianSuburbs";
 
-export default function Search() {
+interface ProductFilterState {
+  categoryId?: number;
+  condition?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  location?: string;
+  search?: string;
+  sort?: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+  brand?: string;
+  color?: string;
+  size?: string;
+  material?: string;
+  [key: string]: any;
+}
+
+export default function SearchPage() {
+  const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [filters, setFilters] = useState<ProductFilterState>({});
+  const [selectedLocation, setSelectedLocation] = useState<{ suburb: Suburb; radius: number } | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("relevance");
 
   useEffect(() => {
-    document.title = "Search - Opshop Online";
-    
-    // Get search query from URL params
+    // Extract search query from URL
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q');
     if (query) {
       setSearchQuery(query);
-      setSubmittedQuery(query);
+      setFilters(prev => ({ ...prev, search: query }));
     }
-  }, []);
+    
+    document.title = query ? `Search: ${query} - Opshop Online` : "Search - Opshop Online";
+  }, [location]);
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["/api/products", { search: submittedQuery }],
-    enabled: !!submittedQuery,
+  // Build query parameters for products API
+  const queryParams = new URLSearchParams();
+  if (filters.categoryId) queryParams.append('categoryId', filters.categoryId.toString());
+  if (filters.condition && filters.condition !== 'any') queryParams.append('condition', filters.condition);
+  if (filters.minPrice) queryParams.append('minPrice', filters.minPrice.toString());
+  if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice.toString());
+  if (searchQuery.trim()) queryParams.append('search', searchQuery.trim());
+  if (sortBy !== 'relevance') queryParams.append('sort', sortBy);
+
+  // Add location-based filtering
+  if (selectedLocation) {
+    queryParams.append('latitude', selectedLocation.suburb.latitude.toString());
+    queryParams.append('longitude', selectedLocation.suburb.longitude.toString());
+    queryParams.append('radius', selectedLocation.radius.toString());
+  }
+
+  // Add advanced filters
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value && key !== 'search' && key !== 'categoryId' && key !== 'condition' && key !== 'minPrice' && key !== 'maxPrice') {
+      queryParams.append(key, value.toString());
+    }
   });
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setSubmittedQuery(searchQuery.trim());
-      // Update URL
-      const url = new URL(window.location.href);
-      url.searchParams.set('q', searchQuery.trim());
-      window.history.pushState({}, '', url.toString());
-    }
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ["/api/products", queryParams.toString()],
+    enabled: true,
+  });
+
+  const handleFilterChange = (newFilters: ProductFilterState) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
-  const clearSearch = () => {
-    setSearchQuery("");
-    setSubmittedQuery("");
+  const handleLocationChange = (location: { suburb: Suburb; radius: number } | null) => {
+    setSelectedLocation(location);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setFilters(prev => ({ ...prev, search: query }));
+    
+    // Update URL without page reload
     const url = new URL(window.location.href);
-    url.searchParams.delete('q');
+    if (query.trim()) {
+      url.searchParams.set('q', query.trim());
+    } else {
+      url.searchParams.delete('q');
+    }
     window.history.replaceState({}, '', url.toString());
   };
 
+  const clearFilters = () => {
+    setFilters({ search: searchQuery });
+    setSelectedLocation(null);
+    setSortBy("relevance");
+  };
+
+  const activeFilterCount = Object.keys(filters).filter(key => 
+    key !== 'search' && filters[key] !== undefined && filters[key] !== '' && filters[key] !== 'any'
+  ).length + (selectedLocation ? 1 : 0);
+
   return (
-    <div className="min-h-screen bg-neutral">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <Header />
-      <CategoryNav />
+      <MobileNav />
+      
+      <main className="flex-1 container mx-auto px-4 py-8">
+        {/* Search Header */}
+        <div className="mb-8">
+          <div className="max-w-2xl mx-auto mb-6">
+            <LiveSearch
+              placeholder="Search for products, brands, or categories..."
+              onSearchChange={handleSearchChange}
+              onResultSelect={(productId) => {
+                window.location.href = `/product/${productId}`;
+              }}
+              className="h-12 text-base"
+            />
+          </div>
 
-      <section className="py-8 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold text-center mb-8">Search Marketplace</h1>
-            
-            <form onSubmit={handleSearch} className="relative mb-8">
-              <Input
-                type="text"
-                placeholder="Search for items, brands, or categories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-12 py-3 text-lg"
-              />
-              <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+          {searchQuery && (
+            <div className="text-center mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Search Results for "{searchQuery}"
+              </h1>
+              {products && (
+                <p className="text-gray-600 dark:text-gray-400">
+                  {products.length} {products.length === 1 ? 'product' : 'products'} found
+                </p>
               )}
-            </form>
+            </div>
+          )}
 
-            <div className="flex justify-center">
-              <Button 
-                type="submit" 
-                onClick={handleSearch}
-                className="px-8"
+          {/* Filter Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+            <div className="flex flex-wrap gap-2 items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
               >
-                <SearchIcon className="mr-2 h-4 w-4" />
-                Search
+                <Filter className="h-4 w-4" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {activeFilterCount}
+                  </Badge>
+                )}
               </Button>
+
+              {activeFilterCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear filters
+                </Button>
+              )}
+            </div>
+
+            {/* Sort Controls */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="popular">Most Popular</option>
+              </select>
             </div>
           </div>
         </div>
-      </section>
 
-      <ProductFilters />
-
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          {submittedQuery && (
-            <div className="mb-8">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">
-                  Search results for "{submittedQuery}"
-                </h2>
-                <span className="text-gray-600">
-                  {Array.isArray(products) ? products.length : 0} items found
-                </span>
+        <div className="flex gap-8">
+          {/* Sidebar Filters */}
+          {showFilters && (
+            <aside className="w-full lg:w-80 flex-shrink-0">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+                <h3 className="font-semibold text-lg mb-4">Refine Results</h3>
+                <ProductFilters
+                  filters={filters}
+                  onFiltersChange={handleFilterChange}
+                  selectedLocation={selectedLocation}
+                  onLocationChange={handleLocationChange}
+                />
               </div>
-            </div>
+            </aside>
           )}
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
-                  <div className="w-full h-48 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-                </div>
-              ))}
-            </div>
-          ) : submittedQuery && Array.isArray(products) && products.length > 0 ? (
-            <ProductGrid products={products} />
-          ) : submittedQuery ? (
-            <div className="text-center py-12">
-              <SearchIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg mb-2">No results found for "{submittedQuery}"</p>
-              <p className="text-gray-500">Try different keywords or browse our categories</p>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <SearchIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg mb-2">Start searching for amazing finds</p>
-              <p className="text-gray-500">Enter keywords above to discover pre-loved treasures</p>
-            </div>
-          )}
+          {/* Main Content */}
+          <div className="flex-1">
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <SearchIcon className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Search Error
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Something went wrong while searching. Please try again.
+                </p>
+              </div>
+            ) : !products || products.length === 0 ? (
+              <div className="text-center py-12">
+                <SearchIcon className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  No products found
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  {searchQuery 
+                    ? `We couldn't find any products matching "${searchQuery}"`
+                    : "Try adjusting your search or filters to find what you're looking for"
+                  }
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="mx-auto"
+                >
+                  Clear all filters
+                </Button>
+              </div>
+            ) : (
+              <ProductGrid products={products} />
+            )}
+          </div>
         </div>
-      </section>
+      </main>
 
       <Footer />
-      <MobileNav />
     </div>
   );
 }

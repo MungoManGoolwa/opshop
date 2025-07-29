@@ -12,6 +12,7 @@ import { useWelcomeSplash } from "@/hooks/useWelcomeSplash";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
+import LiveSearch from "@/components/search/live-search";
 import type { Suburb } from "@/lib/australianSuburbs";
 
 interface ProductFilterState {

@@ -54,6 +54,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== PRODUCT SEARCH AND DISCOVERY =====
+
+  // Product search route with fuzzy matching
+  app.get("/api/products/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      const limit = parseInt(req.query.limit as string) || 20;
+      
+      if (!query || query.trim().length < 2) {
+        return res.json([]);
+      }
+
+      const products = await storage.searchProducts(query, limit);
+      res.json(products);
+    } catch (error) {
+      console.error("Error searching products:", error);
+      res.status(500).json({ message: "Failed to search products" });
+    }
+  });
+
+  // Search suggestions endpoint
+  app.get("/api/search/suggestions", async (req, res) => {
+    try {
+      const suggestions = await storage.getSearchSuggestions();
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+      res.status(500).json({ message: "Failed to fetch suggestions" });
+    }
+  });
+
   // User stats endpoint for welcome splash
   app.get('/api/user/stats', isAuthenticated, async (req: any, res) => {
     try {
