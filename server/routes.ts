@@ -40,10 +40,42 @@ import {
   uuidParamSchema,
   sanitizeInput
 } from "./validation";
+import {
+  authRateLimit,
+  apiRateLimit,
+  searchRateLimit,
+  paymentRateLimit,
+  buybackRateLimit,
+  messageRateLimit,
+  sanitizeRequest,
+  corsMiddleware,
+  adminSecurityCheck,
+  requestId,
+  requestLogger
+} from "./validation-middleware";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Security middleware
+  app.use(requestId);
+  app.use(requestLogger);
+  app.use(corsMiddleware);
+  app.use(sanitizeRequest);
+  
   // Add request metrics collection middleware
   app.use(collectRequestMetrics);
+  
+  // Rate limiting for different route types
+  app.use('/api/auth', authRateLimit);
+  app.use('/api/products/search', searchRateLimit);
+  app.use('/api/search', searchRateLimit);
+  app.use('/api/buyback', buybackRateLimit);
+  app.use('/api/messages', messageRateLimit);
+  app.use('/api/create-payment', paymentRateLimit);
+  app.use('/api/guest-checkout', paymentRateLimit);
+  app.use('/api', apiRateLimit);
+  
+  // Admin routes security
+  app.use('/api/admin', adminSecurityCheck);
 
   // Setup Replit Auth (supports email, Google, Facebook, etc.)
   await setupAuth(app);
@@ -771,8 +803,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== GUEST CHECKOUT ENDPOINTS =====
 
-  // Create payment session for guest checkout
-  app.post("/api/guest-checkout/create-payment", async (req, res) => {
+  // Create payment session for guest checkout (with rate limiting)
+  app.post("/api/guest-checkout/create-payment", validateBody(guestOrderCreateSchema), async (req, res) => {
     try {
       const {
         guestSessionId,
@@ -1641,8 +1673,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== BUYBACK SYSTEM ROUTES =====
   
-  // Create a new buyback offer using AI evaluation
-  app.post('/api/buyback/offer', isAuthenticated, async (req: any, res) => {
+  // Create a new buyback offer using AI evaluation (with rate limiting)
+  app.post('/api/buyback/offer', isAuthenticated, validateBody(buybackEvaluationSchema), async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const { itemTitle, itemDescription, itemCondition, itemAge, itemBrand, itemCategory, images } = req.body;

@@ -31,6 +31,9 @@ export const authRateLimit = createRateLimit(5, 15 * 60 * 1000); // 5 login atte
 export const apiRateLimit = createRateLimit(100, 15 * 60 * 1000); // 100 requests per 15 minutes
 export const uploadRateLimit = createRateLimit(10, 60 * 60 * 1000); // 10 uploads per hour
 export const searchRateLimit = createRateLimit(60, 60 * 1000); // 60 searches per minute
+export const paymentRateLimit = createRateLimit(10, 60 * 60 * 1000); // 10 payment attempts per hour
+export const buybackRateLimit = createRateLimit(5, 60 * 60 * 1000); // 5 buyback offers per hour
+export const messageRateLimit = createRateLimit(30, 60 * 60 * 1000); // 30 messages per hour
 
 // Input sanitization middleware
 export const sanitizeRequest = (req: Request, res: Response, next: NextFunction) => {
@@ -66,7 +69,7 @@ export const sanitizeRequest = (req: Request, res: Response, next: NextFunction)
 };
 
 // File upload validation middleware
-export const validateFileUpload = (req: Request, res: Response, next: NextFunction) => {
+export const validateFileUpload = (req: Request & { file?: any; files?: any }, res: Response, next: NextFunction) => {
   if (!req.file && !req.files) {
     return next();
   }
