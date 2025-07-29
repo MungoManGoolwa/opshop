@@ -41,24 +41,30 @@ import {
   sanitizeInput
 } from "./validation";
 import {
-  authRateLimit,
-  apiRateLimit,
-  searchRateLimit,
-  paymentRateLimit,
-  buybackRateLimit,
-  messageRateLimit,
   sanitizeRequest,
   corsMiddleware,
   adminSecurityCheck,
   requestId,
   requestLogger
 } from "./validation-middleware";
+import {
+  basicRateLimit,
+  authRateLimit,
+  apiRateLimit,
+  searchRateLimit,
+  paymentRateLimit,
+  buybackRateLimit,
+  messageRateLimit,
+  securityMiddleware,
+  getRateLimitStats
+} from "./rate-limiting";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Security middleware
   app.use(requestId);
   app.use(requestLogger);
   app.use(corsMiddleware);
+  app.use(securityMiddleware);
   app.use(sanitizeRequest);
   
   // Add request metrics collection middleware
@@ -70,9 +76,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/search', searchRateLimit);
   app.use('/api/buyback', buybackRateLimit);
   app.use('/api/messages', messageRateLimit);
+  app.use('/api/create-payment-intent', paymentRateLimit);
   app.use('/api/create-payment', paymentRateLimit);
   app.use('/api/guest-checkout', paymentRateLimit);
-  app.use('/api', apiRateLimit);
+  app.use('/paypal', paymentRateLimit);
+  app.use('/api', basicRateLimit);
   
   // Admin routes security
   app.use('/api/admin', adminSecurityCheck);
@@ -90,6 +98,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/monitoring', isAuthenticated, async (req: any, res) => {
     const { monitoringDashboard } = await import('./monitoring');
     await monitoringDashboard(req, res);
+  });
+  
+  // Rate limiting statistics endpoint (admin only)
+  app.get('/api/admin/rate-limit-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const stats = getRateLimitStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching rate limit stats:", error);
+      res.status(500).json({ message: "Failed to fetch rate limit stats" });
+    }
   });
 
   // Auth routes
