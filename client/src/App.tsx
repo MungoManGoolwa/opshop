@@ -9,6 +9,10 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { ViewProvider } from "@/contexts/ViewContext";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import PrivateRoute from "@/components/auth/PrivateRoute";
+import { useEffect } from "react";
+import { initGA } from "./lib/analytics";
+import { useAnalytics } from "./hooks/use-analytics";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -45,6 +49,7 @@ import GuestCheckout from "@/pages/guest-checkout";
 function Router() {
   const { isAuthenticated, isLoading, error } = useAuth();
   useScrollToTop(); // Automatically scroll to top on route changes
+  useAnalytics(); // Track page views for Google Analytics
 
   // Always show landing page if not authenticated to prevent white screen
   if (!isLoading && !isAuthenticated) {
@@ -91,19 +96,67 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/category/:slug" component={Category} />
           <Route path="/product/:id" component={ProductDetail} />
-          <Route path="/checkout" component={Checkout} />
-          <Route path="/shop-upgrade" component={ShopUpgrade} />
-          <Route path="/shop-upgrade/success" component={ShopUpgradeSuccess} />
-          <Route path="/seller/dashboard" component={SellerDashboard} />
-          <Route path="/seller/create" component={CreateListing} />
-          <Route path="/admin/dashboard" component={AdminDashboard} />
-          <Route path="/admin/users" component={AdminUsers} />
-          <Route path="/admin/buyback" component={AdminBuyback} />
-          <Route path="/admin/site" component={SiteAdmin} />
+          <Route path="/checkout">
+            <PrivateRoute>
+              <Checkout />
+            </PrivateRoute>
+          </Route>
+          <Route path="/shop-upgrade">
+            <PrivateRoute role="seller">
+              <ShopUpgrade />
+            </PrivateRoute>
+          </Route>
+          <Route path="/shop-upgrade/success">
+            <PrivateRoute role="seller">
+              <ShopUpgradeSuccess />
+            </PrivateRoute>
+          </Route>
+          <Route path="/seller/dashboard">
+            <PrivateRoute role="seller">
+              <SellerDashboard />
+            </PrivateRoute>
+          </Route>
+          <Route path="/seller/create">
+            <PrivateRoute role="seller">
+              <CreateListing />
+            </PrivateRoute>
+          </Route>
+          <Route path="/admin/dashboard">
+            <PrivateRoute role="admin">
+              <AdminDashboard />
+            </PrivateRoute>
+          </Route>
+          <Route path="/admin/users">
+            <PrivateRoute role="admin">
+              <AdminUsers />
+            </PrivateRoute>
+          </Route>
+          <Route path="/admin/buyback">
+            <PrivateRoute role="admin">
+              <AdminBuyback />
+            </PrivateRoute>
+          </Route>
+          <Route path="/admin/site">
+            <PrivateRoute role="admin">
+              <SiteAdmin />
+            </PrivateRoute>
+          </Route>
           <Route path="/instant-buyback" component={InstantBuyback} />
-          <Route path="/messages" component={Messages} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/wallet" component={Wallet} />
+          <Route path="/messages">
+            <PrivateRoute>
+              <Messages />
+            </PrivateRoute>
+          </Route>
+          <Route path="/profile">
+            <PrivateRoute>
+              <Profile />
+            </PrivateRoute>
+          </Route>
+          <Route path="/wallet">
+            <PrivateRoute>
+              <Wallet />
+            </PrivateRoute>
+          </Route>
           <Route path="/search" component={Search} />
           <Route path="/sell" component={Sell} />
           <Route path="/wishlist" component={Wishlist} />
@@ -122,6 +175,15 @@ function Router() {
 }
 
 function App() {
+  // Initialize Google Analytics when app loads
+  useEffect(() => {
+    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
+      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
+    } else {
+      initGA();
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
