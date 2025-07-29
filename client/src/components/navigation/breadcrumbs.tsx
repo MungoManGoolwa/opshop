@@ -393,3 +393,5 @@ export function SearchBreadcrumbs({
 
   return <Breadcrumbs items={items} className={className} showHome={true} />;
 }
+
+export default Breadcrumbs;

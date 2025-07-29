@@ -162,6 +162,27 @@ export const wishlists = pgTable("wishlists", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Cart items table for persistent cart functionality
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Saved for later items table 
+export const savedItems = pgTable("saved_items", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").default(1).notNull(),
+  savedFromCart: boolean("saved_from_cart").default(false), // Track if saved from cart vs added directly
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   senderId: varchar("sender_id").references(() => users.id),
@@ -280,6 +301,8 @@ export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Wishlist = typeof wishlists.$inferSelect;
+export type CartItem = typeof cartItems.$inferSelect;
+export type SavedItem = typeof savedItems.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Commission = typeof commissions.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -317,6 +340,20 @@ export const insertWishlistSchema = createInsertSchema(wishlists).omit({
   createdAt: true,
 });
 export type InsertWishlist = z.infer<typeof insertWishlistSchema>;
+
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+
+export const insertSavedItemSchema = createInsertSchema(savedItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertSavedItem = z.infer<typeof insertSavedItemSchema>;
 
 // Buyback offers from AI evaluation
 export const buybackOffers = pgTable("buyback_offers", {

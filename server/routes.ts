@@ -20,7 +20,7 @@ import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { buybackService } from "./buyback-service";
 import { commissionService } from "./commission-service";
-import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema, insertPayoutSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema, insertPayoutSchema, insertCartItemSchema, insertSavedItemSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -580,6 +580,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing from wishlist:", error);
       res.status(500).json({ message: "Failed to remove from wishlist" });
+    }
+  });
+
+  // ===== CART OPERATIONS =====
+  
+  // Get user's cart items
+  app.get("/api/cart", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const cartItems = await storage.getUserCartItems(userId);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Error getting cart items:", error);
+      res.status(500).json({ message: "Failed to get cart items" });
+    }
+  });
+
+  // Add item to cart
+  app.post("/api/cart", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const cartItemData = insertCartItemSchema.parse({ ...req.body, userId });
+      const cartItem = await storage.addToCart(cartItemData);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      res.status(500).json({ message: "Failed to add to cart" });
+    }
+  });
+
+  // Update cart item quantity
+  app.patch("/api/cart/:cartItemId", isAuthenticated, async (req: any, res) => {
+    try {
+      const cartItemId = parseInt(req.params.cartItemId);
+      const { quantity } = req.body;
+      const cartItem = await storage.updateCartItemQuantity(cartItemId, quantity);
+      res.json(cartItem);
+    } catch (error) {
+      console.error("Error updating cart item:", error);
+      res.status(500).json({ message: "Failed to update cart item" });
+    }
+  });
+
+  // Remove item from cart
+  app.delete("/api/cart/:productId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const productId = parseInt(req.params.productId);
+      await storage.removeFromCart(userId, productId);
+      res.json({ message: "Item removed from cart" });
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      res.status(500).json({ message: "Failed to remove from cart" });
+    }
+  });
+
+  // Clear entire cart
+  app.delete("/api/cart", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.clearCart(userId);
+      res.json({ message: "Cart cleared" });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Move item from cart to saved for later
+  app.post("/api/cart/:productId/save-for-later", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const productId = parseInt(req.params.productId);
+      
+      // Get cart item to get quantity
+      const cartItems = await storage.getUserCartItems(userId);
+      const cartItem = cartItems.find(item => item.productId === productId);
+      
+      if (!cartItem) {
+        return res.status(404).json({ message: "Item not found in cart" });
+      }
+
+      // Save to saved items
+      const savedItem = await storage.saveItemForLater({
+        userId,
+        productId,
+        quantity: cartItem.quantity,
+        savedFromCart: true
+      });
+
+      // Remove from cart
+      await storage.removeFromCart(userId, productId);
+
+      res.json({ message: "Item saved for later", savedItem });
+    } catch (error) {
+      console.error("Error saving item for later:", error);
+      res.status(500).json({ message: "Failed to save item for later" });
+    }
+  });
+
+  // ===== SAVED ITEMS OPERATIONS =====
+  
+  // Get user's saved items
+  app.get("/api/saved-items", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const savedItems = await storage.getUserSavedItems(userId);
+      res.json(savedItems);
+    } catch (error) {
+      console.error("Error getting saved items:", error);
+      res.status(500).json({ message: "Failed to get saved items" });
+    }
+  });
+
+  // Add item to saved for later
+  app.post("/api/saved-items", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const savedItemData = insertSavedItemSchema.parse({ ...req.body, userId });
+      const savedItem = await storage.saveItemForLater(savedItemData);
+      res.json(savedItem);
+    } catch (error) {
+      console.error("Error saving item:", error);
+      res.status(500).json({ message: "Failed to save item" });
+    }
+  });
+
+  // Move item from saved to cart
+  app.post("/api/saved-items/:productId/move-to-cart", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const productId = parseInt(req.params.productId);
+      const cartItem = await storage.moveToCartFromSaved(userId, productId);
+      res.json({ message: "Item moved to cart", cartItem });
+    } catch (error) {
+      console.error("Error moving item to cart:", error);
+      res.status(500).json({ message: "Failed to move item to cart" });
+    }
+  });
+
+  // Remove item from saved
+  app.delete("/api/saved-items/:productId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const productId = parseInt(req.params.productId);
+      await storage.removeSavedItem(userId, productId);
+      res.json({ message: "Saved item removed" });
+    } catch (error) {
+      console.error("Error removing saved item:", error);
+      res.status(500).json({ message: "Failed to remove saved item" });
     }
   });
 

@@ -3,6 +3,8 @@ import {
   categories,
   products,
   wishlists,
+  cartItems,
+  savedItems,
   messages,
   commissions,
   orders,
@@ -21,6 +23,10 @@ import {
   type InsertProduct,
   type Wishlist,
   type InsertWishlist,
+  type CartItem,
+  type InsertCartItem,
+  type SavedItem,
+  type InsertSavedItem,
   type Message,
   type InsertMessage,
   type Commission,
@@ -75,6 +81,19 @@ export interface IStorage {
   getUserWishlist(userId: string): Promise<(Wishlist & { product: Product })[]>;
   addToWishlist(wishlist: InsertWishlist): Promise<Wishlist>;
   removeFromWishlist(userId: string, productId: number): Promise<void>;
+
+  // Cart operations
+  getUserCartItems(userId: string): Promise<(CartItem & { product: Product })[]>;
+  addToCart(cartItem: InsertCartItem): Promise<CartItem>;
+  updateCartItemQuantity(id: number, quantity: number): Promise<CartItem>;
+  removeFromCart(userId: string, productId: number): Promise<void>;
+  clearCart(userId: string): Promise<void>;
+
+  // Saved items operations
+  getUserSavedItems(userId: string): Promise<(SavedItem & { product: Product })[]>;
+  saveItemForLater(savedItem: InsertSavedItem): Promise<SavedItem>;
+  moveToCartFromSaved(userId: string, productId: number): Promise<CartItem>;
+  removeSavedItem(userId: string, productId: number): Promise<void>;
   
   // Message operations
   getConversations(userId: string): Promise<any[]>;
@@ -554,6 +573,127 @@ export class DatabaseStorage implements IStorage {
   async removeFromWishlist(userId: string, productId: number): Promise<void> {
     await db.delete(wishlists)
       .where(and(eq(wishlists.userId, userId), eq(wishlists.productId, productId)));
+  }
+
+  // Cart operations
+  async getUserCartItems(userId: string): Promise<(CartItem & { product: Product })[]> {
+    return await db.select({
+      id: cartItems.id,
+      userId: cartItems.userId,
+      productId: cartItems.productId,
+      quantity: cartItems.quantity,
+      createdAt: cartItems.createdAt,
+      updatedAt: cartItems.updatedAt,
+      product: products,
+    })
+    .from(cartItems)
+    .innerJoin(products, eq(cartItems.productId, products.id))
+    .where(eq(cartItems.userId, userId))
+    .orderBy(desc(cartItems.createdAt));
+  }
+
+  async addToCart(cartItemData: InsertCartItem): Promise<CartItem> {
+    // Check if item already exists in cart
+    const existingItem = await db.select().from(cartItems)
+      .where(and(eq(cartItems.userId, cartItemData.userId), eq(cartItems.productId, cartItemData.productId)));
+    
+    if (existingItem.length > 0) {
+      // Update quantity instead of creating duplicate
+      const [updatedItem] = await db.update(cartItems)
+        .set({ 
+          quantity: existingItem[0].quantity + (cartItemData.quantity || 1),
+          updatedAt: new Date()
+        })
+        .where(eq(cartItems.id, existingItem[0].id))
+        .returning();
+      return updatedItem;
+    }
+
+    const [cartItem] = await db.insert(cartItems).values(cartItemData).returning();
+    return cartItem;
+  }
+
+  async updateCartItemQuantity(id: number, quantity: number): Promise<CartItem> {
+    const [cartItem] = await db.update(cartItems)
+      .set({ quantity, updatedAt: new Date() })
+      .where(eq(cartItems.id, id))
+      .returning();
+    return cartItem;
+  }
+
+  async removeFromCart(userId: string, productId: number): Promise<void> {
+    await db.delete(cartItems)
+      .where(and(eq(cartItems.userId, userId), eq(cartItems.productId, productId)));
+  }
+
+  async clearCart(userId: string): Promise<void> {
+    await db.delete(cartItems).where(eq(cartItems.userId, userId));
+  }
+
+  // Saved items operations
+  async getUserSavedItems(userId: string): Promise<(SavedItem & { product: Product })[]> {
+    return await db.select({
+      id: savedItems.id,
+      userId: savedItems.userId,
+      productId: savedItems.productId,
+      quantity: savedItems.quantity,
+      savedFromCart: savedItems.savedFromCart,
+      createdAt: savedItems.createdAt,
+      updatedAt: savedItems.updatedAt,
+      product: products,
+    })
+    .from(savedItems)
+    .innerJoin(products, eq(savedItems.productId, products.id))
+    .where(eq(savedItems.userId, userId))
+    .orderBy(desc(savedItems.createdAt));
+  }
+
+  async saveItemForLater(savedItemData: InsertSavedItem): Promise<SavedItem> {
+    // Check if item already exists in saved items
+    const existingItem = await db.select().from(savedItems)
+      .where(and(eq(savedItems.userId, savedItemData.userId), eq(savedItems.productId, savedItemData.productId)));
+    
+    if (existingItem.length > 0) {
+      // Update quantity instead of creating duplicate
+      const [updatedItem] = await db.update(savedItems)
+        .set({ 
+          quantity: existingItem[0].quantity + (savedItemData.quantity || 1),
+          updatedAt: new Date()
+        })
+        .where(eq(savedItems.id, existingItem[0].id))
+        .returning();
+      return updatedItem;
+    }
+
+    const [savedItem] = await db.insert(savedItems).values(savedItemData).returning();
+    return savedItem;
+  }
+
+  async moveToCartFromSaved(userId: string, productId: number): Promise<CartItem> {
+    // Get the saved item
+    const [savedItem] = await db.select().from(savedItems)
+      .where(and(eq(savedItems.userId, userId), eq(savedItems.productId, productId)));
+    
+    if (!savedItem) {
+      throw new Error("Saved item not found");
+    }
+
+    // Add to cart
+    const cartItem = await this.addToCart({
+      userId,
+      productId,
+      quantity: savedItem.quantity
+    });
+
+    // Remove from saved items
+    await this.removeSavedItem(userId, productId);
+
+    return cartItem;
+  }
+
+  async removeSavedItem(userId: string, productId: number): Promise<void> {
+    await db.delete(savedItems)
+      .where(and(eq(savedItems.userId, userId), eq(savedItems.productId, productId)));
   }
 
   // Message operations
