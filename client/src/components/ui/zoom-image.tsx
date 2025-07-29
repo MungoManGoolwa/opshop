@@ -71,7 +71,7 @@ export function ZoomImage({
       <img
         ref={imageRef}
         src={src}
-        alt={alt}
+        alt={alt || "Product image - hover to zoom for detailed view"}
         className={cn(
           "w-full h-full object-cover transition-transform duration-300 ease-out",
           shouldZoom && `scale-${Math.floor(zoomScale * 100)}`
@@ -83,6 +83,7 @@ export function ZoomImage({
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.src = '/placeholder-image.jpg';
+          target.alt = "Product image placeholder - original image unavailable";
         }}
       />
       

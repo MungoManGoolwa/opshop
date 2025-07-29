@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,9 +13,15 @@ import ProductGrid from "@/components/products/product-grid";
 import { mockProducts } from "@/lib/mockData";
 
 export default function Landing() {
-  useEffect(() => {
-    document.title = "Opshop Online - Australia's Sustainable Marketplace";
-  }, []);
+  // SEO Metadata for landing page
+  useSEO({
+    title: "Opshop Online - Australia's Sustainable Marketplace for Pre-Loved Goods",
+    description: "Join Australia's largest sustainable marketplace for second-hand goods. Buy and sell pre-loved items with instant AI buyback, location-based search, and verified sellers. Start your sustainable shopping journey today.",
+    image: "/icons/icon-512x512.svg",
+    url: "https://opshop.online",
+    type: "website",
+    siteName: "Opshop Online",
+  });
 
   const featuredProducts = mockProducts.slice(0, 8);
 
@@ -67,7 +74,7 @@ export default function Landing() {
             <div className="relative">
               <img 
                 src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                alt="Second-hand marketplace items" 
+                alt="Collection of diverse second-hand marketplace items including electronics, books, clothing, and home goods arranged attractively showcasing the variety available on Opshop Online" 
                 className="rounded-xl shadow-2xl" 
               />
               <Badge className="absolute top-4 right-4 bg-accent text-white">

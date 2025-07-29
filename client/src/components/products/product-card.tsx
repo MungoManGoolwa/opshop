@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ZoomImage } from "@/components/ui/zoom-image";
 import { Heart, MapPin, Star, ShoppingCart } from "lucide-react";
+import { QuickShareButtons } from "@/components/social/QuickShareButtons";
 import type { Product } from "@shared/schema";
 
 interface ProductCardProps {
@@ -145,7 +146,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="relative overflow-hidden rounded-t-lg">
           <ZoomImage
             src={mainImage}
-            alt={product.title}
+            alt={`${product.title} - $${product.price} in ${product.condition} condition from ${product.location}`}
             className="w-full h-48"
             enableHoverZoom={true}
             enableClickZoom={false}
@@ -212,6 +213,18 @@ export default function ProductCard({ product }: ProductCardProps) {
               {product.views} views • {product.likes || 0} likes
             </div>
           )}
+          
+          {/* Social Share Buttons */}
+          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+            <span className="text-xs text-gray-500">Share this item</span>
+            <QuickShareButtons
+              title={product.title}
+              description={product.description}
+              price={`$${product.price}`}
+              url={`/product/${product.id}`}
+              className="opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </div>
         </div>
       </div>
     </Link>

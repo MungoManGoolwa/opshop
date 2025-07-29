@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSEO } from "@/hooks/useSEO";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -43,8 +44,17 @@ export default function Home() {
   const [filters, setFilters] = useState<ProductFilterState>({});
   const [selectedLocation, setSelectedLocation] = useState<{ suburb: Suburb; radius: number } | null>(null);
 
+  // SEO Metadata for home page
+  useSEO({
+    title: "Dashboard - Browse Australia's Sustainable Marketplace | Opshop Online",
+    description: "Your personalized dashboard for second-hand shopping. Browse recent listings, manage your wishlist, track orders, and discover new pre-loved treasures across Australia.",
+    image: "/icons/icon-512x512.svg",
+    url: "https://opshop.online/home",
+    type: "website",
+    siteName: "Opshop Online",
+  });
+
   useEffect(() => {
-    document.title = "Home - Opshop Online";
     
     // Get search query and filter from URL params
     const urlParams = new URLSearchParams(window.location.search);

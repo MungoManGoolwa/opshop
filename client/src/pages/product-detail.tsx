@@ -19,6 +19,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { SocialShareButton } from "@/components/social/SocialShareButton";
+import { QuickShareButtons } from "@/components/social/QuickShareButtons";
+import { useSEO, truncateDescription } from "@/hooks/useSEO";
 import { 
   Heart, 
   MapPin, 
@@ -38,9 +41,19 @@ export default function ProductDetail() {
   const queryClient = useQueryClient();
   // Remove currentImageIndex state as it's now handled by ImageGallery
 
-  useEffect(() => {
-    document.title = "Product Details - Opshop Online";
-  }, []);
+  // SEO Metadata
+  useSEO({
+    title: productData ? `${productData.title} - $${productData.price} | Opshop Online` : "Product Details - Opshop Online",
+    description: productData ? truncateDescription(`${productData.description} Located in ${productData.location}. Condition: ${productData.condition}. ${productData.shippingCost && parseFloat(productData.shippingCost) > 0 ? `Shipping: $${productData.shippingCost}` : 'Free shipping'}.`) : "View product details on Australia's sustainable marketplace",
+    image: productData?.images?.[0],
+    url: window.location.href,
+    type: "product",
+    siteName: "Opshop Online",
+    price: productData?.price,
+    availability: productData?.status === "available" ? "in-stock" : "out-of-stock",
+    condition: productData?.condition,
+    location: productData?.location,
+  });
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ["/api/products", id],
@@ -300,10 +313,14 @@ export default function ProductDetail() {
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Message Seller
                 </Button>
-                <Button variant="outline" className="w-full">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
+                <SocialShareButton
+                  title={productData.title}
+                  description={productData.description}
+                  price={`$${productData.price}`}
+                  imageUrl={images[0]}
+                  variant="outline"
+                  className="w-full"
+                />
               </div>
             </div>
 

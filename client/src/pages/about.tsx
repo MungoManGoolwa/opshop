@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileNav from "@/components/layout/mobile-nav";
@@ -6,9 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Recycle, Users, Heart, Shield, Globe, Truck } from "lucide-react";
 
 export default function About() {
-  useEffect(() => {
-    document.title = "About Us - Opshop Online";
-  }, []);
+  // SEO Metadata for about page
+  useSEO({
+    title: "About Opshop Online - Australia's Sustainable Marketplace Revolution",
+    description: "Learn about Opshop Online's mission to revolutionize sustainable shopping in Australia. Discover our story, values, and commitment to the circular economy through second-hand goods.",
+    image: "/icons/icon-512x512.svg",
+    url: "https://opshop.online/about",
+    type: "website",
+    siteName: "Opshop Online",
+  });
 
   return (
     <div className="min-h-screen bg-neutral">
