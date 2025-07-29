@@ -14,6 +14,7 @@ import {
   OrdersController,
 } from "@paypal/paypal-server-sdk";
 import { Request, Response } from "express";
+import { serviceLogger } from "./config/logger";
 
 /* PayPal Controllers Setup */
 
@@ -69,11 +70,14 @@ export async function getClientToken() {
 
 export async function createPaypalOrder(req: Request, res: Response) {
   if (!ordersController) {
+    serviceLogger.paypal.error('create_order', { message: 'PayPal not configured' });
     return res.status(503).json({ error: "PayPal is not configured" });
   }
 
   try {
     const { amount, currency, intent } = req.body;
+    
+    serviceLogger.paypal.order('create', undefined, amount);
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       return res
@@ -116,9 +120,10 @@ export async function createPaypalOrder(req: Request, res: Response) {
     const jsonResponse = JSON.parse(String(body));
     const httpStatusCode = httpResponse.statusCode;
 
+    serviceLogger.paypal.order('created', jsonResponse.id, amount);
     res.status(httpStatusCode).json(jsonResponse);
-  } catch (error) {
-    console.error("Failed to create order:", error);
+  } catch (error: any) {
+    serviceLogger.paypal.error('create_order', error);
     res.status(500).json({ error: "Failed to create order." });
   }
 }

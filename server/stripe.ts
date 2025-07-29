@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
 import { env } from "./config/env";
+import { serviceLogger } from "./config/logger";
 
 const stripe = env.STRIPE_SECRET_KEY ? new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-06-30.basil",
@@ -8,6 +9,7 @@ const stripe = env.STRIPE_SECRET_KEY ? new Stripe(env.STRIPE_SECRET_KEY, {
 
 export async function createPaymentIntent(req: Request, res: Response) {
   if (!stripe) {
+    serviceLogger.stripe.error('create_payment_intent', { message: 'Stripe not configured' });
     return res.status(503).json({ error: 'Payment processing is not configured' });
   }
 
@@ -17,6 +19,8 @@ export async function createPaymentIntent(req: Request, res: Response) {
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
+
+    serviceLogger.stripe.payment('create_intent', undefined, amount);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
@@ -30,12 +34,14 @@ export async function createPaymentIntent(req: Request, res: Response) {
       },
     });
 
+    serviceLogger.stripe.payment('intent_created', paymentIntent.id, amount);
+    
     res.json({ 
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id
     });
   } catch (error: any) {
-    console.error('Stripe payment intent error:', error);
+    serviceLogger.stripe.error('create_payment_intent', error);
     res.status(500).json({ 
       error: 'Failed to create payment intent',
       message: error.message 
