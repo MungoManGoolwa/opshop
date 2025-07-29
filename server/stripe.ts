@@ -1,15 +1,16 @@
 import Stripe from 'stripe';
 import { Request, Response } from 'express';
+import { env } from "./config/env";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = env.STRIPE_SECRET_KEY ? new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-06-30.basil",
-});
+}) : null;
 
 export async function createPaymentIntent(req: Request, res: Response) {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Payment processing is not configured' });
+  }
+
   try {
     const { amount, currency = 'aud', orderId, productId } = req.body;
 

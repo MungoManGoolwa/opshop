@@ -8,8 +8,10 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+import { env } from "./config/env";
+
+if (!env.REPLIT_DOMAINS) {
+  console.warn("REPLIT_DOMAINS not configured - authentication may not work in production");
 }
 
 const getOidcConfig = memoize(
