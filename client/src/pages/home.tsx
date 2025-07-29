@@ -21,9 +21,17 @@ interface ProductFilterState {
   maxPrice?: number;
   location?: string;
   search?: string;
+  sort?: string;
   latitude?: number;
   longitude?: number;
   radius?: number;
+  // General attributes
+  brand?: string;
+  color?: string;
+  size?: string;
+  material?: string;
+  // Include all the advanced filter options from categoryFilters
+  [key: string]: any;
 }
 
 export default function Home() {
@@ -64,6 +72,25 @@ export default function Home() {
     queryParams.append('longitude', selectedLocation.suburb.longitude.toString());
     queryParams.append('radius', selectedLocation.radius.toString());
   }
+
+  // Add all advanced filters from ProductFilters component
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '' && key !== 'categoryId' && key !== 'condition' && key !== 'minPrice' && key !== 'maxPrice') {
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          value.forEach(v => queryParams.append(key, v));
+        }
+      } else if (typeof value === 'boolean') {
+        queryParams.append(key, value.toString());
+      } else if (typeof value === 'object' && value.length === 2) {
+        // Handle price/year range arrays
+        queryParams.append(`min${key.charAt(0).toUpperCase() + key.slice(1)}`, value[0].toString());
+        queryParams.append(`max${key.charAt(0).toUpperCase() + key.slice(1)}`, value[1].toString());
+      } else {
+        queryParams.append(key, value.toString());
+      }
+    }
+  });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["/api/products", queryParams.toString()],

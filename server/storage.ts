@@ -38,7 +38,7 @@ import {
   type ListingSettings,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, gte, lte, desc, sql, or } from "drizzle-orm";
+import { eq, and, like, ilike, gte, lte, desc, asc, sql, or } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -213,9 +213,57 @@ export class DatabaseStorage implements IStorage {
     maxPrice?: number;
     location?: string;
     search?: string;
+    sort?: string;
     latitude?: number;
     longitude?: number;
     radius?: number;
+    // General attributes
+    brand?: string;
+    color?: string;
+    size?: string;
+    material?: string;
+    // Clothing specific
+    clothingSize?: string;
+    clothingType?: string;
+    clothingGender?: string;
+    // Electronics specific
+    model?: string;
+    storageCapacity?: string;
+    screenSize?: string;
+    connectivity?: string;
+    // Vehicles specific
+    make?: string;
+    vehicleModel?: string;
+    year?: number;
+    minYear?: number;
+    maxYear?: number;
+    kilometers?: number;
+    minKilometers?: number;
+    maxKilometers?: number;
+    fuelType?: string;
+    transmission?: string;
+    bodyType?: string;
+    drivetrain?: string;
+    // Home & Garden specific
+    roomType?: string;
+    furnitureType?: string;
+    assemblyRequired?: boolean;
+    // Sports specific
+    sportType?: string;
+    activityLevel?: string;
+    equipmentType?: string;
+    // Books specific
+    author?: string;
+    genre?: string;
+    format?: string;
+    language?: string;
+    publicationYear?: number;
+    // Baby & Kids specific
+    ageRange?: string;
+    educationalValue?: string;
+    // Beauty & Health specific
+    skinType?: string;
+    hairType?: string;
   }): Promise<Product[]> {
     const conditions = [eq(products.status, 'available')];
 
@@ -257,9 +305,169 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    return await db.select().from(products)
-      .where(and(...conditions))
-      .orderBy(desc(products.createdAt));
+    // General attribute filters
+    if (filters?.brand) {
+      conditions.push(ilike(products.brand, `%${filters.brand}%`));
+    }
+    if (filters?.color) {
+      conditions.push(eq(products.color, filters.color));
+    }
+    if (filters?.size) {
+      conditions.push(eq(products.size, filters.size));
+    }
+    if (filters?.material) {
+      conditions.push(eq(products.material, filters.material));
+    }
+
+    // Clothing specific filters
+    if (filters?.clothingSize) {
+      conditions.push(eq(products.clothingSize, filters.clothingSize));
+    }
+    if (filters?.clothingType) {
+      conditions.push(eq(products.clothingType, filters.clothingType));
+    }
+    if (filters?.clothingGender) {
+      conditions.push(eq(products.clothingGender, filters.clothingGender));
+    }
+
+    // Electronics specific filters
+    if (filters?.model) {
+      conditions.push(ilike(products.model, `%${filters.model}%`));
+    }
+    if (filters?.storageCapacity) {
+      conditions.push(eq(products.storageCapacity, filters.storageCapacity));
+    }
+    if (filters?.screenSize) {
+      conditions.push(eq(products.screenSize, filters.screenSize));
+    }
+    if (filters?.connectivity) {
+      conditions.push(ilike(products.connectivity, `%${filters.connectivity}%`));
+    }
+
+    // Vehicles specific filters
+    if (filters?.make) {
+      conditions.push(eq(products.make, filters.make));
+    }
+    if (filters?.vehicleModel) {
+      conditions.push(ilike(products.vehicleModel, `%${filters.vehicleModel}%`));
+    }
+    if (filters?.year) {
+      conditions.push(eq(products.year, filters.year));
+    }
+    if (filters?.minYear) {
+      conditions.push(gte(products.year, filters.minYear));
+    }
+    if (filters?.maxYear) {
+      conditions.push(lte(products.year, filters.maxYear));
+    }
+    if (filters?.kilometers) {
+      conditions.push(eq(products.kilometers, filters.kilometers));
+    }
+    if (filters?.minKilometers) {
+      conditions.push(gte(products.kilometers, filters.minKilometers));
+    }
+    if (filters?.maxKilometers) {
+      conditions.push(lte(products.kilometers, filters.maxKilometers));
+    }
+    if (filters?.fuelType) {
+      conditions.push(eq(products.fuelType, filters.fuelType));
+    }
+    if (filters?.transmission) {
+      conditions.push(eq(products.transmission, filters.transmission));
+    }
+    if (filters?.bodyType) {
+      conditions.push(eq(products.bodyType, filters.bodyType));
+    }
+    if (filters?.drivetrain) {
+      conditions.push(eq(products.drivetrain, filters.drivetrain));
+    }
+
+    // Home & Garden specific filters
+    if (filters?.roomType) {
+      conditions.push(eq(products.roomType, filters.roomType));
+    }
+    if (filters?.furnitureType) {
+      conditions.push(eq(products.furnitureType, filters.furnitureType));
+    }
+    if (filters?.assemblyRequired !== undefined) {
+      conditions.push(eq(products.assemblyRequired, filters.assemblyRequired));
+    }
+
+    // Sports specific filters
+    if (filters?.sportType) {
+      conditions.push(eq(products.sportType, filters.sportType));
+    }
+    if (filters?.activityLevel) {
+      conditions.push(eq(products.activityLevel, filters.activityLevel));
+    }
+    if (filters?.equipmentType) {
+      conditions.push(eq(products.equipmentType, filters.equipmentType));
+    }
+
+    // Books specific filters
+    if (filters?.author) {
+      conditions.push(ilike(products.author, `%${filters.author}%`));
+    }
+    if (filters?.genre) {
+      conditions.push(eq(products.genre, filters.genre));
+    }
+    if (filters?.format) {
+      conditions.push(eq(products.format, filters.format));
+    }
+    if (filters?.language) {
+      conditions.push(eq(products.language, filters.language));
+    }
+    if (filters?.publicationYear) {
+      conditions.push(eq(products.publicationYear, filters.publicationYear));
+    }
+
+    // Baby & Kids specific filters
+    if (filters?.ageRange) {
+      conditions.push(eq(products.ageRange, filters.ageRange));
+    }
+    if (filters?.educationalValue) {
+      conditions.push(eq(products.educationalValue, filters.educationalValue));
+    }
+
+    // Beauty & Health specific filters
+    if (filters?.skinType) {
+      conditions.push(eq(products.skinType, filters.skinType));
+    }
+    if (filters?.hairType) {
+      conditions.push(eq(products.hairType, filters.hairType));
+    }
+
+    // Build the query with conditions
+    let query = db.select().from(products).where(and(...conditions));
+
+    // Apply sorting
+    const sortBy = filters?.sort || 'newest';
+    switch (sortBy) {
+      case 'oldest':
+        query = query.orderBy(asc(products.createdAt));
+        break;
+      case 'price_asc':
+        query = query.orderBy(asc(products.price));
+        break;
+      case 'price_desc':
+        query = query.orderBy(desc(products.price));
+        break;
+      case 'views_desc':
+        query = query.orderBy(desc(products.views));
+        break;
+      case 'title_asc':
+        query = query.orderBy(asc(products.title));
+        break;
+      case 'title_desc':
+        query = query.orderBy(desc(products.title));
+        break;
+      case 'newest':
+      default:
+        query = query.orderBy(desc(products.createdAt));
+        break;
+    }
+
+    return await query;
   }
 
   async getProduct(id: number): Promise<Product | undefined> {

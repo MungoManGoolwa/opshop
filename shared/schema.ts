@@ -87,6 +87,62 @@ export const products = pgTable("products", {
   size: varchar("size"),
   color: varchar("color"),
   material: varchar("material"),
+  
+  // Additional category-specific attributes
+  // Clothing & Fashion specific
+  clothingSize: varchar("clothing_size"), // XS, S, M, L, XL, XXL
+  clothingType: varchar("clothing_type"), // shirt, pants, dress, etc
+  clothingGender: varchar("clothing_gender"), // men, women, unisex, kids
+  
+  // Electronics specific
+  model: varchar("model"),
+  storageCapacity: varchar("storage_capacity"),
+  screenSize: varchar("screen_size"),
+  batteryLife: varchar("battery_life"),
+  connectivity: varchar("connectivity"), // wifi, bluetooth, cellular
+  
+  // Vehicles specific
+  make: varchar("make"), // Toyota, Ford, etc
+  vehicleModel: varchar("vehicle_model"),
+  year: integer("year"),
+  kilometers: integer("kilometers"),
+  fuelType: varchar("fuel_type"), // petrol, diesel, electric, hybrid
+  transmission: varchar("transmission"), // manual, automatic
+  bodyType: varchar("body_type"), // sedan, hatchback, SUV, etc
+  engineSize: varchar("engine_size"),
+  drivetrain: varchar("drivetrain"), // FWD, RWD, AWD
+  registrationState: varchar("registration_state"),
+  
+  // Home & Garden specific
+  roomType: varchar("room_type"), // bedroom, living room, kitchen, etc
+  furnitureType: varchar("furniture_type"), // chair, table, bed, etc
+  dimensions: varchar("dimensions"), // LxWxH
+  assemblyRequired: boolean("assembly_required"),
+  
+  // Sports & Recreation specific
+  sportType: varchar("sport_type"), // football, tennis, cycling, etc
+  activityLevel: varchar("activity_level"), // beginner, intermediate, advanced
+  equipmentType: varchar("equipment_type"), // racket, ball, protective gear, etc
+  
+  // Books & Media specific
+  author: varchar("author"),
+  isbn: varchar("isbn"),
+  publisher: varchar("publisher"),
+  publicationYear: integer("publication_year"),
+  language: varchar("language"),
+  format: varchar("format"), // hardcover, paperback, ebook, audiobook
+  genre: varchar("genre"),
+  
+  // Baby & Kids specific
+  ageRange: varchar("age_range"), // 0-6 months, 6-12 months, 1-2 years, etc
+  safetyStandard: varchar("safety_standard"),
+  educationalValue: varchar("educational_value"),
+  
+  // Beauty & Health specific
+  skinType: varchar("skin_type"), // normal, dry, oily, combination, sensitive
+  hairType: varchar("hair_type"), // straight, wavy, curly, coily
+  ingredients: text("ingredients").array().default([]),
+  expiryDate: timestamp("expiry_date"),
   images: text("images").array(),
   location: varchar("location"),
   suburb: varchar("suburb"),

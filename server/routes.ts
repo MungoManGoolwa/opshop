@@ -117,10 +117,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined,
         location: req.query.location as string,
         search: req.query.search as string,
+        sort: req.query.sort as string || 'newest',
         // Location-based radius search
         latitude: req.query.latitude ? parseFloat(req.query.latitude as string) : undefined,
         longitude: req.query.longitude ? parseFloat(req.query.longitude as string) : undefined,
         radius: req.query.radius ? parseInt(req.query.radius as string) : undefined,
+        // General attributes
+        brand: req.query.brand as string,
+        color: req.query.color as string,
+        size: req.query.size as string,
+        material: req.query.material as string,
+        // Clothing specific
+        clothingSize: req.query.clothingSize as string,
+        clothingType: req.query.clothingType as string,
+        clothingGender: req.query.clothingGender as string,
+        // Electronics specific
+        model: req.query.model as string,
+        storageCapacity: req.query.storageCapacity as string,
+        screenSize: req.query.screenSize as string,
+        connectivity: req.query.connectivity as string,
+        // Vehicles specific
+        make: req.query.make as string,
+        vehicleModel: req.query.vehicleModel as string,
+        year: req.query.year ? parseInt(req.query.year as string) : undefined,
+        minYear: req.query.minYear ? parseInt(req.query.minYear as string) : undefined,
+        maxYear: req.query.maxYear ? parseInt(req.query.maxYear as string) : undefined,
+        kilometers: req.query.kilometers ? parseInt(req.query.kilometers as string) : undefined,
+        minKilometers: req.query.minKilometers ? parseInt(req.query.minKilometers as string) : undefined,
+        maxKilometers: req.query.maxKilometers ? parseInt(req.query.maxKilometers as string) : undefined,
+        fuelType: req.query.fuelType as string,
+        transmission: req.query.transmission as string,
+        bodyType: req.query.bodyType as string,
+        drivetrain: req.query.drivetrain as string,
+        // Home & Garden specific
+        roomType: req.query.roomType as string,
+        furnitureType: req.query.furnitureType as string,
+        assemblyRequired: req.query.assemblyRequired === 'true' ? true : req.query.assemblyRequired === 'false' ? false : undefined,
+        // Sports specific
+        sportType: req.query.sportType as string,
+        activityLevel: req.query.activityLevel as string,
+        equipmentType: req.query.equipmentType as string,
+        // Books specific
+        author: req.query.author as string,
+        genre: req.query.genre as string,
+        format: req.query.format as string,
+        language: req.query.language as string,
+        publicationYear: req.query.publicationYear ? parseInt(req.query.publicationYear as string) : undefined,
+        // Baby & Kids specific
+        ageRange: req.query.ageRange as string,
+        educationalValue: req.query.educationalValue as string,
+        // Beauty & Health specific
+        skinType: req.query.skinType as string,
+        hairType: req.query.hairType as string,
       };
       
       const products = await storage.getProducts(filters);
