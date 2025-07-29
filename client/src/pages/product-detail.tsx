@@ -11,6 +11,8 @@ import MobileNav from "@/components/layout/mobile-nav";
 import BuyButton from "@/components/ui/buy-button";
 import ReviewSummary from "@/components/reviews/review-summary";
 import ReviewList from "@/components/reviews/review-list";
+import { ImageGallery } from "@/components/ui/image-gallery";
+import { ZoomImage } from "@/components/ui/zoom-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,7 +35,7 @@ export default function ProductDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  // Remove currentImageIndex state as it's now handled by ImageGallery
 
   useEffect(() => {
     document.title = "Product Details - Opshop Online";
@@ -120,8 +122,7 @@ export default function ProductDetail() {
     );
   }
 
-  const images = productData.images || [];
-  const currentImage = images[currentImageIndex] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&h=600";
+  const images = productData.images || ["https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&h=600"];
 
   const getConditionColor = (condition: string) => {
     switch (condition?.toLowerCase()) {
@@ -165,35 +166,16 @@ export default function ProductDetail() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Image Gallery */}
+          {/* Enhanced Image Gallery with Zoom & Lightbox */}
           <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
-              <img
-                src={currentImage}
-                alt={productData.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((image: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`aspect-square overflow-hidden rounded border-2 ${
-                      index === currentImageIndex ? 'border-primary' : 'border-gray-200'
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${productData.title} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+            <ImageGallery
+              images={images}
+              title={productData.title}
+              className="h-96 lg:h-[500px]"
+              showThumbnails={images.length > 1}
+              enableZoom={true}
+              enableDownload={false}
+            />
           </div>
 
           {/* Product Info */}

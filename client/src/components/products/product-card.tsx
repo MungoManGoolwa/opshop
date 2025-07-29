@@ -7,6 +7,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ZoomImage } from "@/components/ui/zoom-image";
 import { Heart, MapPin, Star, ShoppingCart } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -141,15 +142,14 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/product/${product.id}`}>
       <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-        <div className="relative">
-          <img
+        <div className="relative overflow-hidden rounded-t-lg">
+          <ZoomImage
             src={mainImage}
             alt={product.title}
-            className="w-full h-48 object-cover rounded-t-lg"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&h=300";
-            }}
+            className="w-full h-48"
+            enableHoverZoom={true}
+            enableClickZoom={false}
+            zoomScale={1.2}
           />
           <div className="absolute top-3 right-3 flex gap-2">
             <Button
