@@ -19,7 +19,10 @@ import {
   Shield,
   Flag,
   Settings,
-  Home
+  Home,
+  ShoppingCart,
+  Mail,
+  Percent
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -123,6 +126,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="users">Users</TabsTrigger>
               <TabsTrigger value="products">Products</TabsTrigger>
               <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="carts">Cart Recovery</TabsTrigger>
               <TabsTrigger value="moderation">Moderation</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
@@ -289,6 +293,99 @@ export default function AdminDashboard() {
                       <p className="text-gray-600">No categories found.</p>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="carts" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShoppingCart className="h-5 w-5" />
+                    Abandoned Cart Recovery
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center">
+                          <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                          <div className="ml-2">
+                            <p className="text-sm font-medium text-muted-foreground">Abandoned Carts</p>
+                            <p className="text-2xl font-bold">23</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <div className="ml-2">
+                            <p className="text-sm font-medium text-muted-foreground">Emails Sent</p>
+                            <p className="text-2xl font-bold">147</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center">
+                          <Percent className="h-4 w-4 text-muted-foreground" />
+                          <div className="ml-2">
+                            <p className="text-sm font-medium text-muted-foreground">Recovery Rate</p>
+                            <p className="text-2xl font-bold">12.3%</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Cart Recovery Management</h3>
+                      <Button>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Process Pending Reminders
+                      </Button>
+                    </div>
+
+                    <div className="border rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium mb-2">Recent Abandonments</h4>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p>• 15 carts abandoned in last 24 hours</p>
+                            <p>• 8 first reminder emails pending</p>
+                            <p>• 5 second reminder emails pending</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium mb-2">Recovery Statistics</h4>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p>• 18 carts recovered this week</p>
+                            <p>• $2,340 revenue recovered</p>
+                            <p>• Average time to recovery: 2.4 days</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-900 mb-2">How Cart Recovery Works</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p>1. System tracks when users add items to cart but don't complete purchase</p>
+                        <p>2. First reminder email sent after 1 hour of inactivity</p>
+                        <p>3. Second reminder email sent after 24 hours if cart still abandoned</p>
+                        <p>4. Final reminder email sent after 3 days with special offer</p>
+                        <p>5. Recovery tracked when user completes purchase within 7 days</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

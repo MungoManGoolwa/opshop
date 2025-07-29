@@ -294,6 +294,37 @@ export const reviews = pgTable("reviews", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Abandoned cart tracking for recovery campaigns
+export const abandonedCarts = pgTable("abandoned_carts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  cartSnapshot: jsonb("cart_snapshot").notNull(), // Store cart items at abandonment time
+  totalValue: decimal("total_value", { precision: 10, scale: 2 }).notNull(),
+  itemCount: integer("item_count").notNull(),
+  abandonedAt: timestamp("abandoned_at").defaultNow().notNull(),
+  firstReminderSent: timestamp("first_reminder_sent"),
+  secondReminderSent: timestamp("second_reminder_sent"),
+  finalReminderSent: timestamp("final_reminder_sent"),
+  recoveredAt: timestamp("recovered_at"), // When user completed purchase
+  status: varchar("status", { length: 50 }).notNull().default("abandoned"), // abandoned, recovered, expired
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Email reminder queue for automated cart recovery
+export const emailReminderQueue = pgTable("email_reminder_queue", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  abandonedCartId: integer("abandoned_cart_id").references(() => abandonedCarts.id).notNull(),
+  reminderType: varchar("reminder_type", { length: 50 }).notNull(), // first, second, final
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  sentAt: timestamp("sent_at"),
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, sent, failed
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Schema types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -311,6 +342,8 @@ export type ListingSettings = typeof listingSettings.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Payout = typeof payouts.$inferSelect;
 export type PayoutSettings = typeof payoutSettings.$inferSelect;
+export type AbandonedCart = typeof abandonedCarts.$inferSelect;
+export type EmailReminderQueue = typeof emailReminderQueue.$inferSelect;
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
@@ -354,6 +387,20 @@ export const insertSavedItemSchema = createInsertSchema(savedItems).omit({
   updatedAt: true,
 });
 export type InsertSavedItem = z.infer<typeof insertSavedItemSchema>;
+
+export const insertAbandonedCartSchema = createInsertSchema(abandonedCarts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertAbandonedCart = z.infer<typeof insertAbandonedCartSchema>;
+
+export const insertEmailReminderSchema = createInsertSchema(emailReminderQueue).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertEmailReminder = z.infer<typeof insertEmailReminderSchema>;
 
 // Buyback offers from AI evaluation
 export const buybackOffers = pgTable("buyback_offers", {

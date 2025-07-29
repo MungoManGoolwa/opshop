@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +56,7 @@ export default function Cart() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("cart");
+  const abandonmentTrackedRef = useRef(false);
 
   // Fetch cart items
   const { data: cartItems = [], isLoading: cartLoading } = useQuery({
@@ -140,6 +141,71 @@ export default function Cart() {
       toast({ title: "Error", description: "Failed to remove saved item", variant: "destructive" });
     },
   });
+
+  // Track cart abandonment
+  const trackAbandonmentMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/cart/track-abandonment");
+    },
+    onError: (error) => {
+      console.error("Failed to track cart abandonment:", error);
+    },
+  });
+
+  // Mark cart as recovered when user proceeds to checkout
+  const markRecoveredMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/cart/mark-recovered");
+    },
+    onError: (error) => {
+      console.error("Failed to mark cart as recovered:", error);
+    },
+  });
+
+  // Track cart abandonment when user navigates away with items in cart
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isAuthenticated && cartItems.length > 0 && !abandonmentTrackedRef.current) {
+        // Track abandonment when user closes tab/navigates away
+        navigator.sendBeacon('/api/cart/track-abandonment', JSON.stringify({}));
+        abandonmentTrackedRef.current = true;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && isAuthenticated && cartItems.length > 0 && !abandonmentTrackedRef.current) {
+        // Track abandonment when user switches tabs
+        trackAbandonmentMutation.mutate();
+        abandonmentTrackedRef.current = true;
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, cartItems.length, trackAbandonmentMutation]);
+
+  // Reset abandonment tracking when cart becomes empty
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      abandonmentTrackedRef.current = false;
+    }
+  }, [cartItems.length]);
+
+  // Function to handle proceeding to checkout (marks cart as recovered)
+  const handleProceedToCheckout = () => {
+    if (cartItems.length > 0) {
+      markRecoveredMutation.mutate();
+      // Navigate to checkout page
+      window.location.href = '/checkout';
+    }
+  };
 
   const calculateTotal = () => {
     return cartItems.reduce((total: number, item: CartItem) => {
@@ -409,7 +475,11 @@ export default function Cart() {
                           <span>Total</span>
                           <span>{formatPrice(calculateTotal())}</span>
                         </div>
-                        <Button className="w-full" size="lg">
+                        <Button 
+                          className="w-full" 
+                          size="lg"
+                          onClick={handleProceedToCheckout}
+                        >
                           Proceed to Checkout
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>

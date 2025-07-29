@@ -733,6 +733,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ABANDONED CART RECOVERY =====
+  
+  // Track cart abandonment when user leaves with items in cart
+  app.post("/api/cart/track-abandonment", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.trackCartAbandonment(userId);
+      res.json({ success: true, message: "Cart abandonment tracked" });
+    } catch (error) {
+      console.error("Error tracking cart abandonment:", error);
+      res.status(500).json({ message: "Failed to track cart abandonment" });
+    }
+  });
+
+  // Mark cart as recovered when user completes purchase
+  app.post("/api/cart/mark-recovered", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.markCartAsRecovered(userId);
+      res.json({ success: true, message: "Cart marked as recovered" });
+    } catch (error) {
+      console.error("Error marking cart as recovered:", error);
+      res.status(500).json({ message: "Failed to mark cart as recovered" });
+    }
+  });
+
+  // Get abandoned cart statistics (admin only)
+  app.get("/api/admin/abandoned-carts/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { abandonedCartService } = await import("./abandoned-cart-service");
+      const stats = await abandonedCartService.getAbandonedCartStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting abandoned cart stats:", error);
+      res.status(500).json({ message: "Failed to get abandoned cart statistics" });
+    }
+  });
+
+  // Process pending reminder emails (admin/cron endpoint)
+  app.post("/api/admin/abandoned-carts/process-reminders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { abandonedCartService } = await import("./abandoned-cart-service");
+      await abandonedCartService.processPendingReminders();
+      res.json({ success: true, message: "Pending reminders processed" });
+    } catch (error) {
+      console.error("Error processing reminders:", error);
+      res.status(500).json({ message: "Failed to process pending reminders" });
+    }
+  });
+
   // Message routes
   app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
     try {

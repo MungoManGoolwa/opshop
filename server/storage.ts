@@ -94,6 +94,10 @@ export interface IStorage {
   saveItemForLater(savedItem: InsertSavedItem): Promise<SavedItem>;
   moveToCartFromSaved(userId: string, productId: number): Promise<CartItem>;
   removeSavedItem(userId: string, productId: number): Promise<void>;
+
+  // Abandoned cart tracking
+  trackCartAbandonment(userId: string): Promise<void>;
+  markCartAsRecovered(userId: string): Promise<void>;
   
   // Message operations
   getConversations(userId: string): Promise<any[]>;
@@ -694,6 +698,17 @@ export class DatabaseStorage implements IStorage {
   async removeSavedItem(userId: string, productId: number): Promise<void> {
     await db.delete(savedItems)
       .where(and(eq(savedItems.userId, userId), eq(savedItems.productId, productId)));
+  }
+
+  // Abandoned cart tracking methods
+  async trackCartAbandonment(userId: string): Promise<void> {
+    const { abandonedCartService } = await import("./abandoned-cart-service");
+    await abandonedCartService.trackCartAbandonment(userId);
+  }
+
+  async markCartAsRecovered(userId: string): Promise<void> {
+    const { abandonedCartService } = await import("./abandoned-cart-service");
+    await abandonedCartService.markCartAsRecovered(userId);
   }
 
   // Message operations
