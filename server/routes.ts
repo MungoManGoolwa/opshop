@@ -20,6 +20,7 @@ import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { buybackService } from "./buyback-service";
 import { commissionService } from "./commission-service";
+import { logAdminAction, auditAdminAction, getAuditLogs, getAuditStatistics } from './admin-audit';
 import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema, insertPayoutSchema, insertCartItemSchema, insertSavedItemSchema } from "@shared/schema";
 import { z } from "zod";
 import {
@@ -58,6 +59,14 @@ import {
   securityMiddleware,
   getRateLimitStats
 } from "./rate-limiting";
+import {
+  csrfProtection,
+  getCsrfToken,
+  csrfErrorHandler,
+  addCsrfToLocals,
+  apiCsrfProtection,
+  getCsrfStats
+} from "./csrf-protection";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Security middleware
@@ -66,6 +75,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(corsMiddleware);
   app.use(securityMiddleware);
   app.use(sanitizeRequest);
+  
+  // CSRF protection for state-changing operations
+  app.use(csrfProtection);
+  app.use(addCsrfToLocals);
   
   // Add request metrics collection middleware
   app.use(collectRequestMetrics);
@@ -115,6 +128,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching rate limit stats:", error);
       res.status(500).json({ message: "Failed to fetch rate limit stats" });
+    }
+  });
+  
+  // CSRF token endpoint
+  app.get('/api/csrf-token', getCsrfToken);
+  
+  // CSRF protection statistics (admin only)
+  app.get('/api/admin/csrf-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const stats = getCsrfStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching CSRF stats:", error);
+      res.status(500).json({ message: "Failed to fetch CSRF stats" });
     }
   });
 
@@ -1241,8 +1275,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin audit logs API
+  app.get('/api/admin/audit-logs', isAuthenticated, auditAdminAction('view_audit_logs', 'audit_logs'), async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const filters = {
+        adminUserId: req.query.adminUserId as string,
+        action: req.query.action as string,
+        targetType: req.query.targetType as string,
+        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+        success: req.query.success === 'true' ? true : req.query.success === 'false' ? false : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 100,
+        offset: req.query.offset ? parseInt(req.query.offset as string) : 0
+      };
+      
+      const auditData = getAuditLogs(filters);
+      res.json(auditData);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
+  app.get('/api/admin/audit-statistics', isAuthenticated, auditAdminAction('view_audit_statistics', 'audit_statistics'), async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const timeRange = req.query.startDate && req.query.endDate ? {
+        startDate: new Date(req.query.startDate as string),
+        endDate: new Date(req.query.endDate as string)
+      } : undefined;
+      
+      const statistics = getAuditStatistics(timeRange);
+      res.json(statistics);
+    } catch (error) {
+      console.error("Error fetching audit statistics:", error);
+      res.status(500).json({ message: "Failed to fetch audit statistics" });
+    }
+  });
+
   // Admin business settings routes
-  app.get('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/settings', isAuthenticated, auditAdminAction('view_settings', 'business_settings'), async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);
@@ -1259,7 +1344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/settings', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/settings', isAuthenticated, auditAdminAction('update_settings', 'business_settings'), async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);
@@ -2197,6 +2282,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to update listing settings' });
     }
   });
+
+  // CSRF error handling middleware (must be after routes)
+  app.use(csrfErrorHandler);
 
   const httpServer = createServer(app);
   return httpServer;
