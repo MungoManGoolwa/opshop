@@ -22,6 +22,24 @@ import { buybackService } from "./buyback-service";
 import { commissionService } from "./commission-service";
 import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema, insertPayoutSchema, insertCartItemSchema, insertSavedItemSchema } from "@shared/schema";
 import { z } from "zod";
+import {
+  validateBody,
+  validateQuery,
+  validateParams,
+  validate,
+  productQuerySchema,
+  cartActionSchema,
+  guestCartActionSchema,
+  messageSchema,
+  buybackEvaluationSchema,
+  orderCreateSchema,
+  guestOrderCreateSchema,
+  adminActionSchema,
+  paginationSchema,
+  idParamSchema,
+  uuidParamSchema,
+  sanitizeInput
+} from "./validation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Add request metrics collection middleware
@@ -57,16 +75,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== PRODUCT SEARCH AND DISCOVERY =====
 
   // Product search route with fuzzy matching
-  app.get("/api/products/search", async (req, res) => {
+  app.get("/api/products/search", validateQuery(z.object({
+    q: z.string().min(2, "Search query must be at least 2 characters"),
+    limit: z.string().optional().transform(val => Math.min(100, parseInt(val || "20")))
+  })), async (req, res) => {
     try {
-      const query = req.query.q as string;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const { q: query, limit } = req.query as any;
       
-      if (!query || query.trim().length < 2) {
-        return res.json([]);
-      }
-
-      const products = await storage.searchProducts(query, limit);
+      const products = await storage.searchProducts(sanitizeInput(query), limit);
       res.json(products);
     } catch (error) {
       console.error("Error searching products:", error);
@@ -210,15 +226,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/products/:id', async (req, res) => {
+  app.get('/api/products/:id', validateParams(idParamSchema), async (req, res) => {
     try {
-      const product = await storage.getProduct(parseInt(req.params.id));
+      const { id } = req.params as any;
+      const product = await storage.getProduct(id);
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
       
       // Increment view count
-      await storage.incrementProductViews(parseInt(req.params.id));
+      await storage.incrementProductViews(id);
       
       res.json(product);
     } catch (error) {
@@ -246,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/products', isAuthenticated, async (req: any, res) => {
+  app.post('/api/products', isAuthenticated, validateBody(insertProductSchema.omit({ id: true, sellerId: true, createdAt: true, updatedAt: true })), async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);
@@ -598,11 +615,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add item to cart
-  app.post("/api/cart", isAuthenticated, async (req: any, res) => {
+  app.post("/api/cart", isAuthenticated, validateBody(cartActionSchema), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const cartItemData = insertCartItemSchema.parse({ ...req.body, userId });
-      const cartItem = await storage.addToCart(cartItemData);
+      const { productId, quantity } = req.body;
+      const cartItem = await storage.addToCart({ userId, productId, quantity });
       res.json(cartItem);
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -611,9 +628,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update cart item quantity
-  app.patch("/api/cart/:cartItemId", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/cart/:cartItemId", isAuthenticated, validate({
+    params: idParamSchema.extend({ cartItemId: z.string().transform(val => parseInt(val)) }),
+    body: z.object({ quantity: z.number().int().min(1).max(10) })
+  }), async (req: any, res) => {
     try {
-      const cartItemId = parseInt(req.params.cartItemId);
+      const { cartItemId } = req.params;
       const { quantity } = req.body;
       const cartItem = await storage.updateCartItemQuantity(cartItemId, quantity);
       res.json(cartItem);
@@ -651,9 +671,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== GUEST CART OPERATIONS =====
   
   // Get guest cart items (no authentication required)
-  app.get("/api/guest-cart/:sessionId", async (req, res) => {
+  app.get("/api/guest-cart/:sessionId", validateParams(uuidParamSchema), async (req, res) => {
     try {
-      const sessionId = req.params.sessionId;
+      const { sessionId } = req.params;
       const cartItems = await storage.getGuestCartItems(sessionId);
       res.json(cartItems);
     } catch (error) {
@@ -663,21 +683,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add item to guest cart (no authentication required)
-  app.post("/api/guest-cart", async (req, res) => {
+  app.post("/api/guest-cart", validateBody(guestCartActionSchema), async (req, res) => {
     try {
-      const { sessionId, productId, quantity = 1 } = req.body;
+      const { sessionId, productId, quantity } = req.body;
       
-      if (!sessionId || !productId) {
-        return res.status(400).json({ message: "sessionId and productId are required" });
-      }
-
-      const guestCartData = {
-        sessionId,
-        productId: parseInt(productId),
-        quantity: parseInt(quantity),
-      };
-
-      const cartItem = await storage.addToGuestCart(guestCartData);
+      const cartItem = await storage.addToGuestCart({ sessionId, productId, quantity });
       res.json(cartItem);
     } catch (error) {
       console.error("Error adding to guest cart:", error);
