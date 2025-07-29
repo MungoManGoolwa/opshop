@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ViewProvider } from "@/contexts/ViewContext";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -127,6 +129,8 @@ function App() {
           <TooltipProvider>
             <Router />
             <Toaster />
+            <PWAInstallPrompt />
+            <OfflineIndicator />
           </TooltipProvider>
         </ViewProvider>
       </QueryClientProvider>
