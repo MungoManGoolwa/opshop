@@ -87,6 +87,18 @@ node scripts/build-with-checks.js
 3. Server bundle build (esbuild)
 4. Postbuild verification and summary
 
+### 🏗️ Quick Build (`build-skip-types.js`)
+Runs the build process without type checking for faster iterations.
+
+```bash
+node scripts/build-skip-types.js
+```
+
+**Use when:**
+- You need a quick build for testing
+- TypeScript errors exist but you want to build anyway
+- Rapid prototyping or demonstrations
+
 ### Manual Usage
 ```bash
 # Individual steps
