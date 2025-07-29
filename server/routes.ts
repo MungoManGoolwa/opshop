@@ -2,6 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
+import { 
+  healthCheck, 
+  metricsEndpoint, 
+  readinessCheck, 
+  livenessCheck,
+  collectRequestMetrics 
+} from "./health";
 import Stripe from "stripe";
 
 import { env } from "./config/env";
@@ -17,8 +24,23 @@ import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertO
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add request metrics collection middleware
+  app.use(collectRequestMetrics);
+
   // Setup Replit Auth (supports email, Google, Facebook, etc.)
   await setupAuth(app);
+
+  // Health check and monitoring endpoints
+  app.get('/health', healthCheck);
+  app.get('/health/ready', readinessCheck);
+  app.get('/health/live', livenessCheck);
+  app.get('/metrics', metricsEndpoint);
+  
+  // Advanced monitoring dashboard (admin only)
+  app.get('/api/admin/monitoring', isAuthenticated, async (req: any, res) => {
+    const { monitoringDashboard } = await import('./monitoring');
+    await monitoringDashboard(req, res);
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
