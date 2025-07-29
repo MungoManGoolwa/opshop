@@ -1,0 +1,12 @@
+{
+  "migrations": [
+    {
+      "filename": "0000_steady_fallen_one.sql",
+      "generatedAt": "2025-07-29T02:49:18.291Z",
+      "checksum": "4fbe110a9390e75d5cfa2e13cd01351e",
+      "applied": false
+    }
+  ],
+  "lastApplied": null,
+  "rollbacks": []
+}
