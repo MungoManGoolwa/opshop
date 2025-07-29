@@ -13,6 +13,7 @@ import ReviewSummary from "@/components/reviews/review-summary";
 import ReviewList from "@/components/reviews/review-list";
 import { ImageGallery } from "@/components/ui/image-gallery";
 import { ZoomImage } from "@/components/ui/zoom-image";
+import { Breadcrumbs, ProductBreadcrumbs } from "@/components/navigation/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -158,11 +159,13 @@ export default function ProductDetail() {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-          <Link href="/" className="hover:text-primary">Home</Link>
-          <span>/</span>
-          <span className="text-gray-900">{productData.title}</span>
+        {/* Enhanced Breadcrumbs */}
+        <div className="mb-6">
+          <ProductBreadcrumbs
+            categoryName={productData.category?.name}
+            categorySlug={productData.category?.slug}
+            productTitle={productData.title}
+          />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">

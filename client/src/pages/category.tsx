@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import ProductGrid from "@/components/products/product-grid";
+import { CategoryBreadcrumbs } from "@/components/navigation/breadcrumbs";
 import ProductFilters from "@/components/products/product-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -61,15 +62,23 @@ export default function Category() {
       {/* Category Header */}
       <section className="bg-white py-8 border-b">
         <div className="container mx-auto px-4">
+          {/* Breadcrumbs */}
+          <div className="mb-6">
+            <CategoryBreadcrumbs 
+              categoryName={currentCategory.name}
+              parentCategory={currentCategory.parent ? {
+                name: currentCategory.parent.name,
+                slug: currentCategory.parent.slug
+              } : undefined}
+            />
+          </div>
+          
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{currentCategory.name}</h1>
               <p className="text-gray-600 mt-2">
                 {categoryProducts.length} {categoryProducts.length === 1 ? 'item' : 'items'} available
               </p>
-            </div>
-            <div className="text-sm text-gray-500">
-              Home › {currentCategory.name}
             </div>
           </div>
         </div>

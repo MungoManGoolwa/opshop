@@ -7,6 +7,7 @@ import MobileNav from "@/components/layout/mobile-nav";
 import ProductGrid from "@/components/products/product-grid";
 import ProductFilters from "@/components/products/product-filters";
 import LiveSearch from "@/components/search/live-search";
+import { SearchBreadcrumbs } from "@/components/navigation/breadcrumbs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,14 @@ export default function SearchPage() {
       <MobileNav />
       
       <main className="flex-1 container mx-auto px-4 py-8">
+        {/* Breadcrumbs */}
+        <div className="mb-6">
+          <SearchBreadcrumbs 
+            query={searchQuery}
+            categoryName={filters.categoryId ? "Category" : undefined}
+          />
+        </div>
+
         {/* Search Header */}
         <div className="mb-8">
           <div className="max-w-2xl mx-auto mb-6">

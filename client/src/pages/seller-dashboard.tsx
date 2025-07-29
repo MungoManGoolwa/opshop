@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import { 
   Plus, 
   DollarSign, 
@@ -80,6 +81,11 @@ export default function SellerDashboard() {
         <Header />
         
         <div className="container mx-auto px-4 py-8">
+          {/* Breadcrumbs */}
+          <div className="mb-6">
+            <Breadcrumbs />
+          </div>
+
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold">Seller Dashboard</h1>

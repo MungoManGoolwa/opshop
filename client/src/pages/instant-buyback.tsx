@@ -25,6 +25,7 @@ import {
   CreditCard
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 
 export default function InstantBuyback() {
   const { isAuthenticated } = useAuth();
@@ -185,6 +186,11 @@ export default function InstantBuyback() {
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
+          {/* Breadcrumbs */}
+          <div className="mb-6">
+            <Breadcrumbs />
+          </div>
+
           {/* Header Section */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4 text-primary">
