@@ -104,53 +104,56 @@ export default function Header() {
               <span className="text-primary font-medium">🇦🇺 Australian Marketplace</span>
             </div>
           <div className="flex items-center space-x-4">
-            <Link href="/about" className="text-gray-600 hover:text-primary">
-              About Us
+            <Link href="/about" className="text-gray-600 hover:text-primary" title="About Us">
+              <span className="hidden md:inline">About Us</span>
+              <HelpCircle className="h-4 w-4 md:hidden" />
             </Link>
             {isAuthenticated && (
-              <Link href="/instant-buyback" className="text-green-600 hover:text-green-700 font-medium">
-                <Sparkles className="inline h-4 w-4 mr-1" />
-                Instant Buyback
+              <Link href="/instant-buyback" className="text-green-600 hover:text-green-700 font-medium" title="Instant Buyback">
+                <Sparkles className="h-4 w-4 mr-0 md:mr-1" />
+                <span className="hidden md:inline">Instant Buyback</span>
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/wallet" className="text-gray-600 hover:text-primary">
-                <CreditCard className="inline h-4 w-4 mr-1" />
-                Wallet
+              <Link href="/wallet" className="text-gray-600 hover:text-primary" title="Wallet">
+                <CreditCard className="h-4 w-4 mr-0 md:mr-1" />
+                <span className="hidden md:inline">Wallet</span>
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/messages" className="text-gray-600 hover:text-primary">
-                <MessageCircle className="inline h-4 w-4 mr-1" />
-                Messages
+              <Link href="/messages" className="text-gray-600 hover:text-primary" title="Messages">
+                <MessageCircle className="h-4 w-4 mr-0 md:mr-1" />
+                <span className="hidden md:inline">Messages</span>
               </Link>
             )}
             {isAuthenticated && ((user as any)?.role === 'seller' || (user as any)?.role === 'business' || (user as any)?.role === 'admin') && (
-              <Link href="/seller/dashboard" className="text-gray-600 hover:text-primary">
-                <Store className="inline h-4 w-4 mr-1" />
-                Sell
+              <Link href="/seller/dashboard" className="text-gray-600 hover:text-primary" title="Seller Dashboard">
+                <Store className="h-4 w-4 mr-0 md:mr-1" />
+                <span className="hidden md:inline">Sell</span>
               </Link>
             )}
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-600">
+              <div className="flex items-center space-x-1 md:space-x-2">
+                <span className="text-gray-600 hidden md:inline">
                   {(user as any)?.firstName || "User"}
                 </span>
                 <div className="flex items-center space-x-1">
                   <button 
                     onClick={() => window.location.href = "/api/logout"}
-                    className="text-gray-600 hover:text-primary text-sm"
+                    className="text-gray-600 hover:text-primary text-xs md:text-sm"
                     title="Switch user (keep logged in to Replit)"
                   >
-                    Switch User
+                    <span className="hidden md:inline">Switch User</span>
+                    <User className="h-4 w-4 md:hidden" />
                   </button>
-                  <span className="text-gray-400">|</span>
+                  <span className="text-gray-400 hidden md:inline">|</span>
                   <button 
                     onClick={() => window.location.href = "/api/logout?force=true"}
-                    className="text-gray-600 hover:text-red-600 text-sm"
+                    className="text-gray-600 hover:text-red-600 text-xs md:text-sm"
                     title="Complete logout from all accounts"
                   >
-                    Logout
+                    <span className="hidden md:inline">Logout</span>
+                    <span className="md:hidden">Out</span>
                   </button>
                 </div>
               </div>
@@ -158,9 +161,10 @@ export default function Header() {
               <button 
                 onClick={() => window.location.href = "/api/login"}
                 className="text-gray-600 hover:text-primary"
+                title="Login"
               >
-                <User className="inline h-4 w-4 mr-1" />
-                Login
+                <User className="h-4 w-4 mr-0 md:mr-1" />
+                <span className="hidden md:inline">Login</span>
               </button>
             )}
           </div>
@@ -169,12 +173,12 @@ export default function Header() {
         {/* Main Navigation */}
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/" className="flex items-center space-x-1 md:space-x-2">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <Recycle className="h-5 w-5 text-white" />
               </div>
-              <span className="text-2xl font-bold text-primary">Opshop</span>
-              <span className="text-lg text-secondary font-medium">Online</span>
+              <span className="text-xl md:text-2xl font-bold text-primary">Opshop</span>
+              <span className="text-sm md:text-lg text-secondary font-medium">Online</span>
             </Link>
             
             {/* Search Bar */}
@@ -197,12 +201,13 @@ export default function Header() {
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
             <Button 
               variant="ghost" 
               size="sm" 
               className="relative"
               onClick={handleWishlistClick}
+              title="Wishlist"
             >
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
@@ -216,6 +221,7 @@ export default function Header() {
               size="sm" 
               className="relative"
               onClick={handleCartClick}
+              title="Shopping Cart"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
@@ -239,7 +245,7 @@ export default function Header() {
                         <UserCircle className="h-5 w-5 text-gray-600" />
                       </div>
                     )}
-                    <span className="hidden lg:block">
+                    <span className="hidden md:inline">
                       Dashboard
                     </span>
                   </Button>
@@ -250,8 +256,10 @@ export default function Header() {
               <Button 
                 onClick={() => window.location.href = "/api/login"}
                 size="sm"
+                title="Login"
               >
-                Login
+                <span className="hidden md:inline">Login</span>
+                <User className="h-4 w-4 md:hidden" />
               </Button>
             )}
           </div>

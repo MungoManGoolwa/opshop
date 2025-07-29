@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { sql, relations } from 'drizzle-orm';
 import {
   index,
   jsonb,
@@ -346,6 +346,102 @@ export const emailReminderQueue = pgTable("email_reminder_queue", {
 // Schema types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Seller achievements and gamification system
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // sales, listings, reviews, community, special
+  icon: varchar("icon", { length: 100 }).notNull(),
+  badgeColor: varchar("badge_color", { length: 20 }).default("blue"),
+  requirement: jsonb("requirement").notNull(), // { type: "sales_count", value: 10 }
+  reward: jsonb("reward"), // { type: "listing_boost", value: 5 } or { type: "commission_discount", value: 0.5 }
+  isActive: boolean("is_active").default(true),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  achievementId: integer("achievement_id").notNull().references(() => achievements.id),
+  unlockedAt: timestamp("unlocked_at").defaultNow(),
+  progress: jsonb("progress"), // Current progress towards achievement
+  isDisplayed: boolean("is_displayed").default(true), // User can choose to display or hide
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sellerStats = pgTable("seller_stats", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  totalSales: integer("total_sales").default(0),
+  totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }).default("0"),
+  totalListings: integer("total_listings").default(0),
+  activeListing: integer("active_listings").default(0),
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default("0"),
+  totalReviews: integer("total_reviews").default(0),
+  responseRate: decimal("response_rate", { precision: 3, scale: 2 }).default("0"), // Message response rate
+  responseTime: integer("response_time").default(0), // Average response time in hours
+  joinedAt: timestamp("joined_at").defaultNow(),
+  lastActiveAt: timestamp("last_active_at").defaultNow(),
+  level: integer("level").default(1),
+  experiencePoints: integer("experience_points").default(0),
+  consecutiveSaleDays: integer("consecutive_sale_days").default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sellerBadges = pgTable("seller_badges", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  badgeType: varchar("badge_type", { length: 50 }).notNull(), // verified, top_seller, eco_warrior, fast_responder
+  badgeLevel: integer("badge_level").default(1), // Bronze(1), Silver(2), Gold(3), Platinum(4)
+  earnedAt: timestamp("earned_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // Some badges may expire
+  isActive: boolean("is_active").default(true),
+  criteria: jsonb("criteria"), // Criteria used to earn this badge
+});
+
+// Relations for achievements system
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  userAchievements: many(userAchievements),
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.id],
+  }),
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id],
+  }),
+}));
+
+export const sellerStatsRelations = relations(sellerStats, ({ one }) => ({
+  user: one(users, {
+    fields: [sellerStats.userId],
+    references: [users.id],
+  }),
+}));
+
+export const sellerBadgesRelations = relations(sellerBadges, ({ one }) => ({
+  user: one(users, {
+    fields: [sellerBadges.userId],
+    references: [users.id],
+  }),
+}));
+
+// Types for achievements
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = typeof achievements.$inferInsert;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+export type SellerStats = typeof sellerStats.$inferSelect;
+export type InsertSellerStats = typeof sellerStats.$inferInsert;
+export type SellerBadge = typeof sellerBadges.$inferSelect;
+export type InsertSellerBadge = typeof sellerBadges.$inferInsert;
 
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
