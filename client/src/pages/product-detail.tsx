@@ -23,6 +23,7 @@ import { SocialShareButton } from "@/components/social/SocialShareButton";
 import { QuickShareButtons } from "@/components/social/QuickShareButtons";
 import { useSEO, truncateDescription } from "@/hooks/useSEO";
 import SEOHead from "@/components/SEOHead";
+import SimilarProducts from "@/components/products/SimilarProducts";
 import { 
   Heart, 
   MapPin, 
@@ -389,6 +390,13 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+
+        {/* Similar Products Comparison */}
+        <SimilarProducts 
+          productId={productData.id} 
+          currentProduct={productData} 
+          limit={6} 
+        />
       </div>
 
       <Footer />

@@ -73,6 +73,8 @@ export interface IStorage {
     radius?: number;
   }): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
+  getSimilarProducts(productId: number, limit?: number): Promise<Product[]>;
+  getProductsForComparison(productIds: number[]): Promise<Product[]>;
   getProductsBySeller(sellerId: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product>;
@@ -535,6 +537,131 @@ export class DatabaseStorage implements IStorage {
   async getProduct(id: number): Promise<Product | undefined> {
     const [product] = await db.select().from(products).where(eq(products.id, id));
     return product || undefined;
+  }
+
+  async getSimilarProducts(productId: number, limit: number = 6): Promise<Product[]> {
+    // Get the original product to find similar items
+    const originalProduct = await this.getProduct(productId);
+    if (!originalProduct) {
+      return [];
+    }
+
+    const conditions = [
+      eq(products.status, "available"),
+      sql`${products.id} != ${productId}` // Exclude the original product
+    ];
+
+    // Primary match: same category
+    const categoryConditions = [...conditions];
+    if (originalProduct.categoryId) {
+      categoryConditions.push(eq(products.categoryId, originalProduct.categoryId));
+    }
+
+    // Add specific attribute matching based on category
+    const specificConditions = [...categoryConditions];
+    
+    // Electronics: match brand, model, or storage capacity
+    if (originalProduct.brand) {
+      specificConditions.push(eq(products.brand, originalProduct.brand));
+    }
+    if (originalProduct.model) {
+      specificConditions.push(ilike(products.model, `%${originalProduct.model}%`));
+    }
+    if (originalProduct.storageCapacity) {
+      specificConditions.push(eq(products.storageCapacity, originalProduct.storageCapacity));
+    }
+
+    // Clothing: match size, type, gender
+    if (originalProduct.clothingSize) {
+      specificConditions.push(eq(products.clothingSize, originalProduct.clothingSize));
+    }
+    if (originalProduct.clothingType) {
+      specificConditions.push(eq(products.clothingType, originalProduct.clothingType));
+    }
+    if (originalProduct.clothingGender) {
+      specificConditions.push(eq(products.clothingGender, originalProduct.clothingGender));
+    }
+
+    // Vehicles: match make, fuel type, transmission
+    if (originalProduct.make) {
+      specificConditions.push(eq(products.make, originalProduct.make));
+    }
+    if (originalProduct.fuelType) {
+      specificConditions.push(eq(products.fuelType, originalProduct.fuelType));
+    }
+    if (originalProduct.transmission) {
+      specificConditions.push(eq(products.transmission, originalProduct.transmission));
+    }
+
+    // Books: match author or genre
+    if (originalProduct.author) {
+      specificConditions.push(ilike(products.author, `%${originalProduct.author}%`));
+    }
+    if (originalProduct.genre) {
+      specificConditions.push(eq(products.genre, originalProduct.genre));
+    }
+
+    // Try to get specific matches first
+    let similarProducts = await db.select()
+      .from(products)
+      .where(and(...specificConditions))
+      .orderBy(desc(products.views), desc(products.createdAt))
+      .limit(limit);
+
+    // If not enough specific matches, fill with category matches
+    if (similarProducts.length < limit && originalProduct.categoryId) {
+      const remaining = limit - similarProducts.length;
+      const excludeIds = [productId, ...similarProducts.map(p => p.id)];
+      
+      const categoryMatches = await db.select()
+        .from(products)
+        .where(and(
+          eq(products.status, "available"),
+          eq(products.categoryId, originalProduct.categoryId),
+          sql`${products.id} NOT IN (${sql.join(excludeIds.map(id => sql`${id}`), sql`, `)})`
+        ))
+        .orderBy(desc(products.views), desc(products.createdAt))
+        .limit(remaining);
+
+      similarProducts = [...similarProducts, ...categoryMatches];
+    }
+
+    // If still not enough, fill with products in similar price range
+    if (similarProducts.length < limit) {
+      const remaining = limit - similarProducts.length;
+      const excludeIds = [productId, ...similarProducts.map(p => p.id)];
+      const minPrice = parseFloat(originalProduct.price) * 0.5; // 50% of original price
+      const maxPrice = parseFloat(originalProduct.price) * 2.0; // 200% of original price
+
+      const priceMatches = await db.select()
+        .from(products)
+        .where(and(
+          eq(products.status, "available"),
+          gte(products.price, minPrice.toString()),
+          lte(products.price, maxPrice.toString()),
+          sql`${products.id} NOT IN (${sql.join(excludeIds.map(id => sql`${id}`), sql`, `)})`
+        ))
+        .orderBy(desc(products.views), desc(products.createdAt))
+        .limit(remaining);
+
+      similarProducts = [...similarProducts, ...priceMatches];
+    }
+
+    return similarProducts.slice(0, limit);
+  }
+
+  async getProductsForComparison(productIds: number[]): Promise<Product[]> {
+    if (productIds.length === 0) {
+      return [];
+    }
+
+    return await db.select()
+      .from(products)
+      .where(and(
+        eq(products.status, "available"),
+        sql`${products.id} IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)})`
+      ))
+      .orderBy(desc(products.views), desc(products.createdAt));
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {

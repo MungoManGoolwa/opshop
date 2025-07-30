@@ -408,6 +408,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get similar products for comparison
+  app.get('/api/products/:id/similar', 
+    validateParams(z.object({
+      id: z.string().transform(val => parseInt(val)).pipe(z.number())
+    })),
+    validateQuery(z.object({
+      limit: z.string().optional().transform(val => Math.min(12, parseInt(val || "6"))).pipe(z.number()).optional()
+    })),
+    async (req, res) => {
+    try {
+      const { id } = req.params as any;
+      const { limit } = req.query as any;
+      
+      const similarProducts = await storage.getSimilarProducts(id, limit || 6);
+      res.json(similarProducts);
+    } catch (error) {
+      console.error("Error fetching similar products:", error);
+      res.status(500).json({ message: "Failed to fetch similar products" });
+    }
+  });
+
+  // Get multiple products for comparison view
+  app.post('/api/products/compare',
+    validateBody(z.object({
+      productIds: z.array(z.number()).min(1).max(6) // Maximum 6 products for comparison
+    })),
+    async (req, res) => {
+    try {
+      const { productIds } = req.body;
+      
+      const products = await storage.getProductsForComparison(productIds);
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products for comparison:", error);
+      res.status(500).json({ message: "Failed to fetch products for comparison" });
+    }
+  });
+
   app.post('/api/products', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
