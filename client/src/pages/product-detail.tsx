@@ -42,7 +42,17 @@ export default function ProductDetail() {
   const queryClient = useQueryClient();
   // Remove currentImageIndex state as it's now handled by ImageGallery
 
-  // SEO Metadata
+  const { data: product, isLoading, error } = useQuery({
+    queryKey: ["/api/products", id],
+    enabled: !!id,
+  });
+
+  // Type guard to check if product data is loaded
+  const isProductLoaded = product && typeof product === 'object' && 'id' in product;
+  // Cast product to any to avoid TypeScript errors while maintaining functionality
+  const productData = isProductLoaded ? (product as any) : null;
+
+  // SEO Metadata - now that productData is defined
   useSEO({
     title: productData ? `${productData.title} - $${productData.price} | Opshop Online` : "Product Details - Opshop Online",
     description: productData ? truncateDescription(`${productData.description} Located in ${productData.location}. Condition: ${productData.condition}. ${productData.shippingCost && parseFloat(productData.shippingCost) > 0 ? `Shipping: $${productData.shippingCost}` : 'Free shipping'}.`) : "View product details on Australia's sustainable marketplace",
@@ -55,16 +65,6 @@ export default function ProductDetail() {
     condition: productData?.condition,
     location: productData?.location,
   });
-
-  const { data: product, isLoading, error } = useQuery({
-    queryKey: ["/api/products", id],
-    enabled: !!id,
-  });
-
-  // Type guard to check if product data is loaded
-  const isProductLoaded = product && typeof product === 'object' && 'id' in product;
-  // Cast product to any to avoid TypeScript errors while maintaining functionality
-  const productData = isProductLoaded ? (product as any) : null;
 
   const addToWishlistMutation = useMutation({
     mutationFn: async () => {
