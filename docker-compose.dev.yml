@@ -1,0 +1,60 @@
+version: '3.8'
+
+# Development version with hot reload and debugging
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: opshop-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: opshop_dev
+      POSTGRES_USER: opshop_dev
+      POSTGRES_PASSWORD: dev_password_123
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: opshop-redis-dev
+    restart: unless-stopped
+    command: redis-server --requirepass dev_redis_123
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6380:6379"
+
+  # Development server with hot reload
+  app-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: opshop-app-dev
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql://opshop_dev:dev_password_123@postgres:5432/opshop_dev
+      NODE_ENV: development
+      PORT: 5000
+      SESSION_SECRET: dev_session_secret_not_for_production
+      REPLIT_DOMAINS: localhost,127.0.0.1,0.0.0.0
+      REPL_ID: opshop-dev-docker
+    ports:
+      - "5000:5000"
+      - "5001:5001"  # Vite dev server
+    volumes:
+      - .:/app
+      - node_modules_dev:/app/node_modules
+      - uploads_dev_data:/app/uploads
+    command: ["npm", "run", "dev"]
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+  uploads_dev_data:
+  node_modules_dev:

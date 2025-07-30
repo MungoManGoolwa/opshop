@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: opshop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: opshop
+      POSTGRES_USER: opshop_user
+      POSTGRES_PASSWORD: opshop_secure_password_2024
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opshop_user -d opshop"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for session storage and caching
+  redis:
+    image: redis:7-alpine
+    container_name: opshop-redis
+    restart: unless-stopped
+    command: redis-server --requirepass opshop_redis_password_2024
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Main Application
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: opshop-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql://opshop_user:opshop_secure_password_2024@postgres:5432/opshop
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: opshop_user
+      PGPASSWORD: opshop_secure_password_2024
+      PGDATABASE: opshop
+      
+      # Application Configuration
+      NODE_ENV: production
+      PORT: 5000
+      SESSION_SECRET: your_super_secure_session_secret_change_this_in_production
+      
+      # Domain Configuration (update these for your setup)
+      REPLIT_DOMAINS: localhost,127.0.0.1,0.0.0.0
+      REPL_ID: opshop-local-docker
+      ISSUER_URL: https://replit.com/oidc
+      
+      # API Keys (set these in .env file - see .env.example)
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      VITE_STRIPE_PUBLIC_KEY: ${VITE_STRIPE_PUBLIC_KEY:-}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      
+      # Analytics and Monitoring (optional)
+      VITE_GA_MEASUREMENT_ID: ${VITE_GA_MEASUREMENT_ID:-}
+      VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    ports:
+      - "5000:5000"
+    volumes:
+      - uploads_data:/app/uploads
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Database Migration Service (runs once on startup)
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: opshop-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://opshop_user:opshop_secure_password_2024@postgres:5432/opshop
+      NODE_ENV: production
+    command: ["sh", "-c", "npm run db:push && npm run db:seed || true"]
+    volumes:
+      - ./drizzle:/app/drizzle
+      - ./migrations:/app/migrations
+    restart: "no"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  default:
+    name: opshop-network
