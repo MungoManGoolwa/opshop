@@ -29,7 +29,7 @@ export default function LocationSearch({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Suburb[]>([]);
-  const [selectedRadius, setSelectedRadius] = useState(25); // Default 25km
+  const [selectedRadius, setSelectedRadius] = useState(selectedLocation?.radius || 25); // Use existing radius or default 25km
   const searchRef = useRef<HTMLDivElement>(null);
 
   // Search suburbs when query changes
@@ -37,6 +37,13 @@ export default function LocationSearch({
     const results = searchSuburbs(searchQuery);
     setSearchResults(results);
   }, [searchQuery]);
+
+  // Sync selected radius when selectedLocation changes
+  useEffect(() => {
+    if (selectedLocation?.radius && selectedLocation.radius !== selectedRadius) {
+      setSelectedRadius(selectedLocation.radius);
+    }
+  }, [selectedLocation]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
+import FeedbackCelebration from "@/components/seller/feedback-celebration";
 import { 
   Plus, 
   DollarSign, 
@@ -74,6 +75,23 @@ export default function SellerDashboard() {
   const totalViews = Array.isArray(products) ? products.reduce((sum: number, p: any) => sum + (p.views || 0), 0) : 0;
   const totalEarnings = Array.isArray(commissions) ? commissions.reduce((sum: number, c: any) => sum + parseFloat(c.salePrice || "0"), 0) : 0;
   const totalCommissions = Array.isArray(commissions) ? commissions.reduce((sum: number, c: any) => sum + parseFloat(c.commissionAmount || "0"), 0) : 0;
+
+  // Mock data for celebration component - in a real app this would come from APIs
+  const mockLatestReview = {
+    id: "rev-123",
+    rating: 5,
+    comment: "Amazing vintage dress, exactly as described! Fast shipping and great communication.",
+    buyerName: "Sarah M.",
+    productName: "Vintage Floral Summer Dress",
+    createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(), // 2 minutes ago
+  };
+
+  const mockSellerStats = {
+    totalReviews: 47,
+    averageRating: 4.8,
+    totalSales: soldProducts,
+    achievementLevel: "Gold Seller",
+  };
 
   return (
     <ProtectedRoute allowedRoles={["seller", "business", "admin"]}>
@@ -148,6 +166,14 @@ export default function SellerDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Feedback Celebration Component */}
+          <div className="mb-8">
+            <FeedbackCelebration 
+              latestReview={mockLatestReview}
+              sellerStats={mockSellerStats}
+            />
           </div>
 
           <Tabs defaultValue="products" className="space-y-6">
