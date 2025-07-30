@@ -132,32 +132,7 @@ export default function Header() {
                 <span className="hidden md:inline">Sell</span>
               </Link>
             )}
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-1 md:space-x-2">
-                <span className="text-gray-600 hidden md:inline">
-                  {(user as any)?.firstName || "User"}
-                </span>
-                <div className="flex items-center space-x-1">
-                  <button 
-                    onClick={() => window.location.href = "/api/logout"}
-                    className="text-gray-600 hover:text-primary text-xs md:text-sm"
-                    title="Switch user (keep logged in to Replit)"
-                  >
-                    <span className="hidden md:inline">Switch User</span>
-                    <User className="h-4 w-4 md:hidden" />
-                  </button>
-                  <span className="text-gray-400 hidden md:inline">|</span>
-                  <button 
-                    onClick={() => window.location.href = "/api/logout?force=true"}
-                    className="text-gray-600 hover:text-red-600 text-xs md:text-sm"
-                    title="Complete logout from all accounts"
-                  >
-                    <span className="hidden md:inline">Logout</span>
-                    <span className="md:hidden">Out</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
+            {!isAuthenticated && (
               <button 
                 onClick={() => window.location.href = "/api/login"}
                 className="text-gray-600 hover:text-primary"
