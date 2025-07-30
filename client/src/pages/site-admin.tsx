@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -82,6 +83,7 @@ interface SystemSettings {
 export default function SiteAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
@@ -396,7 +398,11 @@ export default function SiteAdmin() {
                               {user.isVerified ? 'Unverify' : 'Verify'}
                             </Button>
                             
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setLocation('/admin/users')}
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
                             
