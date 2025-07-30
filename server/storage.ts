@@ -539,7 +539,7 @@ export class DatabaseStorage implements IStorage {
     return product || undefined;
   }
 
-  async getSimilarProducts(productId: number, limit: number = 6): Promise<Product[]> {
+  async getSimilarProducts(productId: number, limit: number = 6): Promise<(Product & { sellerName?: string })[]> {
     // Get the original product to find similar items
     const originalProduct = await this.getProduct(productId);
     if (!originalProduct) {
@@ -560,108 +560,178 @@ export class DatabaseStorage implements IStorage {
     // Add specific attribute matching based on category
     const specificConditions = [...categoryConditions];
     
-    // Electronics: match brand, model, or storage capacity
-    if (originalProduct.brand) {
+    // Only add non-null conditions to avoid Drizzle issues
+    if (originalProduct.brand && originalProduct.brand.trim()) {
       specificConditions.push(eq(products.brand, originalProduct.brand));
     }
-    if (originalProduct.model) {
+    if (originalProduct.model && originalProduct.model.trim()) {
       specificConditions.push(ilike(products.model, `%${originalProduct.model}%`));
     }
-    if (originalProduct.storageCapacity) {
+    if (originalProduct.storageCapacity && originalProduct.storageCapacity.trim()) {
       specificConditions.push(eq(products.storageCapacity, originalProduct.storageCapacity));
     }
-
-    // Clothing: match size, type, gender
-    if (originalProduct.clothingSize) {
+    if (originalProduct.clothingSize && originalProduct.clothingSize.trim()) {
       specificConditions.push(eq(products.clothingSize, originalProduct.clothingSize));
     }
-    if (originalProduct.clothingType) {
+    if (originalProduct.clothingType && originalProduct.clothingType.trim()) {
       specificConditions.push(eq(products.clothingType, originalProduct.clothingType));
     }
-    if (originalProduct.clothingGender) {
+    if (originalProduct.clothingGender && originalProduct.clothingGender.trim()) {
       specificConditions.push(eq(products.clothingGender, originalProduct.clothingGender));
     }
-
-    // Vehicles: match make, fuel type, transmission
-    if (originalProduct.make) {
+    if (originalProduct.make && originalProduct.make.trim()) {
       specificConditions.push(eq(products.make, originalProduct.make));
     }
-    if (originalProduct.fuelType) {
+    if (originalProduct.fuelType && originalProduct.fuelType.trim()) {
       specificConditions.push(eq(products.fuelType, originalProduct.fuelType));
     }
-    if (originalProduct.transmission) {
+    if (originalProduct.transmission && originalProduct.transmission.trim()) {
       specificConditions.push(eq(products.transmission, originalProduct.transmission));
     }
-
-    // Books: match author or genre
-    if (originalProduct.author) {
+    if (originalProduct.author && originalProduct.author.trim()) {
       specificConditions.push(ilike(products.author, `%${originalProduct.author}%`));
     }
-    if (originalProduct.genre) {
+    if (originalProduct.genre && originalProduct.genre.trim()) {
       specificConditions.push(eq(products.genre, originalProduct.genre));
     }
 
-    // Try to get specific matches first
-    let similarProducts = await db.select()
-      .from(products)
-      .where(and(...specificConditions))
-      .orderBy(desc(products.views), desc(products.createdAt))
-      .limit(limit);
-
-    // If not enough specific matches, fill with category matches
-    if (similarProducts.length < limit && originalProduct.categoryId) {
-      const remaining = limit - similarProducts.length;
-      const excludeIds = [productId, ...similarProducts.map(p => p.id)];
+    // Try to get specific matches first with basic select
+    let similarProductsData = [];
+    try {
+      // Ensure we have at least basic conditions before making the query
+      if (specificConditions.length === 0) {
+        specificConditions.push(...conditions);
+      }
       
-      const categoryMatches = await db.select()
+      similarProductsData = await db.select()
         .from(products)
-        .where(and(
-          eq(products.status, "available"),
-          eq(products.categoryId, originalProduct.categoryId),
-          sql`${products.id} NOT IN (${sql.join(excludeIds.map(id => sql`${id}`), sql`, `)})`
-        ))
+        .where(and(...specificConditions))
         .orderBy(desc(products.views), desc(products.createdAt))
-        .limit(remaining);
+        .limit(limit);
+    } catch (error) {
+      console.error('Error getting specific matches:', error);
+      // Fall back to category matches directly
+      similarProductsData = [];
+    }
 
-      similarProducts = [...similarProducts, ...categoryMatches];
+    // Get seller names separately for the similar products
+    const allSellerIds = new Set(similarProductsData.map(p => p.sellerId).filter(Boolean));
+    
+    // If not enough specific matches, fill with category matches
+    if (similarProductsData.length < limit && originalProduct.categoryId) {
+      const remaining = limit - similarProductsData.length;
+      const excludeIds = [productId, ...similarProductsData.map(p => p.id)];
+      
+      let categoryMatchesData = [];
+      try {
+        categoryMatchesData = await db.select()
+          .from(products)
+          .where(and(
+            eq(products.status, "available"),
+            eq(products.categoryId, originalProduct.categoryId),
+            sql`${products.id} NOT IN (${sql.join(excludeIds.map(id => sql`${id}`), sql`, `)})`
+          ))
+          .orderBy(desc(products.views), desc(products.createdAt))
+          .limit(remaining);
+      } catch (error) {
+        console.error('Error getting category matches:', error);
+        categoryMatchesData = [];
+      }
+
+      // Add category matches to the list
+      similarProductsData = [...similarProductsData, ...categoryMatchesData];
+      categoryMatchesData.forEach(p => p.sellerId && allSellerIds.add(p.sellerId));
     }
 
     // If still not enough, fill with products in similar price range
-    if (similarProducts.length < limit) {
-      const remaining = limit - similarProducts.length;
-      const excludeIds = [productId, ...similarProducts.map(p => p.id)];
+    if (similarProductsData.length < limit) {
+      const remaining = limit - similarProductsData.length;
+      const excludeIds = [productId, ...similarProductsData.map(p => p.id)];
       const minPrice = parseFloat(originalProduct.price) * 0.5; // 50% of original price
       const maxPrice = parseFloat(originalProduct.price) * 2.0; // 200% of original price
 
-      const priceMatches = await db.select()
-        .from(products)
-        .where(and(
-          eq(products.status, "available"),
-          gte(products.price, minPrice.toString()),
-          lte(products.price, maxPrice.toString()),
-          sql`${products.id} NOT IN (${sql.join(excludeIds.map(id => sql`${id}`), sql`, `)})`
-        ))
-        .orderBy(desc(products.views), desc(products.createdAt))
-        .limit(remaining);
+      let priceMatchesData = [];
+      try {
+        priceMatchesData = await db.select()
+          .from(products)
+          .where(and(
+            eq(products.status, "available"),
+            gte(products.price, minPrice.toString()),
+            lte(products.price, maxPrice.toString()),
+            sql`${products.id} NOT IN (${sql.join(excludeIds.map(id => sql`${id}`), sql`, `)})`
+          ))
+          .orderBy(desc(products.views), desc(products.createdAt))
+          .limit(remaining);
+      } catch (error) {
+        console.error('Error getting price matches:', error);
+        priceMatchesData = [];
+      }
 
-      similarProducts = [...similarProducts, ...priceMatches];
+      // Add price matches to the list
+      similarProductsData = [...similarProductsData, ...priceMatchesData];
+      priceMatchesData.forEach(p => p.sellerId && allSellerIds.add(p.sellerId));
     }
 
-    return similarProducts.slice(0, limit);
+    // Get all seller names in one query
+    const sellersMap = new Map();
+    if (allSellerIds.size > 0) {
+      const sellerIdsArray = Array.from(allSellerIds);
+      const sellers = await db.select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email
+      }).from(users).where(sql`${users.id} IN (${sql.join(sellerIdsArray.map(id => sql`${id}`), sql`, `)})`);
+      
+      sellers.forEach(seller => {
+        const sellerName = [seller.firstName, seller.lastName].filter(Boolean).join(' ') || seller.email || 'Unknown Seller';
+        sellersMap.set(seller.id, sellerName);
+      });
+    }
+
+    // Add seller names to products and return
+    return similarProductsData.slice(0, limit).map(product => ({
+      ...product,
+      sellerName: sellersMap.get(product.sellerId) || null
+    }));
   }
 
-  async getProductsForComparison(productIds: number[]): Promise<Product[]> {
+  async getProductsForComparison(productIds: number[]): Promise<(Product & { sellerName?: string })[]> {
     if (productIds.length === 0) {
       return [];
     }
 
-    return await db.select()
+    // Get products first
+    const productsData = await db.select()
       .from(products)
       .where(and(
         eq(products.status, "available"),
         sql`${products.id} IN (${sql.join(productIds.map(id => sql`${id}`), sql`, `)})`
       ))
       .orderBy(desc(products.views), desc(products.createdAt));
+
+    // Get seller names separately
+    const sellerIds = productsData.map(p => p.sellerId).filter(Boolean);
+    const sellersMap = new Map();
+    if (sellerIds.length > 0) {
+      const sellers = await db.select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email
+      }).from(users).where(sql`${users.id} IN (${sql.join(sellerIds.map(id => sql`${id}`), sql`, `)})`);
+      
+      sellers.forEach(seller => {
+        const sellerName = [seller.firstName, seller.lastName].filter(Boolean).join(' ') || seller.email || 'Unknown Seller';
+        sellersMap.set(seller.id, sellerName);
+      });
+    }
+
+    // Add seller names to products
+    return productsData.map(product => ({
+      ...product,
+      sellerName: sellersMap.get(product.sellerId) || null
+    }));
   }
 
   async getProductsBySeller(sellerId: string): Promise<Product[]> {

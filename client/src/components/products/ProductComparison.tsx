@@ -18,6 +18,8 @@ interface Product {
   views: number;
   categoryId: number;
   createdAt: string;
+  sellerId: string;
+  sellerName?: string;
   color?: string;
   size?: string;
   material?: string;
@@ -330,6 +332,13 @@ export function ProductComparison({ products, onClose, onRemoveProduct }: Produc
                     {product.title}
                   </Link>
                 </CardTitle>
+                
+                {/* Seller information */}
+                {product.sellerName && (
+                  <div className="text-sm text-muted-foreground mb-2">
+                    Sold by <span className="font-medium">{product.sellerName}</span>
+                  </div>
+                )}
                 
                 <div className="flex items-center gap-2">
                   <Badge className={getConditionColor(product.condition)}>

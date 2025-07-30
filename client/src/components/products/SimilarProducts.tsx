@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
-import { Compare, Heart, ShoppingCart, Eye } from "lucide-react";
+import { GitCompare, Heart, ShoppingCart, Eye } from "lucide-react";
 import { ProductComparison } from "./ProductComparison";
 
 interface Product {
@@ -21,6 +21,8 @@ interface Product {
   views: number;
   categoryId: number;
   createdAt: string;
+  sellerId: string;
+  sellerName?: string;
   color?: string;
   size?: string;
   material?: string;
@@ -110,7 +112,7 @@ export default function SimilarProducts({ productId, currentProduct, limit = 6 }
             onClick={() => setShowComparison(true)}
             className="flex items-center gap-2"
           >
-            <Compare className="h-4 w-4" />
+            <GitCompare className="h-4 w-4" />
             Compare ({selectedForComparison.length})
           </Button>
         )}
@@ -132,7 +134,7 @@ export default function SimilarProducts({ productId, currentProduct, limit = 6 }
       ) : !similarProducts || similarProducts.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
-            <Compare className="h-12 w-12 mx-auto" />
+            <GitCompare className="h-12 w-12 mx-auto" />
           </div>
           <h3 className="text-lg font-medium text-gray-600 mb-2">No Similar Items Found</h3>
           <p className="text-gray-500">Try browsing our categories for more options</p>
@@ -156,7 +158,7 @@ export default function SimilarProducts({ productId, currentProduct, limit = 6 }
                     onClick={() => toggleProductForComparison(product)}
                     className="h-8 w-8 p-0"
                   >
-                    <Compare className="h-3 w-3" />
+                    <GitCompare className="h-3 w-3" />
                   </Button>
                   <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
                     <Heart className="h-3 w-3" />
@@ -197,6 +199,13 @@ export default function SimilarProducts({ productId, currentProduct, limit = 6 }
                       {product.storageCapacity && <span>{product.storageCapacity}</span>}
                       {product.year && <span>{product.year}</span>}
                     </div>
+                    
+                    {/* Seller information */}
+                    {product.sellerName && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Sold by <span className="font-medium">{product.sellerName}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Key attributes for quick comparison */}
@@ -252,7 +261,7 @@ export default function SimilarProducts({ productId, currentProduct, limit = 6 }
                         onClick={() => toggleProductForComparison(product)}
                         className="text-xs px-2 py-1 h-7"
                       >
-                        <Compare className="h-3 w-3 mr-1" />
+                        <GitCompare className="h-3 w-3 mr-1" />
                         {isSelectedForComparison(product.id) ? 'Selected' : 'Compare'}
                       </Button>
                       
