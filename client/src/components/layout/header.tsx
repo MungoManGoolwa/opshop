@@ -47,15 +47,15 @@ export default function Header() {
   const getDashboardRoute = () => {
     if (!user) return "/";
     
-    switch ((user as any)?.role) {
+    switch ((user as any)?.accountType) {
       case "admin":
         return "/admin/site";  // Site administrator with full access
       case "seller":
-      case "business":
+      case "shop":
         return "/seller/dashboard";
-      case "customer":
+      case "buyer":
       default:
-        return "/profile"; // Default customer profile page
+        return "/profile"; // Default buyer profile page
     }
   };
 
@@ -105,31 +105,31 @@ export default function Header() {
             </div>
           <div className="flex items-center space-x-4">
             {isAuthenticated && (
-              <Link href="/about" className="text-gray-600 hover:text-primary" title="About Us">
+              <Link href="/about" className="flex items-center text-gray-600 hover:text-primary" title="About Us">
                 <span className="hidden md:inline">About Us</span>
                 <HelpCircle className="h-4 w-4 md:hidden" />
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/instant-buyback" className="text-green-600 hover:text-green-700 font-medium" title="Instant Buyback">
+              <Link href="/instant-buyback" className="flex items-center text-green-600 hover:text-green-700 font-medium" title="Instant Buyback">
                 <Sparkles className="h-4 w-4 mr-0 md:mr-1" />
                 <span className="hidden md:inline">Instant Buyback</span>
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/wallet" className="text-gray-600 hover:text-primary" title="Wallet">
+              <Link href="/wallet" className="flex items-center text-gray-600 hover:text-primary" title="Wallet">
                 <CreditCard className="h-4 w-4 mr-0 md:mr-1" />
                 <span className="hidden md:inline">Wallet</span>
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/messages" className="text-gray-600 hover:text-primary" title="Messages">
+              <Link href="/messages" className="flex items-center text-gray-600 hover:text-primary" title="Messages">
                 <MessageCircle className="h-4 w-4 mr-0 md:mr-1" />
                 <span className="hidden md:inline">Messages</span>
               </Link>
             )}
-            {isAuthenticated && ((user as any)?.role === 'seller' || (user as any)?.role === 'business' || (user as any)?.role === 'admin') && (
-              <Link href="/seller/dashboard" className="text-gray-600 hover:text-primary" title="Seller Dashboard">
+            {isAuthenticated && ((user as any)?.accountType === 'seller' || (user as any)?.accountType === 'shop' || (user as any)?.accountType === 'admin') && (
+              <Link href="/seller/dashboard" className="flex items-center text-gray-600 hover:text-primary" title="Seller Dashboard">
                 <Store className="h-4 w-4 mr-0 md:mr-1" />
                 <span className="hidden md:inline">Sell</span>
               </Link>
