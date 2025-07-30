@@ -74,7 +74,22 @@ import {
 //   getCsrfStats
 // } from "./csrf-protection";
 
+// Performance optimization imports
+import { 
+  cacheMiddleware, 
+  optimizeProductQueries, 
+  InventorySync,
+  performanceMiddleware 
+} from "./performance-cache";
+import { optimizedImageMiddleware } from "./image-optimization";
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Performance monitoring middleware
+  app.use(performanceMiddleware);
+  
+  // Image optimization for faster loading
+  app.use(optimizedImageMiddleware());
+  
   // Minimal middleware for debugging
   app.use(requestId);
   app.use(corsMiddleware);
@@ -128,15 +143,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== PRODUCT SEARCH AND DISCOVERY =====
 
-  // Product search route with fuzzy matching
-  app.get("/api/products/search", validateQuery(z.object({
-    q: z.string().min(2, "Search query must be at least 2 characters"),
-    limit: z.string().optional().transform(val => Math.min(100, parseInt(val || "20"))).pipe(z.number())
-  })), async (req, res) => {
+  // Product search route with fuzzy matching and caching
+  app.get("/api/products/search", 
+    cacheMiddleware({ ttl: 2 * 60 * 1000, maxAge: 120 }), // 2 minute cache
+    validateQuery(z.object({
+      q: z.string().min(2, "Search query must be at least 2 characters"),
+      limit: z.string().optional().transform(val => Math.min(100, parseInt(val || "20"))).pipe(z.number())
+    })), 
+    async (req, res) => {
     try {
       const { q: query, limit } = req.query as any;
       
-      const products = await storage.searchProducts(sanitizeInput(query), limit);
+      // Use optimized search query with caching
+      const products = await optimizeProductQueries.searchProducts(storage, {
+        query: sanitizeInput(query),
+        limit
+      });
       res.json(products);
     } catch (error) {
       console.error("Error searching products:", error);
@@ -170,10 +192,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Category routes
-  app.get('/api/categories', async (req, res) => {
+  // Category routes with caching
+  app.get('/api/categories', 
+    cacheMiddleware({ ttl: 30 * 60 * 1000, maxAge: 1800 }), // 30 minute cache
+    async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const categories = await optimizeProductQueries.getCategories(storage);
       res.json(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -199,16 +223,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Product routes
-  app.get('/api/products', async (req, res) => {
+  // Product routes with caching and inventory sync
+  app.get('/api/products', 
+    cacheMiddleware({ ttl: 5 * 60 * 1000, maxAge: 300 }), // 5 minute cache
+    async (req, res) => {
     try {
-      // If specific product ID is requested
+      // If specific product ID is requested with real-time inventory
       if (req.query.id) {
-        const product = await storage.getProduct(parseInt(req.query.id as string));
+        const productId = req.query.id as string;
+        const product = await optimizeProductQueries.getProduct(storage, productId);
         if (!product) {
           return res.status(404).json({ message: "Product not found" });
         }
-        return res.json(product);
+        
+        // Add real-time inventory info
+        const inventorySync = InventorySync.getInstance();
+        const currentQuantity = await inventorySync.getInventory(productId, storage);
+        const lowStockWarning = inventorySync.getLowStockWarning(currentQuantity);
+        
+        return res.json({
+          ...product,
+          currentQuantity,
+          lowStockWarning,
+          isAvailable: currentQuantity > 0
+        });
       }
 
       const filters = {
@@ -272,8 +310,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hairType: req.query.hairType as string,
       };
       
+      // Use optimized product queries with real-time inventory
       const products = await storage.getProducts(filters);
-      res.json(products);
+      
+      // Add real-time inventory status to all products
+      const inventorySync = InventorySync.getInstance();
+      const productsWithInventory = await Promise.all(
+        products.map(async (product: any) => {
+          const currentQuantity = await inventorySync.getInventory(product.id.toString(), storage);
+          const lowStockWarning = inventorySync.getLowStockWarning(currentQuantity);
+          
+          return {
+            ...product,
+            currentQuantity,
+            lowStockWarning,
+            isAvailable: currentQuantity > 0
+          };
+        })
+      );
+      
+      res.json(productsWithInventory);
     } catch (error) {
       console.error("Error fetching products:", error);
       res.status(500).json({ message: "Failed to fetch products" });
@@ -827,8 +883,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== GUEST CHECKOUT ENDPOINTS =====
 
-  // Create payment session for guest checkout (with rate limiting)
-  app.post("/api/guest-checkout/create-payment", validateBody(guestOrderCreateSchema), async (req, res) => {
+  // Create payment session for guest checkout (optimized for speed)
+  app.post("/api/guest-checkout/create-payment", 
+    performanceMiddleware, // Monitor checkout performance
+    validateBody(guestOrderCreateSchema), 
+    async (req, res) => {
     try {
       const {
         guestSessionId,
@@ -1136,8 +1195,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/paypal/order", isAuthenticated, createPaypalOrder);
   app.post("/api/paypal/order/:orderID/capture", isAuthenticated, capturePaypalOrder);
 
-  // Order management routes
-  app.post('/api/orders', isAuthenticated, async (req: any, res) => {
+  // Order management routes with performance optimization
+  app.post('/api/orders', 
+    isAuthenticated, 
+    performanceMiddleware, // Monitor checkout performance
+    async (req: any, res) => {
     try {
       const buyerId = req.user?.claims?.sub;
       const orderData = insertOrderSchema.parse({
@@ -1148,13 +1210,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const order = await storage.createOrder(orderData);
       
-      // Create commission record using enhanced commission service
+      // Create commission record using enhanced commission service (async for speed)
       if (order.sellerId) {
-        const seller = await storage.getUser(order.sellerId);
-        if (seller) {
-          await commissionService.createCommissionFromOrder(order, seller);
-        }
+        // Run commission creation in background to speed up checkout
+        setImmediate(async () => {
+          try {
+            const seller = await storage.getUser(order.sellerId);
+            if (seller) {
+              await commissionService.createCommissionFromOrder(order, seller);
+            }
+          } catch (error) {
+            console.error("Background commission creation failed:", error);
+          }
+        });
       }
+      
+      // Update inventory immediately for real-time sync
+      const inventorySync = InventorySync.getInstance();
+      await inventorySync.updateInventory(order.productId.toString(), order.quantity || 1);
       
       res.json(order);
     } catch (error: any) {
