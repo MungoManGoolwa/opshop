@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { GitCompare, Heart, ShoppingCart, Eye } from "lucide-react";
 import { ProductComparison } from "./ProductComparison";
+import BuyButton from "@/components/ui/buy-button";
 
 interface Product {
   id: number;
@@ -265,10 +266,12 @@ export default function SimilarProducts({ productId, currentProduct, limit = 6 }
                         {isSelectedForComparison(product.id) ? 'Selected' : 'Compare'}
                       </Button>
                       
-                      <Button size="sm" className="text-xs px-2 py-1 h-7">
-                        <ShoppingCart className="h-3 w-3 mr-1" />
-                        Buy
-                      </Button>
+                      <BuyButton
+                        productId={product.id}
+                        price={product.price}
+                        status={product.status}
+                        className="text-xs px-2 py-1 h-7"
+                      />
                     </div>
                   </div>
                 </div>

@@ -7,17 +7,24 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 
 interface BuyButtonProps {
   productId: number;
-  price: string;
+  price?: string;
+  amount?: string; // Support both price and amount props
   shippingCost?: string;
   isAvailable?: boolean;
+  status?: string; // Support status prop
+  sellerId?: string; // Support sellerId prop
+  variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
   className?: string;
 }
 
 export default function BuyButton({ 
   productId, 
   price, 
+  amount,
   shippingCost = "0", 
   isAvailable = true,
+  status,
+  variant = "default",
   className = ""
 }: BuyButtonProps) {
   const [, setLocation] = useLocation();
@@ -38,7 +45,9 @@ export default function BuyButton({
       return;
     }
 
-    if (!isAvailable) {
+    // Check availability based on both isAvailable prop and status
+    const itemAvailable = isAvailable && (!status || status === "available");
+    if (!itemAvailable) {
       toast({
         title: "Item Unavailable",
         description: "This item is no longer available for purchase.",
@@ -63,12 +72,17 @@ export default function BuyButton({
     }
   };
 
-  const totalCost = parseFloat(price) + parseFloat(shippingCost);
+  // Use price if available, otherwise use amount
+  const productPrice = price || amount || "0";
+  const totalCost = parseFloat(productPrice) + parseFloat(shippingCost || "0");
 
+  const itemAvailable = isAvailable && (!status || status === "available");
+  
   return (
     <Button
       onClick={handleBuyNow}
-      disabled={!isAvailable || isLoading}
+      disabled={!itemAvailable || isLoading}
+      variant={variant}
       className={`w-full ${className}`}
       size="lg"
     >
