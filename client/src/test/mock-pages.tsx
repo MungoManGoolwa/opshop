@@ -1,0 +1,24 @@
+// Mock page components for testing
+export const MockLandingPage = () => <div data-testid="landing-page">Landing Page</div>;
+export const MockHomePage = () => <div data-testid="home-page">Home Page</div>;
+export const MockAboutPage = () => <div data-testid="about-page">About Page</div>;
+export const MockProductDetailPage = () => <div data-testid="product-detail-page">Product Detail Page</div>;
+export const MockAdminDashboardPage = () => <div data-testid="admin-dashboard-page">Admin Dashboard Page</div>;
+export const MockSellerDashboardPage = () => <div data-testid="seller-dashboard-page">Seller Dashboard Page</div>;
+export const MockSearchPage = () => <div data-testid="search-page">Search Page</div>;
+export const MockCartPage = () => <div data-testid="cart-page">Cart Page</div>;
+export const MockCheckoutPage = () => <div data-testid="checkout-page">Checkout Page</div>;
+export const MockProfilePage = () => <div data-testid="profile-page">Profile Page</div>;
+export const MockCreateListingPage = () => <div data-testid="create-listing-page">Create Listing Page</div>;
+export const MockWishlistPage = () => <div data-testid="wishlist-page">Wishlist Page</div>;
+export const MockMessagesPage = () => <div data-testid="messages-page">Messages Page</div>;
+export const MockWalletPage = () => <div data-testid="wallet-page">Wallet Page</div>;
+export const MockCategoryPage = () => <div data-testid="category-page">Category Page</div>;
+export const MockInstantBuybackPage = () => <div data-testid="instant-buyback-page">Instant Buyback Page</div>;
+export const MockSellPage = () => <div data-testid="sell-page">Sell Page</div>;
+export const MockHelpCenterPage = () => <div data-testid="help-center-page">Help Center Page</div>;
+export const MockContactPage = () => <div data-testid="contact-page">Contact Page</div>;
+export const MockPrivacyPolicyPage = () => <div data-testid="privacy-policy-page">Privacy Policy Page</div>;
+export const MockTermsOfServicePage = () => <div data-testid="terms-of-service-page">Terms of Service Page</div>;
+export const MockPricingGuidePage = () => <div data-testid="pricing-guide-page">Pricing Guide Page</div>;
+export const MockSafetyGuidelinesPage = () => <div data-testid="safety-guidelines-page">Safety Guidelines Page</div>;
