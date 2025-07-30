@@ -15,6 +15,7 @@ import { useEffect, lazy, Suspense } from "react";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import { preloadCriticalRoutes, preloadAuthenticatedRoutes, preloadAdminRoutes, preloadSellerRoutes } from "./utils/preloadRoutes";
+import { HelmetProvider } from "react-helmet-async";
 
 // Critical pages - loaded immediately
 import NotFound from "@/pages/not-found";
@@ -271,18 +272,20 @@ function App() {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ViewProvider>
-          <TooltipProvider>
-            <Router />
-            <Toaster />
-            <PWAInstallPrompt />
-            <OfflineIndicator />
-          </TooltipProvider>
-        </ViewProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <ViewProvider>
+            <TooltipProvider>
+              <Router />
+              <Toaster />
+              <PWAInstallPrompt />
+              <OfflineIndicator />
+            </TooltipProvider>
+          </ViewProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </HelmetProvider>
   );
 }
 

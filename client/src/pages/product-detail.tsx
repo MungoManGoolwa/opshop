@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { SocialShareButton } from "@/components/social/SocialShareButton";
 import { QuickShareButtons } from "@/components/social/QuickShareButtons";
 import { useSEO, truncateDescription } from "@/hooks/useSEO";
+import SEOHead from "@/components/SEOHead";
 import { 
   Heart, 
   MapPin, 
@@ -169,6 +170,23 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-neutral">
+      {/* Enhanced SEO with structured data for products */}
+      {productData && (
+        <SEOHead
+          title={`${productData.title} - $${productData.price}`}
+          description={truncateDescription(`${productData.description} Located in ${productData.location}. Condition: ${productData.condition}.`)}
+          keywords={`${productData.title}, ${productData.category}, ${productData.condition}, ${productData.location}, second hand, pre-loved, Australia`}
+          image={productData.images?.[0]}
+          url={`/product/${id}`}
+          type="product"
+          price={productData.price}
+          currency="AUD"
+          availability={productData.status === "available" ? "InStock" : "OutOfStock"}
+          condition={productData.condition === "new" ? "New" : "Used"}
+          location={productData.location}
+          category={productData.category}
+        />
+      )}
       <Header />
       
       <div className="container mx-auto px-4 py-8">

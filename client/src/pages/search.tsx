@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search as SearchIcon, Filter, X, SortAsc, SortDesc } from "lucide-react";
 import type { Suburb } from "@/lib/australianSuburbs";
+import SEOHead from "@/components/SEOHead";
 
 interface ProductFilterState {
   categoryId?: number;
@@ -39,6 +40,8 @@ export default function SearchPage() {
   const [selectedLocation, setSelectedLocation] = useState<{ suburb: Suburb; radius: number } | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("relevance");
+
+  const searchTerms = searchQuery || "all items";
 
   useEffect(() => {
     // Extract search query from URL
@@ -114,6 +117,12 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <SEOHead
+        title={`Search Results for "${searchTerms}" - Second-Hand Marketplace | Opshop Online`}
+        description={`Find quality second-hand ${searchTerms} across Australia. Browse pre-loved items with sustainable shopping on Opshop Online's marketplace. Filter by location, condition, and price.`}
+        keywords={`search ${searchTerms}, second hand ${searchTerms}, pre-loved items, sustainable shopping, Australia marketplace`}
+        url={`/search?q=${encodeURIComponent(searchQuery)}`}
+      />
       <Header />
       <MobileNav />
       
@@ -144,7 +153,7 @@ export default function SearchPage() {
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 Search Results for "{searchQuery}"
               </h1>
-              {products && (
+              {Array.isArray(products) && (
                 <p className="text-gray-600 dark:text-gray-400">
                   {products.length} {products.length === 1 ? 'product' : 'products'} found
                 </p>
@@ -240,7 +249,7 @@ export default function SearchPage() {
                   Something went wrong while searching. Please try again.
                 </p>
               </div>
-            ) : !products || products.length === 0 ? (
+            ) : !Array.isArray(products) || products.length === 0 ? (
               <div className="text-center py-12">
                 <SearchIcon className="h-16 w-16 mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
