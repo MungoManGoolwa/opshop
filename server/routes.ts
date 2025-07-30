@@ -2373,6 +2373,266 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin listing management routes
+  app.get('/api/admin/listings', isAuthenticated, auditAdminAction('view_all_listings', 'listings'), async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const filters = {
+        status: req.query.status as string,
+        sellerId: req.query.sellerId as string,
+        categoryId: req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined,
+        search: req.query.search as string,
+        sort: req.query.sort as string || 'newest',
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
+        offset: req.query.offset ? parseInt(req.query.offset as string) : 0
+      };
+      
+      const listings = await storage.getProducts(filters);
+      const totalCount = await storage.getProductCount(filters);
+      
+      res.json({
+        listings,
+        totalCount,
+        currentPage: Math.floor((filters.offset || 0) / (filters.limit || 50)) + 1,
+        totalPages: Math.ceil(totalCount / (filters.limit || 50))
+      });
+    } catch (error) {
+      console.error("Error fetching admin listings:", error);
+      res.status(500).json({ message: "Failed to fetch listings" });
+    }
+  });
+
+  app.get('/api/admin/listings/:id', isAuthenticated, auditAdminAction('view_listing_details', 'listing'), async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const listingId = parseInt(req.params.id);
+      const listing = await storage.getProduct(listingId);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+      
+      // Get seller information
+      const seller = await storage.getUser(listing.sellerId);
+      
+      res.json({
+        ...listing,
+        seller: seller ? {
+          id: seller.id,
+          email: seller.email,
+          firstName: seller.firstName,
+          lastName: seller.lastName,
+          role: seller.role,
+          createdAt: seller.createdAt
+        } : null
+      });
+    } catch (error) {
+      console.error("Error fetching listing details:", error);
+      res.status(500).json({ message: "Failed to fetch listing details" });
+    }
+  });
+
+  app.put('/api/admin/listings/:id', 
+    isAuthenticated, 
+    auditAdminAction('edit_listing', 'listing'),
+    validateBody(insertProductSchema.partial()),
+    async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const listingId = parseInt(req.params.id);
+      const listing = await storage.getProduct(listingId);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      // Update listing with admin modifications
+      const updateData = {
+        ...req.body,
+        lastModifiedBy: userId,
+        lastModifiedAt: new Date(),
+      };
+
+      const updatedListing = await storage.updateProduct(listingId, updateData);
+      
+      // Log the admin edit action
+      console.log(`Admin ${user.email} edited listing ${listingId}`);
+      
+      res.json(updatedListing);
+    } catch (error: any) {
+      console.error("Error updating listing:", error);
+      res.status(400).json({ message: error.message || "Failed to update listing" });
+    }
+  });
+
+  // Admin photo management for listings
+  app.post('/api/admin/listings/:id/photos', 
+    isAuthenticated,
+    auditAdminAction('add_listing_photo', 'listing'),
+    upload.array('photos', 10),
+    async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const listingId = parseInt(req.params.id);
+      const listing = await storage.getProduct(listingId);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: "No photos provided" });
+      }
+
+      // Process uploaded photos
+      const newPhotos = req.files.map((file: any) => ({
+        url: `/uploads/${file.filename}`,
+        filename: file.filename,
+        originalName: file.originalname,
+        size: file.size,
+        uploadedBy: userId,
+        uploadedAt: new Date()
+      }));
+
+      // Add photos to existing listing photos
+      const currentPhotos = listing.photos || [];
+      const updatedPhotos = [...currentPhotos, ...newPhotos];
+
+      await storage.updateProduct(listingId, { 
+        photos: updatedPhotos,
+        lastModifiedBy: userId,
+        lastModifiedAt: new Date()
+      });
+
+      console.log(`Admin ${user.email} added ${newPhotos.length} photos to listing ${listingId}`);
+      
+      res.json({ 
+        message: "Photos added successfully", 
+        addedPhotos: newPhotos,
+        totalPhotos: updatedPhotos.length 
+      });
+    } catch (error: any) {
+      console.error("Error adding photos to listing:", error);
+      res.status(500).json({ message: error.message || "Failed to add photos" });
+    }
+  });
+
+  app.delete('/api/admin/listings/:id/photos/:photoIndex', 
+    isAuthenticated,
+    auditAdminAction('remove_listing_photo', 'listing'),
+    async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const listingId = parseInt(req.params.id);
+      const photoIndex = parseInt(req.params.photoIndex);
+      
+      const listing = await storage.getProduct(listingId);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      const photos = listing.photos || [];
+      
+      if (photoIndex < 0 || photoIndex >= photos.length) {
+        return res.status(400).json({ message: "Invalid photo index" });
+      }
+
+      // Remove photo from array
+      const removedPhoto = photos[photoIndex];
+      const updatedPhotos = photos.filter((_, index) => index !== photoIndex);
+
+      await storage.updateProduct(listingId, { 
+        photos: updatedPhotos,
+        lastModifiedBy: userId,
+        lastModifiedAt: new Date()
+      });
+
+      // Optionally delete the physical file (implement file cleanup if needed)
+      console.log(`Admin ${user.email} removed photo from listing ${listingId}: ${removedPhoto.filename}`);
+      
+      res.json({ 
+        message: "Photo removed successfully", 
+        removedPhoto,
+        remainingPhotos: updatedPhotos.length 
+      });
+    } catch (error: any) {
+      console.error("Error removing photo from listing:", error);
+      res.status(500).json({ message: error.message || "Failed to remove photo" });
+    }
+  });
+
+  app.patch('/api/admin/listings/:id/status', 
+    isAuthenticated,
+    auditAdminAction('change_listing_status', 'listing'),
+    validateBody(z.object({
+      status: z.enum(['available', 'sold', 'withdrawn', 'pending', 'banned']),
+      reason: z.string().optional()
+    })),
+    async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const listingId = parseInt(req.params.id);
+      const { status, reason } = req.body;
+      
+      const listing = await storage.getProduct(listingId);
+      
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      await storage.updateProduct(listingId, {
+        status,
+        adminNotes: reason ? `Status changed to ${status}: ${reason}` : `Status changed to ${status}`,
+        lastModifiedBy: userId,
+        lastModifiedAt: new Date()
+      });
+
+      console.log(`Admin ${user.email} changed listing ${listingId} status to ${status}${reason ? ` (${reason})` : ''}`);
+      
+      res.json({ message: "Listing status updated successfully", status });
+    } catch (error: any) {
+      console.error("Error updating listing status:", error);
+      res.status(400).json({ message: error.message || "Failed to update listing status" });
+    }
+  });
+
   // Listing settings API routes
   app.get('/api/admin/listing-settings', isAuthenticated, async (req: any, res) => {
     try {
