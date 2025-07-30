@@ -71,7 +71,7 @@
     "express-rate-limit": "^8.0.1",
     "express-session": "^1.18.1",
     "express-slow-down": "^2.1.0",
-    "framer-motion": "^11.13.1",
+    "framer-motion": "^11.18.2",
     "input-otp": "^1.4.2",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
