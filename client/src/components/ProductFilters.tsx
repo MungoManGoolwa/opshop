@@ -90,7 +90,7 @@ export default function ProductFilters({ categorySlug, onFiltersChange, initialF
                 <SelectValue placeholder={`Select ${filter.label.toLowerCase()}`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All {filter.label.toLowerCase()}</SelectItem>
+                <SelectItem value="all">All {filter.label.toLowerCase()}</SelectItem>
                 {filter.options?.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}

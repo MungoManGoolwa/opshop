@@ -19,10 +19,10 @@ interface ProductFiltersProps {
 export default function ProductFilters({ onFiltersChange }: ProductFiltersProps) {
   const { viewMode, setViewMode } = useView();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [filters, setFilters] = useState<any>({
-    condition: "",
+    condition: "all",
     sort: "newest",
   });
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
@@ -34,13 +34,13 @@ export default function ProductFilters({ onFiltersChange }: ProductFiltersProps)
   // Calculate active filters count
   useEffect(() => {
     let count = 0;
-    if (selectedCategory) count++;
-    if (filters.condition) count++;
+    if (selectedCategory && selectedCategory !== "all") count++;
+    if (filters.condition && filters.condition !== "all") count++;
     if (priceRange[0] > 0 || priceRange[1] < 10000) count++;
     
     // Count category-specific filters
     Object.values(filters).forEach(value => {
-      if (value && value !== "" && value !== "newest") {
+      if (value && value !== "" && value !== "newest" && value !== "all") {
         if (Array.isArray(value) && value.length > 0) count++;
         else if (!Array.isArray(value)) count++;
       }
@@ -82,10 +82,10 @@ export default function ProductFilters({ onFiltersChange }: ProductFiltersProps)
     };
 
     // Basic filters
-    if (categoryId) {
+    if (categoryId && categoryId !== "all") {
       apiFilters.categoryId = parseInt(categoryId);
     }
-    if (currentFilters.condition) {
+    if (currentFilters.condition && currentFilters.condition !== "all") {
       apiFilters.condition = currentFilters.condition;
     }
     if (currentPriceRange[0] > 0) {
@@ -100,7 +100,7 @@ export default function ProductFilters({ onFiltersChange }: ProductFiltersProps)
       if (key !== 'condition' && key !== 'sort' && value) {
         if (Array.isArray(value) && value.length > 0) {
           apiFilters[key] = value;
-        } else if (!Array.isArray(value) && value !== "") {
+        } else if (!Array.isArray(value) && value !== "" && value !== "all") {
           apiFilters[key] = value;
         }
       }
@@ -110,8 +110,8 @@ export default function ProductFilters({ onFiltersChange }: ProductFiltersProps)
   };
 
   const clearAllFilters = () => {
-    setSelectedCategory("");
-    setFilters({ condition: "", sort: "newest" });
+    setSelectedCategory("all");
+    setFilters({ condition: "all", sort: "newest" });
     setPriceRange([0, 10000]);
     onFiltersChange?.({ sort: "newest" });
   };
@@ -128,7 +128,7 @@ export default function ProductFilters({ onFiltersChange }: ProductFiltersProps)
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {Array.isArray(categories) && categories.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -143,7 +143,7 @@ export default function ProductFilters({ onFiltersChange }: ProductFiltersProps)
                 <SelectValue placeholder="Any Condition" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Condition</SelectItem>
+                <SelectItem value="all">Any Condition</SelectItem>
                 <SelectItem value="excellent">Like New</SelectItem>
                 <SelectItem value="good">Good</SelectItem>
                 <SelectItem value="fair">Fair</SelectItem>
@@ -245,7 +245,7 @@ export default function ProductFilters({ onFiltersChange }: ProductFiltersProps)
                             <SelectValue placeholder={`Select ${filterConfig.label}`} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Any {filterConfig.label}</SelectItem>
+                            <SelectItem value="all">Any {filterConfig.label}</SelectItem>
                             {filterConfig.options?.map((option, idx) => (
                               <SelectItem key={idx} value={option.value}>
                                 {option.label}
