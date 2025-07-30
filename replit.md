@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **January 30, 2025**: LOCATION SEARCH RADIUS SELECTION BUG COMPLETELY FIXED WITH IMPROVED UX
+  - Fixed critical radius selection bug that was preventing users from changing location search radius
+  - Replaced problematic Select dropdown component with intuitive button-based radius selector 
+  - Implemented visual feedback with highlighted button showing currently selected radius
+  - Simplified state management eliminating complex synchronization issues between components
+  - Enhanced user experience with clear, clickable radius options (5km, 10km, 25km, 50km, 100km, 250km)
+  - Verified working end-to-end: radius changes now properly update product filtering and API calls
+  - Cleaned up debugging console logs for better development experience
+
 - **January 30, 2025**: DOCKER FILES REORGANIZATION AND PROJECT STRUCTURE OPTIMIZATION COMPLETED
   - Successfully moved all Docker-related files to dedicated `/docker` directory for better project organization
   - Reorganized Docker project structure: Dockerfile, docker-compose.yml, docker-entrypoint.sh, .dockerignore, .env.docker, README.docker.md now in `/docker` folder
