@@ -219,7 +219,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span className="text-xs text-gray-500">Share this item</span>
             <QuickShareButtons
               title={product.title}
-              description={product.description}
+              description={product.description || ""}
               price={`$${product.price}`}
               url={`/product/${product.id}`}
               className="opacity-70 hover:opacity-100 transition-opacity"

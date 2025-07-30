@@ -122,6 +122,28 @@ export default function Messages() {
     retry: false,
   });
 
+  // Handle URL parameters for auto-opening seller conversation
+  useEffect(() => {
+    if (!isAuthenticated || !conversations || !Array.isArray(conversations)) return;
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const sellerId = urlParams.get('sellerId');
+    const productId = urlParams.get('productId');
+    
+    if (sellerId && conversations.length > 0) {
+      // Auto-select conversation with this seller
+      setSelectedConversation(sellerId);
+      
+      // If there's a product context, set up a pre-filled message
+      if (productId) {
+        setNewMessage(`Hi! I'm interested in your product (ID: ${productId}). `);
+      }
+      
+      // Clear URL parameters
+      window.history.replaceState({}, '', '/messages');
+    }
+  }, [isAuthenticated, conversations]);
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ receiverId, content, productId }: { receiverId: string; content: string; productId?: number }) => {

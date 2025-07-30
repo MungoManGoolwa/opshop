@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
@@ -41,6 +41,7 @@ export default function ProductDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   // Remove currentImageIndex state as it's now handled by ImageGallery
 
   const { data: product, isLoading, error } = useQuery({
@@ -328,7 +329,25 @@ export default function ProductDetail() {
               />
               
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      toast({
+                        title: "Login Required",
+                        description: "Please log in to message sellers.",
+                        variant: "destructive",
+                      });
+                      setTimeout(() => {
+                        window.location.href = "/api/login";
+                      }, 1500);
+                      return;
+                    }
+                    // Navigate to messages page with seller info
+                    setLocation(`/messages?sellerId=${productData.sellerId}&productId=${productData.id}`);
+                  }}
+                >
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Message Seller
                 </Button>
