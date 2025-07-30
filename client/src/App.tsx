@@ -69,7 +69,7 @@ function Router() {
         preloadAuthenticatedRoutes();
         
         // Preload role-specific routes
-        if ('role' in user) {
+        if (user && typeof user === 'object' && 'role' in user) {
           const userRole = (user as any).role;
           if (userRole === "admin") {
             preloadAdminRoutes();
