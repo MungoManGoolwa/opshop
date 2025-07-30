@@ -1,59 +1,51 @@
-# Multi-stage build for Opshop Online marketplace
+# Opshop Online - Production Dockerfile
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-# Development dependencies for building
-FROM base AS build-deps
+# Build stage
+FROM base AS builder
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
-# Build the application
-FROM build-deps AS builder
-WORKDIR /app
+# Copy source code
 COPY . .
 
-# Build frontend and backend
+# Build the application
 RUN npm run build
 
-# Production image
+# Production stage
 FROM base AS runner
 WORKDIR /app
 
-# Create non-root user for security
+# Add non-root user
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 # Copy built application
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/public ./public
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
+COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 
-# Copy migration files and scripts
-COPY --from=builder --chown=nodejs:nodejs /app/drizzle ./drizzle
-COPY --from=builder --chown=nodejs:nodejs /app/drizzle.config.ts ./
-COPY --from=builder --chown=nodejs:nodejs /app/migrations ./migrations
+# Create uploads directory
+RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 
-# Create uploads directory for file uploads
-RUN mkdir -p uploads && chown nodejs:nodejs uploads
-
-# Switch to non-root user
-USER nodejs
+USER nextjs
 
 # Expose port
-EXPOSE 5000
+EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 
 # Start the application
-CMD ["node", "dist/index.js"]
+CMD ["npm", "start"]
