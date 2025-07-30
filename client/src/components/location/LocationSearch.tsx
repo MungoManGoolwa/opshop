@@ -3,7 +3,7 @@ import { MapPin, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// Removed Select components - using button approach instead
 import { searchSuburbs, type Suburb } from "@/lib/australianSuburbs";
 
 interface LocationSearchProps {
@@ -32,7 +32,7 @@ export default function LocationSearch({
   const [selectedRadius, setSelectedRadius] = useState(selectedLocation?.radius || 25); // Use existing radius or default 25km
   const searchRef = useRef<HTMLDivElement>(null);
   
-  console.log(`LocationSearch render - selectedRadius: ${selectedRadius}, selectedLocation?.radius: ${selectedLocation?.radius}`);
+  // Removed debug logging
 
   // Search suburbs when query changes
   useEffect(() => {
@@ -67,15 +67,10 @@ export default function LocationSearch({
 
   const handleRadiusChange = (radius: string) => {
     const radiusNum = parseInt(radius);
-    console.log(`Select onValueChange fired - radius: ${radius}, parsed: ${radiusNum}`);
-    console.log(`Current selectedRadius: ${selectedRadius}, new radius: ${radiusNum}`);
     setSelectedRadius(radiusNum);
-    // Always call onLocationChange when radius changes, even without a suburb
+    // Always call onLocationChange when radius changes
     if (selectedLocation) {
-      console.log(`Calling onLocationChange with radius: ${radiusNum}km for suburb: ${selectedLocation.suburb.name}`);
       onLocationChange({ suburb: selectedLocation.suburb, radius: radiusNum });
-    } else {
-      console.log(`No selectedLocation, radius changed to: ${radiusNum}km but not propagated`);
     }
   };
 
@@ -139,23 +134,22 @@ export default function LocationSearch({
               />
             </div>
 
-            {/* Radius Selector */}
+            {/* Radius Selector - Simple Button Approach */}
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium">Within:</span>
-              <Select value={selectedRadius.toString()} onValueChange={handleRadiusChange}>
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder={`${selectedRadius}km`}>
-                    {selectedRadius}km
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {RADIUS_OPTIONS.map(option => (
-                    <SelectItem key={option.value} value={option.value.toString()}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap gap-1">
+                {RADIUS_OPTIONS.map(option => (
+                  <Button
+                    key={option.value}
+                    variant={selectedRadius === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleRadiusChange(option.value.toString())}
+                    className="h-8 px-2 text-xs"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
             </div>
 
             {/* Search Results */}
