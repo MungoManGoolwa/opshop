@@ -46,8 +46,7 @@ interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
-  accountType: string;
+  accountType: string; // "buyer", "admin", "moderator", "seller", "shop"
   isActive: boolean;
   isVerified: boolean;
   createdAt: string;

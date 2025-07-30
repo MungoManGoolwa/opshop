@@ -32,11 +32,10 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").notNull().default("customer"), // admin, moderator, customer, seller, business
-  accountType: varchar("account_type", { length: 20 }).default("seller").notNull(), // "seller" or "shop"
+  accountType: varchar("account_type", { length: 20 }).default("buyer").notNull(), // "buyer", "admin", "moderator", "seller", "shop"
   shopUpgradeDate: timestamp("shop_upgrade_date"),
   shopExpiryDate: timestamp("shop_expiry_date"),
-  maxListings: integer("max_listings").default(10).notNull(),
+  maxListings: integer("max_listings").default(0).notNull(), // 0 for buyers, 10 for sellers, 100 for shops
   useDefaultMaxListings: boolean("use_default_max_listings").default(true),
   location: varchar("location"),
   suburb: varchar("suburb"),
@@ -636,7 +635,6 @@ export const insertVerificationDocumentSchema = createInsertSchema(verificationD
   verifiedAt: true,
   verifiedBy: true,
 });
-export type InsertVerificationDocument = z.infer<typeof insertVerificationDocumentSchema>;
 
 export const insertVerificationSubmissionSchema = createInsertSchema(verificationSubmissions).omit({
   id: true,
@@ -647,7 +645,6 @@ export const insertVerificationSubmissionSchema = createInsertSchema(verificatio
   reviewedBy: true,
   approvalDate: true,
 });
-export type InsertVerificationSubmission = z.infer<typeof insertVerificationSubmissionSchema>;
 
 // Buyback offers from AI evaluation
 export const buybackOffers = pgTable("buyback_offers", {

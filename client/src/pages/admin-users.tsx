@@ -40,8 +40,7 @@ const userFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
-  role: z.enum(["admin", "moderator", "customer", "seller", "business"]),
-  accountType: z.enum(["seller", "shop"]),
+  accountType: z.enum(["buyer", "admin", "moderator", "seller", "shop"]),
   phone: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -53,7 +52,7 @@ const userFormSchema = z.object({
   abn: z.string().optional(),
   isActive: z.boolean().default(true),
   shopExpiryDate: z.string().optional(),
-  maxListings: z.number().min(1).max(10000),
+  maxListings: z.number().min(0).max(10000),
   commissionRate: z.number().min(0).max(50).default(10), // Commission rate percentage (0-50%)
   useDefaultMaxListings: z.boolean().default(true), // Whether to use system default or custom value
 });
@@ -64,7 +63,7 @@ export default function AdminUsers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [accountTypeFilter, setAccountTypeFilter] = useState("all");
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -83,8 +82,7 @@ export default function AdminUsers() {
       firstName: "",
       lastName: "",
       email: "",
-      role: "customer",
-      accountType: "seller",
+      accountType: "buyer",
       phone: "",
       address: "",
       city: "",
@@ -95,7 +93,7 @@ export default function AdminUsers() {
       businessName: "",
       abn: "",
       isActive: true,
-      maxListings: 10,
+      maxListings: 0,
       commissionRate: 10,
       useDefaultMaxListings: true,
     },
@@ -183,8 +181,7 @@ export default function AdminUsers() {
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       email: user.email || "",
-      role: user.role || "customer",
-      accountType: user.accountType || "seller",
+      accountType: user.accountType || "buyer",
       phone: user.phone || "",
       address: user.address || "",
       city: user.city || "",
@@ -196,7 +193,7 @@ export default function AdminUsers() {
       abn: user.abn || "",
       isActive: user.isActive !== false,
       shopExpiryDate: user.shopExpiryDate ? new Date(user.shopExpiryDate).toISOString().split('T')[0] : "",
-      maxListings: user.maxListings || 10,
+      maxListings: user.maxListings || 0,
       commissionRate: parseFloat(user.commissionRate) || 10,
       useDefaultMaxListings: user.useDefaultMaxListings !== false,
     });
@@ -209,22 +206,25 @@ export default function AdminUsers() {
     setIsDialogOpen(true);
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
+  const getAccountTypeBadgeColor = (accountType: string) => {
+    switch (accountType) {
       case "admin": return "bg-red-500";
       case "moderator": return "bg-orange-500";
-      case "business": return "bg-purple-500";
+      case "shop": return "bg-purple-500";
       case "seller": return "bg-blue-500";
       default: return "bg-gray-500";
     }
   };
 
-  const getAccountTypeBadge = (accountType: string) => {
-    return accountType === "shop" ? (
-      <Badge className="bg-gold text-black">Shop</Badge>
-    ) : (
-      <Badge variant="outline">Seller</Badge>
-    );
+  const getAccountTypeLabel = (accountType: string) => {
+    switch (accountType) {
+      case "admin": return "Admin";
+      case "moderator": return "Moderator";
+      case "seller": return "Seller";
+      case "shop": return "Shop";
+      case "buyer": return "Buyer";
+      default: return "Unknown";
+    }
   };
 
   const filteredUsers = Array.isArray(users) ? users.filter((user: any) => {
@@ -234,9 +234,9 @@ export default function AdminUsers() {
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.businessName?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    const matchesAccountType = accountTypeFilter === "all" || user.accountType === accountTypeFilter;
     
-    return matchesSearch && matchesRole;
+    return matchesSearch && matchesAccountType;
   }) : [];
 
   if (isLoading) {
@@ -287,18 +287,18 @@ export default function AdminUsers() {
                     className="pl-10"
                   />
                 </div>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-[180px]">
+                <Select value={accountTypeFilter} onValueChange={setAccountTypeFilter}>
+                  <SelectTrigger className="w-[200px]">
                     <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Filter by role" />
+                    <SelectValue placeholder="Filter by account type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="moderator">Moderator</SelectItem>
-                    <SelectItem value="business">Business</SelectItem>
-                    <SelectItem value="seller">Seller</SelectItem>
-                    <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="all">All Account Types</SelectItem>
+                    <SelectItem value="buyer">Buyers</SelectItem>
+                    <SelectItem value="admin">Admins</SelectItem>
+                    <SelectItem value="moderator">Moderators</SelectItem>
+                    <SelectItem value="seller">Sellers</SelectItem>
+                    <SelectItem value="shop">Shops</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -370,53 +370,30 @@ export default function AdminUsers() {
                             )}
                           />
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="role"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Role</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select role" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="admin">Admin</SelectItem>
-                                      <SelectItem value="moderator">Moderator</SelectItem>
-                                      <SelectItem value="business">Business</SelectItem>
-                                      <SelectItem value="seller">Seller</SelectItem>
-                                      <SelectItem value="customer">Customer</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="accountType"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Account Type</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select account type" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="seller">Seller</SelectItem>
-                                      <SelectItem value="shop">Shop</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
+                          <FormField
+                            control={form.control}
+                            name="accountType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Account Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select account type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="buyer">Buyer (default)</SelectItem>
+                                    <SelectItem value="admin">Admin (all privileges)</SelectItem>
+                                    <SelectItem value="moderator">Moderator (users & listings)</SelectItem>
+                                    <SelectItem value="seller">Seller (10 items, ID required)</SelectItem>
+                                    <SelectItem value="shop">Shop (100 items, ABN & ID required)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
                           <FormField
                             control={form.control}
@@ -631,8 +608,8 @@ export default function AdminUsers() {
                             )}
                           />
 
-                          {/* Commission Rate - only show for sellers and businesses */}
-                          {(form.watch("role") === "seller" || form.watch("role") === "business") && (
+                          {/* Commission Rate - only show for sellers and shops */}
+                          {(form.watch("accountType") === "seller" || form.watch("accountType") === "shop") && (
                             <FormField
                               control={form.control}
                               name="commissionRate"
@@ -699,10 +676,9 @@ export default function AdminUsers() {
                         <h3 className="font-semibold">
                           {user.firstName} {user.lastName}
                         </h3>
-                        <Badge className={getRoleBadgeColor(user.role)}>
-                          {user.role}
+                        <Badge className={getAccountTypeBadgeColor(user.accountType)}>
+                          {getAccountTypeLabel(user.accountType)}
                         </Badge>
-                        {user.accountType === "shop" && getAccountTypeBadge(user.accountType)}
                         {!user.isActive && <Badge variant="destructive">Inactive</Badge>}
                       </div>
                       
@@ -739,7 +715,7 @@ export default function AdminUsers() {
                   <div className="flex items-center space-x-2">
                     <div className="text-right text-sm text-gray-600">
                       <div>Max Listings: {user.maxListings || 10}</div>
-                      {(user.role === "seller" || user.role === "business") && (
+                      {(user.accountType === "seller" || user.accountType === "shop") && (
                         <div>Commission: {parseFloat(user.commissionRate || "10.00").toFixed(1)}%</div>
                       )}
                       {user.shopExpiryDate && (
