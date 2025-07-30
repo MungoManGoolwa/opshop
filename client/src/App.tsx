@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
-import { ErrorBoundary } from "@/components/error-boundary";
+import { ErrorBoundary, PageErrorBoundary, SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { ViewProvider } from "@/contexts/ViewContext";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
@@ -52,6 +52,7 @@ const TermsOfService = lazy(() => import("@/pages/terms-of-service"));
 const PricingGuide = lazy(() => import("@/pages/pricing-guide"));
 const SafetyGuidelines = lazy(() => import("@/pages/safety-guidelines"));
 const GuestCheckout = lazy(() => import("@/pages/guest-checkout"));
+const ErrorDashboard = lazy(() => import("@/pages/error-dashboard"));
 
 function Router() {
   const { isAuthenticated, isLoading, error, user } = useAuth();
@@ -252,6 +253,9 @@ function Router() {
           </Route>
           <Route path="/safety-guidelines">
             <LazyRoute><SafetyGuidelines /></LazyRoute>
+          </Route>
+          <Route path="/error-dashboard">
+            <LazyRoute><ErrorDashboard /></LazyRoute>
           </Route>
         </>
       )}

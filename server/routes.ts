@@ -2243,6 +2243,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CSRF error handling middleware (must be after routes)
   // CSRF error handler temporarily disabled
 
+  // Error logging endpoint for client-side errors
+  app.post("/api/errors", (req, res) => {
+    try {
+      const errorData = req.body;
+      
+      // Log error with structured logging
+      const logData = {
+        type: 'client_error',
+        errorId: errorData.id,
+        message: errorData.message,
+        severity: errorData.severity,
+        category: errorData.category,
+        url: errorData.url,
+        userAgent: errorData.userAgent,
+        sessionId: errorData.sessionId,
+        userId: (req as any).user?.id || 'anonymous',
+        timestamp: errorData.timestamp,
+        stack: errorData.stack,
+        componentStack: errorData.componentStack,
+        metadata: errorData.metadata
+      };
+
+      // Log with appropriate level based on severity
+      switch (errorData.severity) {
+        case 'critical':
+          logger.error(logData, 'Critical client error');
+          break;
+        case 'high':
+          logger.error(logData, 'High severity client error');
+          break;
+        case 'medium':
+          logger.warn(logData, 'Medium severity client error');
+          break;
+        default:
+          logger.info(logData, 'Low severity client error');
+      }
+
+      res.status(200).json({ success: true, errorId: errorData.id });
+    } catch (error: any) {
+      logger.error({ error: error.message, stack: error.stack }, 'Failed to log client error');
+      res.status(500).json({ success: false, message: 'Failed to log error' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
