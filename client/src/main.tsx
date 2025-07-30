@@ -1,7 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { initSentry } from "./lib/sentry";
 import App from "./App";
 import "./index.css";
+
+// Initialize Sentry for error tracking (optional - only if DSN is provided)
+initSentry();
 
 // Register service worker for PWA functionality
 if ('serviceWorker' in navigator) {

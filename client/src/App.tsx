@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
-import { ErrorBoundary, PageErrorBoundary, SectionErrorBoundary } from "@/components/ErrorBoundary";
+import { PageErrorBoundary } from "@/components/ErrorBoundaryWithSentry";
 import { ViewProvider } from "@/contexts/ViewContext";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";

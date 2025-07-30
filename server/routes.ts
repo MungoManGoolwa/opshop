@@ -2268,21 +2268,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log with appropriate level based on severity
       switch (errorData.severity) {
         case 'critical':
-          logger.error(logData, 'Critical client error');
+          console.error('Critical client error:', logData);
           break;
         case 'high':
-          logger.error(logData, 'High severity client error');
+          console.error('High severity client error:', logData);
           break;
         case 'medium':
-          logger.warn(logData, 'Medium severity client error');
+          console.warn('Medium severity client error:', logData);
           break;
         default:
-          logger.info(logData, 'Low severity client error');
+          console.log('Low severity client error:', logData);
       }
 
       res.status(200).json({ success: true, errorId: errorData.id });
     } catch (error: any) {
-      logger.error({ error: error.message, stack: error.stack }, 'Failed to log client error');
+      console.error('Failed to log client error:', error);
       res.status(500).json({ success: false, message: 'Failed to log error' });
     }
   });
