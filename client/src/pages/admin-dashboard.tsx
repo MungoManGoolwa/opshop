@@ -24,6 +24,7 @@ import {
   Mail,
   Percent
 } from "lucide-react";
+import { DynamicStatsGrid } from "@/components/DynamicStatsGrid";
 
 export default function AdminDashboard() {
   useEffect(() => {
@@ -69,55 +70,9 @@ export default function AdminDashboard() {
         
         <div className="container mx-auto px-4 py-8">
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <div className="ml-2">
-                    <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                    <p className="text-2xl font-bold">{totalUsers.toLocaleString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <div className="ml-2">
-                    <p className="text-sm font-medium text-muted-foreground">Total Products</p>
-                    <p className="text-2xl font-bold">{totalProducts}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <div className="ml-2">
-                    <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                    <p className="text-2xl font-bold">${totalSales.toLocaleString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  <div className="ml-2">
-                    <p className="text-sm font-medium text-muted-foreground">Active Listings</p>
-                    <p className="text-2xl font-bold">{activeListings}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Dynamic Stats Grid */}
+          <div className="mb-8">
+            <DynamicStatsGrid />
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">

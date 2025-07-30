@@ -23,6 +23,7 @@ import { createPaymentIntent, confirmPayment, createRefund } from "./stripe";
 import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import { buybackService } from "./buyback-service";
 import { commissionService } from "./commission-service";
+import { dashboardStatsService } from "./dashboard-stats";
 import { logAdminAction, auditAdminAction, getAuditLogs, getAuditStatistics } from './admin-audit';
 import { verificationService, DOCUMENT_TYPES } from "./seller-verification-service";
 import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema, insertPayoutSchema, insertCartItemSchema, insertSavedItemSchema } from "@shared/schema";
@@ -1859,6 +1860,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching admin buyback offers:", error);
       res.status(500).json({ message: "Failed to fetch buyback offers" });
+    }
+  });
+
+  // ===== DYNAMIC DASHBOARD STATISTICS =====
+  
+  // Dynamic dashboard statistics
+  app.get('/api/admin/dashboard-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const stats = await dashboardStatsService.getDashboardStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard statistics" });
+    }
+  });
+
+  // Trending statistics
+  app.get('/api/admin/trending-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const trends = await dashboardStatsService.getTrendingStats();
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching trending stats:", error);
+      res.status(500).json({ message: "Failed to fetch trending statistics" });
+    }
+  });
+
+  // Real-time activity statistics
+  app.get('/api/admin/activity-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const activity = await dashboardStatsService.getActivityStats();
+      res.json(activity);
+    } catch (error) {
+      console.error("Error fetching activity stats:", error);
+      res.status(500).json({ message: "Failed to fetch activity statistics" });
+    }
+  });
+
+  // Category breakdown statistics
+  app.get('/api/admin/category-stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const categories = await dashboardStatsService.getCategoryStats();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching category stats:", error);
+      res.status(500).json({ message: "Failed to fetch category statistics" });
     }
   });
 
