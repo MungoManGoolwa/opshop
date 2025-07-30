@@ -43,7 +43,7 @@ export default function LocationSearch({
     if (selectedLocation?.radius && selectedLocation.radius !== selectedRadius) {
       setSelectedRadius(selectedLocation.radius);
     }
-  }, [selectedLocation]);
+  }, [selectedLocation, selectedRadius]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -65,8 +65,11 @@ export default function LocationSearch({
 
   const handleRadiusChange = (radius: string) => {
     const radiusNum = parseInt(radius);
+    console.log(`Radius changing from ${selectedRadius} to ${radiusNum}`);
     setSelectedRadius(radiusNum);
+    // Always call onLocationChange when radius changes, even without a suburb
     if (selectedLocation) {
+      console.log(`Updating location with new radius: ${radiusNum}km`);
       onLocationChange({ suburb: selectedLocation.suburb, radius: radiusNum });
     }
   };
