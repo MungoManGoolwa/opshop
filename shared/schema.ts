@@ -74,6 +74,16 @@ export const categories = pgTable("categories", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Buyback settings per category - admin configurable percentage reduction from AI price
+export const categoryBuybackSettings = pgTable("category_buyback_settings", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").notNull().references(() => categories.id),
+  buybackPercentage: decimal("buyback_percentage", { precision: 5, scale: 2 }).notNull().default("40.00"), // Default 40% of AI price (60% reduction)
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   title: varchar("title").notNull(),
@@ -539,6 +549,7 @@ export type VerificationAuditLog = typeof verificationAuditLog.$inferSelect;
 export type InsertVerificationAuditLog = typeof verificationAuditLog.$inferInsert;
 
 export type Category = typeof categories.$inferSelect;
+export type CategoryBuybackSettings = typeof categoryBuybackSettings.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Wishlist = typeof wishlists.$inferSelect;
 export type CartItem = typeof cartItems.$inferSelect;
@@ -559,6 +570,13 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export const insertCategoryBuybackSettingsSchema = createInsertSchema(categoryBuybackSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertCategoryBuybackSettings = z.infer<typeof insertCategoryBuybackSettingsSchema>;
 
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
@@ -753,3 +771,25 @@ export const insertBusinessSettingsSchema = createInsertSchema(businessSettings)
   updatedAt: true,
 });
 export type InsertBusinessSettings = z.infer<typeof insertBusinessSettingsSchema>;
+
+// Relations for categories and buyback settings
+export const categoriesRelations = relations(categories, ({ many, one }) => ({
+  products: many(products),
+  buybackSettings: one(categoryBuybackSettings, {
+    fields: [categories.id],
+    references: [categoryBuybackSettings.categoryId],
+  }),
+  children: many(categories, { relationName: "CategoryHierarchy" }),
+  parent: one(categories, {
+    fields: [categories.parentId],
+    references: [categories.id],
+    relationName: "CategoryHierarchy",
+  }),
+}));
+
+export const categoryBuybackSettingsRelations = relations(categoryBuybackSettings, ({ one }) => ({
+  category: one(categories, {
+    fields: [categoryBuybackSettings.categoryId],
+    references: [categories.id],
+  }),
+}));

@@ -44,8 +44,14 @@ export interface AIEvaluationResult {
   suggestedListingPrice: number;
 }
 
-export async function evaluateItemWithAI(item: ItemEvaluation): Promise<AIEvaluationResult> {
+export async function evaluateItemWithAI(item: ItemEvaluation, buybackPercentage: number = 40.00): Promise<AIEvaluationResult> {
+  const startTime = Date.now();
+  
   try {
+    if (!anthropic) {
+      throw new Error("Anthropic API key not configured");
+    }
+    
     const prompt = `You are an expert second-hand marketplace valuation specialist for the Australian market. 
 
 Evaluate this item and provide a comprehensive assessment:
@@ -120,7 +126,8 @@ Provide realistic, conservative estimates based on actual market conditions.`;
 
     // Validate and sanitize the response
     const retailPrice = Math.max(5, parseFloat(evaluationData.estimatedRetailPrice) || 0);
-    const buybackPrice = Math.round(retailPrice * 0.5 * 100) / 100; // 50% of retail, rounded to cents
+    const buybackMultiplier = buybackPercentage / 100; // Convert percentage to decimal
+    const buybackPrice = Math.round(retailPrice * buybackMultiplier * 100) / 100; // Category-specific percentage of retail, rounded to cents
 
     const duration = Date.now() - startTime;
     const confidence = Math.min(1, Math.max(0, parseFloat(evaluationData.confidence) || 0.5));

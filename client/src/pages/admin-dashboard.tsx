@@ -385,6 +385,27 @@ export default function AdminDashboard() {
               </Card>
               
               <PaymentSettings />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Buyback Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Percent className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Configure category-specific instant buyback percentages</p>
+                    <Button asChild className="mb-4">
+                      <Link href="/admin/buyback-settings">
+                        <Percent className="mr-2 h-4 w-4" />
+                        Manage Buyback Settings
+                      </Link>
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-4">
+                      Features: Category percentages, AI evaluation settings, buyback configuration
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

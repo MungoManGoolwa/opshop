@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, buybackOffers, storeCreditTransactions, products } from "@shared/schema";
+import { users, buybackOffers, storeCreditTransactions, products, categories, categoryBuybackSettings } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { evaluateItemWithAI, type ItemEvaluation } from "./ai-evaluation";
 import { emailService } from "./email-service";
@@ -19,10 +19,121 @@ export interface CreateBuybackOfferRequest {
 }
 
 export class BuybackService {
+
+  // Get all categories with their buyback settings for admin
+  async getCategoriesWithBuybackSettings() {
+    try {
+      const categoriesWithSettings = await db
+        .select({
+          id: categories.id,
+          name: categories.name,
+          slug: categories.slug,
+          description: categories.description,
+          isActive: categories.isActive,
+          buybackPercentage: categoryBuybackSettings.buybackPercentage,
+          buybackSettingsActive: categoryBuybackSettings.isActive,
+        })
+        .from(categories)
+        .leftJoin(categoryBuybackSettings, eq(categories.id, categoryBuybackSettings.categoryId))
+        .where(eq(categories.isActive, true))
+        .orderBy(categories.name);
+
+      // Set default percentage for categories without settings
+      return categoriesWithSettings.map(category => ({
+        ...category,
+        buybackPercentage: category.buybackPercentage || "40.00", // Default 40%
+        buybackSettingsActive: category.buybackSettingsActive !== null ? category.buybackSettingsActive : true,
+      }));
+    } catch (error) {
+      console.error("Error fetching categories with buyback settings:", error);
+      throw new Error("Failed to fetch categories with buyback settings");
+    }
+  }
+
+  // Update or create category buyback settings
+  async updateCategoryBuybackSettings(categoryId: number, buybackPercentage: number) {
+    try {
+      // Check if settings already exist
+      const [existingSettings] = await db
+        .select()
+        .from(categoryBuybackSettings)
+        .where(eq(categoryBuybackSettings.categoryId, categoryId))
+        .limit(1);
+
+      if (existingSettings) {
+        // Update existing settings
+        const [updated] = await db
+          .update(categoryBuybackSettings)
+          .set({
+            buybackPercentage: buybackPercentage.toString(),
+            updatedAt: new Date(),
+          })
+          .where(eq(categoryBuybackSettings.categoryId, categoryId))
+          .returning();
+        return updated;
+      } else {
+        // Create new settings
+        const [created] = await db
+          .insert(categoryBuybackSettings)
+          .values({
+            categoryId,
+            buybackPercentage: buybackPercentage.toString(),
+            isActive: true,
+          })
+          .returning();
+        return created;
+      }
+    } catch (error) {
+      console.error("Error updating category buyback settings:", error);
+      throw new Error("Failed to update category buyback settings");
+    }
+  }
+
+  // Get category buyback percentage (default 40% if not configured)
+  async getCategoryBuybackPercentage(categoryName?: string): Promise<number> {
+    if (!categoryName) {
+      return 40.00; // Default 40% of AI price (60% reduction from retail)
+    }
+
+    try {
+      // Find category by name
+      const [category] = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.name, categoryName))
+        .limit(1);
+
+      if (!category) {
+        return 40.00; // Default if category not found
+      }
+
+      // Get buyback settings for this category
+      const [settings] = await db
+        .select()
+        .from(categoryBuybackSettings)
+        .where(and(
+          eq(categoryBuybackSettings.categoryId, category.id),
+          eq(categoryBuybackSettings.isActive, true)
+        ))
+        .limit(1);
+
+      if (!settings) {
+        return 40.00; // Default if no settings found
+      }
+
+      return parseFloat(settings.buybackPercentage);
+    } catch (error) {
+      console.error("Error fetching category buyback percentage:", error);
+      return 40.00; // Default on error
+    }
+  }
   
   // Create a new buyback offer using AI evaluation
   async createBuybackOffer(request: CreateBuybackOfferRequest) {
     try {
+      // Get category-specific buyback percentage
+      const buybackPercentage = await this.getCategoryBuybackPercentage(request.itemCategory);
+      
       // Prepare item for AI evaluation
       const itemEvaluation: ItemEvaluation = {
         title: request.itemTitle,
@@ -34,8 +145,8 @@ export class BuybackService {
         images: request.images,
       };
 
-      // Get AI evaluation
-      const aiResult = await evaluateItemWithAI(itemEvaluation);
+      // Get AI evaluation with category-specific percentage
+      const aiResult = await evaluateItemWithAI(itemEvaluation, buybackPercentage);
 
       // Create expiry date (24 hours from now)
       const expiresAt = new Date();

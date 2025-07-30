@@ -1969,6 +1969,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ADMIN CATEGORY BUYBACK SETTINGS =====
+  
+  // Get all categories with their buyback settings
+  app.get('/api/admin/categories/buyback-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const categoriesWithSettings = await buybackService.getCategoriesWithBuybackSettings();
+      res.json(categoriesWithSettings);
+    } catch (error: any) {
+      console.error("Error fetching category buyback settings:", error);
+      res.status(500).json({ message: "Failed to fetch category buyback settings" });
+    }
+  });
+
+  // Update category buyback percentage
+  app.put('/api/admin/categories/:categoryId/buyback-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const categoryId = parseInt(req.params.categoryId);
+      const { buybackPercentage } = req.body;
+
+      if (!buybackPercentage || buybackPercentage < 10 || buybackPercentage > 80) {
+        return res.status(400).json({ message: "Buyback percentage must be between 10% and 80%" });
+      }
+
+      const settings = await buybackService.updateCategoryBuybackSettings(categoryId, buybackPercentage);
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Error updating category buyback settings:", error);
+      res.status(500).json({ message: error.message || "Failed to update buyback settings" });
+    }
+  });
+
   // ===== DYNAMIC DASHBOARD STATISTICS =====
   
   // Dynamic dashboard statistics
