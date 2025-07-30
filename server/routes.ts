@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import { 
   healthCheck, 
   metricsEndpoint, 
@@ -21,6 +24,7 @@ import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./payp
 import { buybackService } from "./buyback-service";
 import { commissionService } from "./commission-service";
 import { logAdminAction, auditAdminAction, getAuditLogs, getAuditStatistics } from './admin-audit';
+import { verificationService, DOCUMENT_TYPES } from "./seller-verification-service";
 import { insertProductSchema, insertCategorySchema, insertMessageSchema, insertOrderSchema, insertReviewSchema, insertPayoutSchema, insertCartItemSchema, insertSavedItemSchema } from "@shared/schema";
 import { z } from "zod";
 import {
@@ -2242,6 +2246,176 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // CSRF error handling middleware (must be after routes)
   // CSRF error handler temporarily disabled
+
+  // ===== SELLER VERIFICATION ENDPOINTS =====
+  
+  // Get verification status
+  app.get("/api/seller/verification/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const status = await verificationService.getVerificationStatus(userId);
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting verification status:", error);
+      res.status(500).json({ message: "Failed to get verification status" });
+    }
+  });
+
+  // Get available document types
+  app.get("/api/seller/verification/document-types", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const status = await verificationService.getVerificationStatus(userId);
+      const availableTypes = verificationService.getAvailableDocumentTypes(status.documents);
+      res.json(availableTypes);
+    } catch (error) {
+      console.error("Error getting document types:", error);
+      res.status(500).json({ message: "Failed to get document types" });
+    }
+  });
+
+  // Upload verification document
+  const verificationUpload = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadDir = "public/uploads/verification";
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2);
+        cb(null, `verification_${timestamp}_${random}${ext}`);
+      }
+    }),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error("Only JPEG, PNG and PDF files are allowed"));
+      }
+    }
+  });
+
+  app.post("/api/seller/verification/upload-document", 
+    isAuthenticated, 
+    verificationUpload.fields([
+      { name: 'frontImage', maxCount: 1 },
+      { name: 'backImage', maxCount: 1 }
+    ]), 
+    async (req: any, res) => {
+      try {
+        const userId = req.user.claims.sub;
+        const { documentType, documentNumber, expiryDate } = req.body;
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+        if (!documentType) {
+          return res.status(400).json({ message: "Document type is required" });
+        }
+
+        if (!files.frontImage || files.frontImage.length === 0) {
+          return res.status(400).json({ message: "Front image is required" });
+        }
+
+        const frontImageUrl = `/uploads/verification/${files.frontImage[0].filename}`;
+        const backImageUrl = files.backImage && files.backImage.length > 0 
+          ? `/uploads/verification/${files.backImage[0].filename}` 
+          : undefined;
+
+        const documentData = {
+          documentType,
+          documentNumber: documentNumber || undefined,
+          frontImageUrl,
+          backImageUrl,
+          expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+        };
+
+        const document = await verificationService.uploadDocument(userId, documentData);
+        res.json(document);
+      } catch (error) {
+        console.error("Error uploading verification document:", error);
+        res.status(500).json({ message: error.message || "Failed to upload document" });
+      }
+    }
+  );
+
+  // Submit verification for review
+  app.post("/api/seller/verification/submit", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const submission = await verificationService.submitForReview(userId);
+      res.json(submission);
+    } catch (error) {
+      console.error("Error submitting verification:", error);
+      res.status(500).json({ message: error.message || "Failed to submit verification" });
+    }
+  });
+
+  // Admin: Get pending verifications
+  app.get("/api/admin/verification/pending", isAuthenticated, async (req: any, res) => {
+    try {
+      const userRole = req.user.claims.role || "customer";
+      if (userRole !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const pendingSubmissions = await verificationService.getPendingSubmissions();
+      res.json(pendingSubmissions);
+    } catch (error) {
+      console.error("Error getting pending verifications:", error);
+      res.status(500).json({ message: "Failed to get pending verifications" });
+    }
+  });
+
+  // Admin: Verify document
+  app.post("/api/admin/verification/verify-document/:documentId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userRole = req.user.claims.role || "customer";
+      if (userRole !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const adminId = req.user.claims.sub;
+      const documentId = parseInt(req.params.documentId);
+      const { approved, rejectionReason } = req.body;
+
+      const document = await verificationService.verifyDocument(documentId, adminId, approved, rejectionReason);
+      res.json(document);
+    } catch (error) {
+      console.error("Error verifying document:", error);
+      res.status(500).json({ message: "Failed to verify document" });
+    }
+  });
+
+  // Admin: Review submission
+  app.post("/api/admin/verification/review-submission/:submissionId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userRole = req.user.claims.role || "customer";
+      if (userRole !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const adminId = req.user.claims.sub;
+      const submissionId = parseInt(req.params.submissionId);
+      const { approved, reviewNotes } = req.body;
+
+      const submission = await verificationService.reviewSubmission(submissionId, adminId, approved, reviewNotes);
+      res.json(submission);
+    } catch (error) {
+      console.error("Error reviewing submission:", error);
+      res.status(500).json({ message: "Failed to review submission" });
+    }
+  });
 
   // Error logging endpoint for client-side errors
   app.post("/api/errors", (req, res) => {

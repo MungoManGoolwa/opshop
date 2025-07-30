@@ -53,6 +53,9 @@ export const users = pgTable("users", {
   abn: varchar("abn"),
   isActive: boolean("is_active").default(true),
   isVerified: boolean("is_verified").default(false),
+  verificationStatus: varchar("verification_status").default("unverified"), // unverified, pending, verified, rejected
+  verificationSubmittedAt: timestamp("verification_submitted_at"),
+  verificationCompletedAt: timestamp("verification_completed_at"),
   storeCredit: decimal("store_credit", { precision: 10, scale: 2 }).default("0.00"),
   commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).default("10.00"), // Individual commission rate for this user
   createdAt: timestamp("created_at").defaultNow(),
@@ -403,6 +406,57 @@ export const sellerBadges = pgTable("seller_badges", {
   criteria: jsonb("criteria"), // Criteria used to earn this badge
 });
 
+// Seller verification documents and ID tracking
+export const verificationDocuments = pgTable("verification_documents", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  documentType: varchar("document_type").notNull(), // passport, drivers_licence, birth_certificate, medicare_card, etc.
+  documentNumber: varchar("document_number"),
+  documentPoints: integer("document_points").notNull(), // Points value for this document
+  frontImageUrl: varchar("front_image_url"),
+  backImageUrl: varchar("back_image_url"),
+  verificationStatus: varchar("verification_status").default("pending"), // pending, verified, rejected
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: varchar("verified_by"), // Admin ID who verified
+  rejectionReason: text("rejection_reason"),
+  expiryDate: timestamp("expiry_date"), // For documents that expire
+  documentData: jsonb("document_data"), // Extracted data from document
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Track verification submissions and progress
+export const verificationSubmissions = pgTable("verification_submissions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  totalPoints: integer("total_points").default(0),
+  hasPhotoId: boolean("has_photo_id").default(false), // Must have passport or drivers licence
+  submissionStatus: varchar("submission_status").default("draft"), // draft, submitted, under_review, approved, rejected
+  submittedAt: timestamp("submitted_at"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: varchar("reviewed_by"), // Admin ID who reviewed
+  reviewNotes: text("review_notes"),
+  approvalDate: timestamp("approval_date"),
+  rejectionReason: text("rejection_reason"),
+  autoVerified: boolean("auto_verified").default(false), // If verified automatically
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Verification audit trail
+export const verificationAuditLog = pgTable("verification_audit_log", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  submissionId: integer("submission_id").references(() => verificationSubmissions.id),
+  documentId: integer("document_id").references(() => verificationDocuments.id),
+  action: varchar("action").notNull(), // document_uploaded, document_verified, submission_approved, etc.
+  adminId: varchar("admin_id").references(() => users.id),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  details: jsonb("details"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations for achievements system
 export const achievementsRelations = relations(achievements, ({ many }) => ({
   userAchievements: many(userAchievements),
@@ -433,6 +487,41 @@ export const sellerBadgesRelations = relations(sellerBadges, ({ one }) => ({
   }),
 }));
 
+export const verificationDocumentsRelations = relations(verificationDocuments, ({ one }) => ({
+  user: one(users, {
+    fields: [verificationDocuments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const verificationSubmissionsRelations = relations(verificationSubmissions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [verificationSubmissions.userId],
+    references: [users.id],
+  }),
+  documents: many(verificationDocuments),
+  auditLogs: many(verificationAuditLog),
+}));
+
+export const verificationAuditLogRelations = relations(verificationAuditLog, ({ one }) => ({
+  user: one(users, {
+    fields: [verificationAuditLog.userId],
+    references: [users.id],
+  }),
+  admin: one(users, {
+    fields: [verificationAuditLog.adminId],
+    references: [users.id],
+  }),
+  submission: one(verificationSubmissions, {
+    fields: [verificationAuditLog.submissionId],
+    references: [verificationSubmissions.id],
+  }),
+  document: one(verificationDocuments, {
+    fields: [verificationAuditLog.documentId],
+    references: [verificationDocuments.id],
+  }),
+}));
+
 // Types for achievements
 export type Achievement = typeof achievements.$inferSelect;
 export type InsertAchievement = typeof achievements.$inferInsert;
@@ -442,6 +531,12 @@ export type SellerStats = typeof sellerStats.$inferSelect;
 export type InsertSellerStats = typeof sellerStats.$inferInsert;
 export type SellerBadge = typeof sellerBadges.$inferSelect;
 export type InsertSellerBadge = typeof sellerBadges.$inferInsert;
+export type VerificationDocument = typeof verificationDocuments.$inferSelect;
+export type InsertVerificationDocument = typeof verificationDocuments.$inferInsert;
+export type VerificationSubmission = typeof verificationSubmissions.$inferSelect;
+export type InsertVerificationSubmission = typeof verificationSubmissions.$inferInsert;
+export type VerificationAuditLog = typeof verificationAuditLog.$inferSelect;
+export type InsertVerificationAuditLog = typeof verificationAuditLog.$inferInsert;
 
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
@@ -515,6 +610,26 @@ export const insertEmailReminderSchema = createInsertSchema(emailReminderQueue).
   updatedAt: true,
 });
 export type InsertEmailReminder = z.infer<typeof insertEmailReminderSchema>;
+
+export const insertVerificationDocumentSchema = createInsertSchema(verificationDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  verifiedAt: true,
+  verifiedBy: true,
+});
+export type InsertVerificationDocument = z.infer<typeof insertVerificationDocumentSchema>;
+
+export const insertVerificationSubmissionSchema = createInsertSchema(verificationSubmissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  submittedAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+  approvalDate: true,
+});
+export type InsertVerificationSubmission = z.infer<typeof insertVerificationSubmissionSchema>;
 
 // Buyback offers from AI evaluation
 export const buybackOffers = pgTable("buyback_offers", {
