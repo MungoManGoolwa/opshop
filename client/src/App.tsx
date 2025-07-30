@@ -54,6 +54,8 @@ const PricingGuide = lazy(() => import("@/pages/pricing-guide"));
 const SafetyGuidelines = lazy(() => import("@/pages/safety-guidelines"));
 const GuestCheckout = lazy(() => import("@/pages/guest-checkout"));
 const ErrorDashboard = lazy(() => import("@/pages/error-dashboard"));
+const SellerVerification = lazy(() => import("@/pages/seller-verification"));
+const SellerAchievements = lazy(() => import("@/pages/seller-achievements"));
 
 function Router() {
   const { isAuthenticated, isLoading, error, user } = useAuth();
@@ -185,6 +187,16 @@ function Router() {
           <Route path="/seller/create">
             <PrivateRoute role="seller">
               <LazyRoute skeleton="listing"><CreateListing /></LazyRoute>
+            </PrivateRoute>
+          </Route>
+          <Route path="/seller/verification">
+            <PrivateRoute role="seller">
+              <LazyRoute><SellerVerification /></LazyRoute>
+            </PrivateRoute>
+          </Route>
+          <Route path="/seller/achievements">
+            <PrivateRoute role="seller">
+              <LazyRoute><SellerAchievements /></LazyRoute>
             </PrivateRoute>
           </Route>
           <Route path="/admin/dashboard">

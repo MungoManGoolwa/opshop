@@ -130,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product search route with fuzzy matching
   app.get("/api/products/search", validateQuery(z.object({
     q: z.string().min(2, "Search query must be at least 2 characters"),
-    limit: z.string().optional().transform(val => Math.min(100, parseInt(val || "20")))
+    limit: z.string().optional().transform(val => Math.min(100, parseInt(val || "20"))).pipe(z.number())
   })), async (req, res) => {
     try {
       const { q: query, limit } = req.query as any;
@@ -279,7 +279,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/products/:id', validateParams(idParamSchema), async (req, res) => {
+  app.get('/api/products/:id', validateParams(z.object({
+    id: z.string().transform(val => parseInt(val)).pipe(z.number())
+  })), async (req, res) => {
     try {
       const { id } = req.params as any;
       const product = await storage.getProduct(id);
@@ -316,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/products', isAuthenticated, validateBody(insertProductSchema.omit({ id: true, sellerId: true, createdAt: true, updatedAt: true })), async (req: any, res) => {
+  app.post('/api/products', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);

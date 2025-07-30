@@ -12,10 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { PrivateRoute } from "@/components/PrivateRoute";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
+import PrivateRoute from "@/components/auth/PrivateRoute";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
+import Breadcrumbs from "@/components/navigation/breadcrumbs";
 import { 
   CheckCircle, 
   XCircle, 
@@ -255,7 +255,7 @@ export default function SellerVerification() {
   }
 
   return (
-    <PrivateRoute allowedRoles={["seller", "business", "admin"]}>
+    <PrivateRoute role="seller">
       <div className="min-h-screen bg-neutral">
         <Header />
         

@@ -146,7 +146,7 @@ export class CommissionService {
     .where(
       and(
         eq(commissions.status, "pending"),
-        lt(commissions.createdAt, new Date(Date.now() - settings.holdingPeriodDays * 24 * 60 * 60 * 1000))
+        lt(commissions.createdAt, new Date(Date.now() - (settings.holdingPeriodDays ?? 7) * 24 * 60 * 60 * 1000))
       )
     )
     .groupBy(commissions.sellerId)
@@ -158,7 +158,7 @@ export class CommissionService {
       try {
         const payout = await this.createPayout(
           seller.sellerId, 
-          settings.defaultPaymentMethod,
+          settings.defaultPaymentMethod ?? "stripe",
           new Date()
         );
         results.push({ sellerId: seller.sellerId, payout, status: "created" });
@@ -277,6 +277,66 @@ export class CommissionService {
     .leftJoin(orders, eq(commissions.orderId, orders.id))
     .where(eq(commissions.payoutId, payoutId))
     .orderBy(desc(commissions.createdAt));
+  }
+
+  /**
+   * Get commission analytics for admin dashboard
+   */
+  async getCommissionAnalytics() {
+    try {
+      const [totalCommissions, totalPayouts, pendingPayouts, monthlyStats] = await Promise.all([
+        // Total commissions
+        db.select({
+          total: sql<string>`COALESCE(SUM(${commissions.commissionAmount}), 0)`,
+          count: sql<string>`COUNT(*)`
+        }).from(commissions),
+        
+        // Total payouts
+        db.select({
+          total: sql<string>`COALESCE(SUM(${payouts.totalAmount}), 0)`,
+          count: sql<string>`COUNT(*)`
+        }).from(payouts).where(eq(payouts.status, 'completed')),
+        
+        // Pending payouts
+        db.select({
+          total: sql<string>`COALESCE(SUM(${payouts.totalAmount}), 0)`,
+          count: sql<string>`COUNT(*)`
+        }).from(payouts).where(eq(payouts.status, 'pending')),
+        
+        // Monthly commission stats
+        db.select({
+          month: sql<string>`DATE_TRUNC('month', ${commissions.createdAt})`,
+          total: sql<string>`COALESCE(SUM(${commissions.commissionAmount}), 0)`,
+          count: sql<string>`COUNT(*)`
+        }).from(commissions)
+          .where(gte(commissions.createdAt, sql`CURRENT_DATE - INTERVAL '12 months'`))
+          .groupBy(sql`DATE_TRUNC('month', ${commissions.createdAt})`)
+          .orderBy(sql`DATE_TRUNC('month', ${commissions.createdAt})`)
+      ]);
+
+      return {
+        totalCommissions: {
+          amount: totalCommissions[0]?.total || '0',
+          count: parseInt(totalCommissions[0]?.count || '0')
+        },
+        totalPayouts: {
+          amount: totalPayouts[0]?.total || '0',
+          count: parseInt(totalPayouts[0]?.count || '0')
+        },
+        pendingPayouts: {
+          amount: pendingPayouts[0]?.total || '0',
+          count: parseInt(pendingPayouts[0]?.count || '0')
+        },
+        monthlyStats: monthlyStats.map(stat => ({
+          month: stat.month,
+          amount: stat.total,
+          count: parseInt(stat.count)
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching commission analytics:', error);
+      throw new Error('Failed to fetch commission analytics');
+    }
   }
 }
 

@@ -137,11 +137,11 @@ export default function SellerAchievements() {
         apiRequest("GET", "/api/achievements/stats"),
       ]);
 
-      setAchievements(achievementsRes);
-      setProgress(progressRes);
-      setUserAchievements(userAchievementsRes);
-      setBadges(badgesRes);
-      setStats(statsRes);
+      setAchievements(await achievementsRes.json());
+      setProgress(await progressRes.json());
+      setUserAchievements(await userAchievementsRes.json());
+      setBadges(await badgesRes.json());
+      setStats(await statsRes.json());
     } catch (error) {
       console.error("Error fetching achievement data:", error);
       toast({
