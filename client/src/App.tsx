@@ -254,7 +254,8 @@ function Router() {
           </Route>
         </>
       )}
-      <Route component={NotFound} />
+      {/* Wildcard catch-all route for unknown paths */}
+      <Route path="*" component={NotFound} />
     </Switch>
   );
 }
