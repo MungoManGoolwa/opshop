@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/react";
-import { BrowserTracing } from "@sentry/tracing";
 
 interface SentryConfig {
   dsn?: string;
@@ -33,7 +32,7 @@ export const initSentry = () => {
     environment: config.environment,
     tracesSampleRate: config.tracesSampleRate,
     integrations: [
-      new BrowserTracing({
+      Sentry.browserTracingIntegration({
         // Set sampling rate for performance monitoring
         // Basic route tracking for single page applications
       }),
@@ -55,16 +54,15 @@ export const initSentry = () => {
       return event;
     },
     // Capture unhandled promise rejections
-    captureUnhandledRejections: true,
-    // Set user context automatically
-    initialScope: {
-      tags: {
-        component: "opshop-online"
-      }
-    }
+    captureUnhandledRejections: true
   });
 
-  console.log('Sentry: Initialized for', config.environment);
+  // Set initial context
+  Sentry.setTag('component', 'opshop-online');
+  
+  if (import.meta.env.DEV) {
+    console.log('Sentry: Initialized for', config.environment);
+  }
 };
 
 // Enhanced error logging that integrates with both our custom logger and Sentry
@@ -143,9 +141,11 @@ export const startSentryTransaction = (name: string, operation: string) => {
     return null;
   }
 
-  return Sentry.startTransaction({
+  return Sentry.startSpan({
     name,
     op: operation
+  }, () => {
+    // Return span for transaction
   });
 };
 

@@ -5,11 +5,10 @@ const DYNAMIC_CACHE = 'opshop-dynamic-v1';
 
 // Static files to cache
 const STATIC_FILES = [
-  '/',
   '/manifest.json',
   '/icons/icon-192x192.svg',
   '/icons/icon-512x512.svg',
-  // Add critical CSS and JS files here
+  '/offline.html'
 ];
 
 // API endpoints that should be cached
@@ -21,12 +20,13 @@ const CACHEABLE_APIS = [
 
 // Install event - cache static files
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
-        console.log('Service Worker: Caching static files');
-        return cache.addAll(STATIC_FILES);
+        // Try to cache static files, skip if not found
+        return Promise.allSettled(
+          STATIC_FILES.map(file => cache.add(file))
+        );
       })
       .then(() => {
         return self.skipWaiting();
@@ -36,13 +36,11 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-            console.log('Service Worker: Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -89,7 +87,7 @@ async function networkFirstWithFallback(request) {
     
     return networkResponse;
   } catch (error) {
-    console.log('Service Worker: Network failed, trying cache');
+    // Network failed, try cache
     
     // Try cache
     const cachedResponse = await caches.match(request);
@@ -124,7 +122,6 @@ async function cacheFirst(request) {
     }
     return networkResponse;
   } catch (error) {
-    console.log('Service Worker: Failed to fetch:', request.url);
     throw error;
   }
 }
@@ -144,8 +141,6 @@ function isStaticAsset(pathname) {
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Background sync triggered', event.tag);
-  
   if (event.tag === 'product-search') {
     event.waitUntil(syncProductSearch());
   } else if (event.tag === 'cart-update') {
@@ -157,9 +152,9 @@ self.addEventListener('sync', (event) => {
 async function syncProductSearch() {
   try {
     // Implement offline search sync logic here
-    console.log('Service Worker: Syncing product searches');
+    // Currently a placeholder for future implementation
   } catch (error) {
-    console.error('Service Worker: Failed to sync product searches', error);
+    // Handle sync errors silently
   }
 }
 
@@ -167,53 +162,8 @@ async function syncProductSearch() {
 async function syncCartUpdates() {
   try {
     // Implement offline cart sync logic here
-    console.log('Service Worker: Syncing cart updates');
+    // Currently a placeholder for future implementation
   } catch (error) {
-    console.error('Service Worker: Failed to sync cart updates', error);
+    // Handle sync errors silently
   }
 }
-
-// Push notification handling
-self.addEventListener('push', (event) => {
-  console.log('Service Worker: Push notification received');
-  
-  const options = {
-    body: event.data ? event.data.text() : 'New update available!',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/badge-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'View Details',
-        icon: '/icons/checkmark.png'
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: '/icons/xmark.png'
-      }
-    ]
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification('Opshop Online', options)
-  );
-});
-
-// Notification click handling
-self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker: Notification clicked');
-  
-  event.notification.close();
-  
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
-});

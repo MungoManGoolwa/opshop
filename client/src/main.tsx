@@ -8,11 +8,13 @@ import "./index.css";
 initSentry();
 
 // Register service worker for PWA functionality
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('PWA: Service Worker registered successfully:', registration.scope);
+        if (import.meta.env.DEV) {
+          console.log('PWA: Service Worker registered successfully:', registration.scope);
+        }
         
         // Check for updates
         registration.addEventListener('updatefound', () => {
@@ -20,14 +22,18 @@ if ('serviceWorker' in navigator) {
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('PWA: New content available, please refresh.');
+                if (import.meta.env.DEV) {
+                  console.log('PWA: New content available, please refresh.');
+                }
               }
             });
           }
         });
       })
       .catch((error) => {
-        console.error('PWA: Service Worker registration failed:', error);
+        if (import.meta.env.DEV) {
+          console.error('PWA: Service Worker registration failed:', error);
+        }
       });
   });
 }

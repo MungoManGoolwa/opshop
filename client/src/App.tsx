@@ -18,6 +18,7 @@ import { useAnalytics } from "./hooks/use-analytics";
 import { preloadCriticalRoutes, preloadAuthenticatedRoutes, preloadAdminRoutes, preloadSellerRoutes } from "./utils/preloadRoutes";
 import { HelmetProvider } from "react-helmet-async";
 
+
 // Critical pages - loaded immediately
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -281,9 +282,8 @@ function Router() {
 function App() {
   // Initialize Google Analytics when app loads
   useEffect(() => {
-    if (!import.meta.env.VITE_GA_MEASUREMENT_ID) {
-      console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
-    } else {
+    // Initialize Google Analytics if available
+    if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
       initGA();
     }
   }, []);
