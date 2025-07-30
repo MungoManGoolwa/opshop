@@ -31,6 +31,8 @@ export default function LocationSearch({
   const [searchResults, setSearchResults] = useState<Suburb[]>([]);
   const [selectedRadius, setSelectedRadius] = useState(selectedLocation?.radius || 25); // Use existing radius or default 25km
   const searchRef = useRef<HTMLDivElement>(null);
+  
+  console.log(`LocationSearch render - selectedRadius: ${selectedRadius}, selectedLocation?.radius: ${selectedLocation?.radius}`);
 
   // Search suburbs when query changes
   useEffect(() => {
@@ -65,12 +67,15 @@ export default function LocationSearch({
 
   const handleRadiusChange = (radius: string) => {
     const radiusNum = parseInt(radius);
-    console.log(`Radius changing from ${selectedRadius} to ${radiusNum}`);
+    console.log(`Select onValueChange fired - radius: ${radius}, parsed: ${radiusNum}`);
+    console.log(`Current selectedRadius: ${selectedRadius}, new radius: ${radiusNum}`);
     setSelectedRadius(radiusNum);
     // Always call onLocationChange when radius changes, even without a suburb
     if (selectedLocation) {
-      console.log(`Updating location with new radius: ${radiusNum}km`);
+      console.log(`Calling onLocationChange with radius: ${radiusNum}km for suburb: ${selectedLocation.suburb.name}`);
       onLocationChange({ suburb: selectedLocation.suburb, radius: radiusNum });
+    } else {
+      console.log(`No selectedLocation, radius changed to: ${radiusNum}km but not propagated`);
     }
   };
 
@@ -88,7 +93,7 @@ export default function LocationSearch({
           <Badge variant="secondary" className="flex items-center space-x-1 px-3 py-1">
             <MapPin className="h-3 w-3" />
             <span>{selectedLocation.suburb.name}, {selectedLocation.suburb.state}</span>
-            <span className="text-xs">({selectedLocation.radius}km)</span>
+            <span className="text-xs">({selectedRadius}km)</span>
             <button 
               onClick={clearLocation}
               className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
@@ -139,7 +144,9 @@ export default function LocationSearch({
               <span className="text-sm font-medium">Within:</span>
               <Select value={selectedRadius.toString()} onValueChange={handleRadiusChange}>
                 <SelectTrigger className="w-24">
-                  <SelectValue />
+                  <SelectValue placeholder={`${selectedRadius}km`}>
+                    {selectedRadius}km
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {RADIUS_OPTIONS.map(option => (
