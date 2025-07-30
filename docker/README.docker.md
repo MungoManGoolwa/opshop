@@ -2,6 +2,8 @@
 
 This guide helps you run the complete Opshop Online marketplace application using Docker on your local machine.
 
+> **Note**: All Docker-related files are now organized in the `/docker` directory for better project structure.
+
 ## 🚀 Quick Start
 
 ### 1. Prerequisites
@@ -19,6 +21,9 @@ mkdir opshop-online && cd opshop-online
 # Download all Docker files (you can copy the files from the Replit project)
 # Or clone if you have the repository
 
+# Navigate to Docker directory
+cd docker
+
 # Copy environment configuration
 cp .env.docker .env
 
@@ -29,6 +34,7 @@ nano .env
 ### 3. Start the Application
 
 ```bash
+# From the /docker directory:
 # Start all services (database, redis, app)
 docker-compose up -d
 
