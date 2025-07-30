@@ -62,8 +62,8 @@ class ErrorLogger {
   private setupGlobalErrorHandlers(): void {
     if (!this.config.enabled || typeof window === 'undefined') return;
 
-    // Global JavaScript error handler
-    window.addEventListener('error', (event) => {
+    // Global JavaScript error handler with proper typing
+    const errorHandler = (event: ErrorEvent) => {
       this.logError({
         message: event.message,
         stack: event.error?.stack,
@@ -76,10 +76,10 @@ class ErrorLogger {
           type: 'global_error'
         }
       });
-    });
+    };
 
-    // Unhandled promise rejection handler
-    window.addEventListener('unhandledrejection', (event) => {
+    // Unhandled promise rejection handler with proper typing
+    const rejectionHandler = (event: PromiseRejectionEvent) => {
       this.logError({
         message: `Unhandled Promise Rejection: ${event.reason}`,
         stack: event.reason?.stack,
@@ -90,13 +90,27 @@ class ErrorLogger {
           type: 'unhandled_rejection'
         }
       });
-    });
+    };
 
-    // Network error detection
-    window.addEventListener('fetch', () => {
-      // This is a simplified approach - in production you might want to wrap fetch
-      // or use service workers for more comprehensive network error tracking
-    });
+    // Add event listeners
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', rejectionHandler);
+
+    // Store cleanup function for proper removal
+    this.globalHandlerCleanup = () => {
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', rejectionHandler);
+    };
+  }
+
+  // Cleanup method for global handlers
+  private globalHandlerCleanup: (() => void) | null = null;
+
+  destroy(): void {
+    if (this.globalHandlerCleanup) {
+      this.globalHandlerCleanup();
+      this.globalHandlerCleanup = null;
+    }
   }
 
   logError(error: Partial<ErrorLogEntry>): void {

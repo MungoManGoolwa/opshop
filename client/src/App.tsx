@@ -9,6 +9,7 @@ import { PageErrorBoundary } from "@/components/ErrorBoundaryWithSentry";
 import { ViewProvider } from "@/contexts/ViewContext";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { useAppListeners } from "@/hooks/useCleanupListeners";
 import PrivateRoute from "@/components/auth/PrivateRoute";
 import LazyRoute from "@/components/LazyRoute";
 import { useEffect, lazy, Suspense } from "react";
@@ -275,9 +276,12 @@ function App() {
     }
   }, []);
 
+  // Set up all global listeners with proper cleanup
+  useAppListeners();
+
   return (
     <HelmetProvider>
-      <ErrorBoundary>
+      <PageErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <ViewProvider>
             <TooltipProvider>
@@ -288,7 +292,7 @@ function App() {
             </TooltipProvider>
           </ViewProvider>
         </QueryClientProvider>
-      </ErrorBoundary>
+      </PageErrorBoundary>
     </HelmetProvider>
   );
 }
