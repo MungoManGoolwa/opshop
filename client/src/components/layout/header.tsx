@@ -104,10 +104,12 @@ export default function Header() {
               <span className="text-primary font-medium">🇦🇺 Australian Marketplace</span>
             </div>
           <div className="flex items-center space-x-4">
-            <Link href="/about" className="text-gray-600 hover:text-primary" title="About Us">
-              <span className="hidden md:inline">About Us</span>
-              <HelpCircle className="h-4 w-4 md:hidden" />
-            </Link>
+            {isAuthenticated && (
+              <Link href="/about" className="text-gray-600 hover:text-primary" title="About Us">
+                <span className="hidden md:inline">About Us</span>
+                <HelpCircle className="h-4 w-4 md:hidden" />
+              </Link>
+            )}
             {isAuthenticated && (
               <Link href="/instant-buyback" className="text-green-600 hover:text-green-700 font-medium" title="Instant Buyback">
                 <Sparkles className="h-4 w-4 mr-0 md:mr-1" />
@@ -131,16 +133,6 @@ export default function Header() {
                 <Store className="h-4 w-4 mr-0 md:mr-1" />
                 <span className="hidden md:inline">Sell</span>
               </Link>
-            )}
-            {!isAuthenticated && (
-              <button 
-                onClick={() => window.location.href = "/api/login"}
-                className="text-gray-600 hover:text-primary"
-                title="Login"
-              >
-                <User className="h-4 w-4 mr-0 md:mr-1" />
-                <span className="hidden md:inline">Login</span>
-              </button>
             )}
           </div>
         </div>
