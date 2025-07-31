@@ -198,6 +198,11 @@ function Router() {
               <LazyRoute skeleton="listing"><EditListing /></LazyRoute>
             </PrivateRoute>
           </Route>
+          <Route path="/edit-listing/:id">
+            <PrivateRoute role={["seller", "business", "admin"]}>
+              <LazyRoute skeleton="listing"><EditListing /></LazyRoute>
+            </PrivateRoute>
+          </Route>
           <Route path="/seller/verification">
             <PrivateRoute role="seller">
               <LazyRoute><SellerVerification /></LazyRoute>

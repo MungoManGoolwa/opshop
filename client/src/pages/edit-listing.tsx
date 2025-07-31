@@ -122,16 +122,28 @@ export default function EditListing() {
         shippingCost: data.shippingCost || "0.00",
       };
       
-      return apiRequest("PUT", `/api/products/${productId}`, productData);
+      // Use admin endpoint if user is admin, otherwise use regular endpoint
+      const endpoint = user?.accountType === 'admin' 
+        ? `/api/admin/products/${productId}` 
+        : `/api/products/${productId}`;
+      
+      return apiRequest("PUT", endpoint, productData);
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Your listing has been updated successfully!",
+        description: "Listing has been updated successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
-      setLocation("/seller/dashboard");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      
+      // Redirect based on user role
+      if (user?.accountType === 'admin') {
+        setLocation("/admin/site");
+      } else {
+        setLocation("/seller/dashboard");
+      }
     },
     onError: (error: any) => {
       toast({
@@ -242,14 +254,14 @@ export default function EditListing() {
             <div className="mb-8">
               <div className="flex items-center space-x-2 mb-4">
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/seller/dashboard">
+                  <Link href={user?.accountType === 'admin' ? "/admin/site" : "/seller/dashboard"}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Dashboard
+                    Back to {user?.accountType === 'admin' ? 'Admin Panel' : 'Dashboard'}
                   </Link>
                 </Button>
               </div>
-              <h1 className="text-3xl font-bold">Edit Listing</h1>
-              <p className="text-gray-600">Update your product information</p>
+              <h1 className="text-3xl font-bold">{user?.accountType === 'admin' ? 'Admin Edit Listing' : 'Edit Listing'}</h1>
+              <p className="text-gray-600">{user?.accountType === 'admin' ? 'Update any product information' : 'Update your product information'}</p>
             </div>
 
             <Form {...form}>

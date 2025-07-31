@@ -495,6 +495,15 @@ export default function SiteAdmin() {
                               {product.isVerified ? 'Unverify' : 'Verify'}
                             </Button>
                             
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setLocation(`/edit-listing/${product.id}`)}
+                              title="Edit this listing"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            
                             <Button size="sm" variant="outline">
                               <Eye className="w-4 h-4" />
                             </Button>
