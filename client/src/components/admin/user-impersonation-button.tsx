@@ -8,17 +8,17 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { User, Eye, AlertTriangle } from "lucide-react";
 
-interface User {
+interface UserForImpersonation {
   id: string;
   email: string;
   firstName?: string;
   lastName?: string;
-  role: string;
+  accountType: string;
   profileImageUrl?: string;
 }
 
 interface UserImpersonationButtonProps {
-  user: User;
+  user: UserForImpersonation;
   onImpersonationStart?: () => void;
 }
 

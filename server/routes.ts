@@ -2310,11 +2310,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { userId } = req.body;
-      const targetUser = await storage.getUser(userId);
+      console.log('Impersonation request for userId:', userId, 'type:', typeof userId);
+      
+      // Ensure userId is string (it should be for storage.getUser)
+      const targetUserId = String(userId);
+      const targetUser = await storage.getUser(targetUserId);
       
       if (!targetUser) {
+        console.log('Target user not found:', targetUserId);
         return res.status(404).json({ message: 'User not found' });
       }
+
+      console.log('Starting impersonation:', {
+        admin: req.user.claims.sub,
+        target: targetUser.id,
+        targetEmail: targetUser.email
+      });
 
       // Store original admin user info in session
       req.session.originalUserId = req.user.claims.sub;
