@@ -138,7 +138,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     addToCartMutation.mutate();
   };
 
-  const mainImage = product.images?.[0] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&h=300";
+  // Add cache-busting timestamp to force refresh of updated images
+  const baseImage = product.images?.[0] || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&h=300";
+  const mainImage = baseImage.startsWith('/uploads/') ? `${baseImage}?v=${Date.now()}` : baseImage;
 
   return (
     <Link href={`/product/${product.id}`}>
