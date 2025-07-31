@@ -34,7 +34,7 @@ export default function PrivateRoute({
     }
 
     // Check role requirement
-    if (role && user && 'role' in user) {
+    if (role && user && typeof user === 'object' && user !== null && 'role' in user) {
       const userRole = (user as any).role;
       const allowedRoles = Array.isArray(role) ? role : [role];
       
@@ -72,7 +72,7 @@ export default function PrivateRoute({
   }
 
   // Don't render if role check failed
-  if (role && user && 'role' in user) {
+  if (role && user && typeof user === 'object' && user !== null && 'role' in user) {
     const userRole = (user as any).role;
     const allowedRoles = Array.isArray(role) ? role : [role];
     
