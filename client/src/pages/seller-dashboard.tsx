@@ -72,6 +72,13 @@ export default function SellerDashboard() {
         description: "Product deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
+      // Invalidate ALL product list queries (with any query parameters) for home page refresh
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "/api/products" && 
+          query.queryKey.length <= 2
+      });
       setDeletingProductId(null);
     },
     onError: (error: any) => {

@@ -176,7 +176,13 @@ export default function SiteAdmin() {
         description: "Product deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      // Invalidate ALL product list queries (with any query parameters)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "/api/products" && 
+          query.queryKey.length <= 2
+      });
       setDeletingProductId(null);
     },
     onError: (error: any) => {
