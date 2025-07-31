@@ -123,6 +123,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image optimization for faster loading
   app.use(optimizedImageMiddleware());
   
+  // Serve uploaded files directly to avoid truncation
+  app.use('/uploads', (req, res, next) => {
+    const filePath = path.join(process.cwd(), 'public', 'uploads', req.path);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      next();
+    }
+  });
+  
   // Minimal middleware for debugging
   app.use(requestId);
   app.use(corsMiddleware);
