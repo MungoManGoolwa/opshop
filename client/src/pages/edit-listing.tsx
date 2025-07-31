@@ -152,7 +152,13 @@ export default function EditListing() {
       // Invalidate cache and refetch to get updated product data
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      // Invalidate ALL product list queries (with any query parameters)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "/api/products" && 
+          query.queryKey.length <= 2
+      });
       
       // Force refetch the current product to update the existing photos display
       const updatedProduct = await queryClient.refetchQueries({ 
@@ -228,8 +234,13 @@ export default function EditListing() {
       // Refresh the product data instead of manipulating local state
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-      // Invalidate the main products list for home page
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      // Invalidate ALL product list queries (with any query parameters)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => 
+          Array.isArray(query.queryKey) && 
+          query.queryKey[0] === "/api/products" && 
+          query.queryKey.length <= 2
+      });
       // Force refetch to get updated photo list
       queryClient.refetchQueries({ queryKey: ["/api/products", productId] });
     },
