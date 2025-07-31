@@ -78,7 +78,7 @@ export default function Profile() {
               <CardTitle>{userData?.firstName || userData?.email || "User"}</CardTitle>
               <div className="flex justify-center">
                 <Badge variant="outline" className="capitalize">
-                  {userData?.role || "Customer"}
+                  {userData?.accountType || "Customer"}
                 </Badge>
               </div>
             </CardHeader>

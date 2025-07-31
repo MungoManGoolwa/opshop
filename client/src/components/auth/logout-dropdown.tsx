@@ -40,7 +40,7 @@ export default function LogoutDropdown() {
               {(user as any)?.email || ""}
             </p>
             <p className="text-xs leading-none text-muted-foreground capitalize">
-              Role: {(user as any)?.role || "customer"}
+              Account Type: {(user as any)?.accountType || "customer"}
             </p>
           </div>
         </DropdownMenuLabel>
