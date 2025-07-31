@@ -104,9 +104,16 @@ export default function EditListing() {
         shippingCost: productData.shippingCost?.toString() || "",
       });
       
-      // Set existing photos from images field
+      // Set existing photos from images field - convert array of URLs to proper format
       if (productData.images && Array.isArray(productData.images)) {
-        setExistingPhotos(productData.images);
+        const photoObjects = productData.images.map((url: string, index: number) => ({
+          url: url,
+          originalName: `Photo ${index + 1}`,
+          index: index
+        }));
+        setExistingPhotos(photoObjects);
+      } else {
+        setExistingPhotos([]);
       }
     }
   }, [productData, form]);
@@ -134,17 +141,23 @@ export default function EditListing() {
       
       return response.json();
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       toast({
         title: "Success",
         description: `${result.addedPhotos?.length || 0} photos uploaded successfully!`,
       });
       setImages([]);
       setImagePreviews([]);
+      
+      // Invalidate cache and refetch to get updated product data
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
-      // Invalidate the main products list for home page
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      // Force refetch the current product to update the existing photos display
+      const updatedProduct = await queryClient.refetchQueries({ 
+        queryKey: ["/api/products", productId] 
+      });
     },
     onError: (error: any) => {
       toast({
