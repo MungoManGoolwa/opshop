@@ -32,7 +32,7 @@ export async function setupSimpleAuth(app: Express) {
         firstName: "Demo",
         lastName: "User",
         profileImageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-        role: "admin" as const,
+        accountType: "admin" as const,
         isActive: true,
         isVerified: true
       };
