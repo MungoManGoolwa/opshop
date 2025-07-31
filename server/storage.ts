@@ -16,6 +16,7 @@ import {
   listingSettings,
   storeCreditTransactions,
   guestCartSessions,
+  australianLocations,
   type User,
   type UpsertUser,
   type Category,
@@ -44,9 +45,10 @@ import {
   type InsertBusinessSettings,
   type ListingSettings,
   type InsertGuestCartSession,
+  type AustralianLocation,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, ilike, gte, lte, desc, asc, sql, or } from "drizzle-orm";
+import { eq, and, like, ilike, gte, lte, desc, asc, sql, or, isNotNull } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -167,6 +169,12 @@ export interface IStorage {
   // Listing Settings operations
   getListingSettings(): Promise<ListingSettings>;
   updateListingSettings(settings: Partial<ListingSettings>): Promise<ListingSettings>;
+
+  // Australian Locations operations
+  searchLocations(query: string, limit?: number): Promise<AustralianLocation[]>;
+  getLocationsByPostcode(postcode: string): Promise<AustralianLocation[]>;
+  getLocationsByState(state: string, limit?: number): Promise<AustralianLocation[]>;
+  getAllStates(): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1746,6 +1754,59 @@ export class DatabaseStorage implements IStorage {
       console.error("Error fetching search suggestions:", error);
       return [];
     }
+  }
+
+  // Australian Locations operations
+  async searchLocations(query: string, limit: number = 50): Promise<AustralianLocation[]> {
+    if (!query || query.length < 2) {
+      return [];
+    }
+
+    const searchQuery = `%${query.toLowerCase()}%`;
+    
+    const locations = await db
+      .select()
+      .from(australianLocations)
+      .where(
+        or(
+          ilike(australianLocations.locality, searchQuery),
+          ilike(australianLocations.postcode, searchQuery)
+        )
+      )
+      .orderBy(australianLocations.locality)
+      .limit(limit);
+
+    return locations;
+  }
+
+  async getLocationsByPostcode(postcode: string): Promise<AustralianLocation[]> {
+    const locations = await db
+      .select()
+      .from(australianLocations)
+      .where(eq(australianLocations.postcode, postcode))
+      .orderBy(australianLocations.locality);
+
+    return locations;
+  }
+
+  async getLocationsByState(state: string, limit: number = 100): Promise<AustralianLocation[]> {
+    const locations = await db
+      .select()
+      .from(australianLocations)
+      .where(eq(australianLocations.state, state))
+      .orderBy(australianLocations.locality)
+      .limit(limit);
+
+    return locations;
+  }
+
+  async getAllStates(): Promise<string[]> {
+    const stateResults = await db
+      .selectDistinct({ state: australianLocations.state })
+      .from(australianLocations)
+      .orderBy(australianLocations.state);
+
+    return stateResults.map(result => result.state);
   }
 }
 

@@ -2943,6 +2943,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== AUSTRALIAN LOCATIONS API ENDPOINTS =====
+  
+  // Search Australian locations
+  app.get('/api/locations/search', async (req, res) => {
+    try {
+      const { q: query, limit } = req.query;
+      
+      if (!query || typeof query !== 'string' || query.length < 2) {
+        return res.json([]);
+      }
+      
+      const locations = await storage.searchLocations(
+        query, 
+        limit ? parseInt(limit as string, 10) : 50
+      );
+      
+      res.json(locations);
+    } catch (error: any) {
+      console.error("Error searching locations:", error);
+      res.status(500).json({ message: "Failed to search locations" });
+    }
+  });
+
+  // Get locations by postcode
+  app.get('/api/locations/postcode/:postcode', async (req, res) => {
+    try {
+      const { postcode } = req.params;
+      const locations = await storage.getLocationsByPostcode(postcode);
+      res.json(locations);
+    } catch (error: any) {
+      console.error("Error fetching locations by postcode:", error);
+      res.status(500).json({ message: "Failed to fetch locations" });
+    }
+  });
+
+  // Get locations by state
+  app.get('/api/locations/state/:state', async (req, res) => {
+    try {
+      const { state } = req.params;
+      const { limit } = req.query;
+      
+      const locations = await storage.getLocationsByState(
+        state.toUpperCase(),
+        limit ? parseInt(limit as string, 10) : 100
+      );
+      
+      res.json(locations);
+    } catch (error: any) {
+      console.error("Error fetching locations by state:", error);
+      res.status(500).json({ message: "Failed to fetch locations" });
+    }
+  });
+
+  // Get all Australian states
+  app.get('/api/locations/states', async (req, res) => {
+    try {
+      const states = await storage.getAllStates();
+      res.json(states);
+    } catch (error: any) {
+      console.error("Error fetching states:", error);  
+      res.status(500).json({ message: "Failed to fetch states" });
+    }
+  });
+
   // Error logging endpoint for client-side errors
   app.post("/api/errors", (req, res) => {
     try {

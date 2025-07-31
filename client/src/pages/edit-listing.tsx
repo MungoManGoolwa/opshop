@@ -13,9 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { ProtectedRoute } from "@/components/ui/protected-route";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
+import ProtectedRoute from "@/components/ui/protected-route";
 import { ArrowLeft, Package, Upload, X } from "lucide-react";
 import { Link } from "wouter";
 

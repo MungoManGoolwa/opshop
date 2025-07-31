@@ -83,6 +83,28 @@ export const categoryBuybackSettings = pgTable("category_buyback_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Australian locations table for comprehensive postcode/suburb selection
+export const australianLocations = pgTable("australian_locations", {
+  id: serial("id").primaryKey(),
+  postcode: varchar("postcode", { length: 10 }).notNull(),
+  locality: varchar("locality", { length: 200 }).notNull(), // suburb/town name
+  state: varchar("state", { length: 10 }).notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  type: varchar("type", { length: 50 }), // delivery area, post office boxes, etc
+  status: varchar("status", { length: 50 }), // active, updated, etc
+  region: varchar("region", { length: 10 }), // R1, R2, etc for remoteness
+  sa3Name: varchar("sa3_name", { length: 200 }), // Statistical Area Level 3 name
+  sa4Name: varchar("sa4_name", { length: 200 }), // Statistical Area Level 4 name
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_postcode").on(table.postcode),
+  index("idx_locality").on(table.locality),
+  index("idx_state").on(table.state),
+  index("idx_postcode_state").on(table.postcode, table.state),
+]);
+
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   title: varchar("title").notNull(),
@@ -768,6 +790,16 @@ export const insertBusinessSettingsSchema = createInsertSchema(businessSettings)
   updatedAt: true,
 });
 export type InsertBusinessSettings = z.infer<typeof insertBusinessSettingsSchema>;
+
+// Australian Locations types and schema
+export type AustralianLocation = typeof australianLocations.$inferSelect;
+
+export const insertAustralianLocationSchema = createInsertSchema(australianLocations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertAustralianLocation = z.infer<typeof insertAustralianLocationSchema>;
 
 // Relations for categories and buyback settings
 export const categoriesRelations = relations(categories, ({ many, one }) => ({

@@ -1,15 +1,26 @@
-import { useState, useRef, useEffect } from "react";
-import { MapPin, Search, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// Removed Select components - using button approach instead
-import { searchSuburbs, type Suburb } from "@/lib/australianSuburbs";
+import { MapPin, Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface AustralianLocation {
+  id: number;
+  postcode: string;
+  locality: string;
+  state: string;
+  latitude: number | null;
+  longitude: number | null;
+}
 
 interface LocationSearchProps {
-  selectedLocation?: { suburb: Suburb; radius: number } | null;
-  onLocationChange: (location: { suburb: Suburb; radius: number } | null) => void;
+  selectedLocation?: { suburb: { name: string; postcode: string; state: string; lat: number; lng: number }; radius: number } | null;
+  onLocationChange: (location: { suburb: { name: string; postcode: string; state: string; lat: number; lng: number }; radius: number } | null) => void;
   className?: string;
+  placeholder?: string;
+  showRadiusSelector?: boolean;
 }
 
 const RADIUS_OPTIONS = [
@@ -21,24 +32,61 @@ const RADIUS_OPTIONS = [
   { value: 250, label: "250km" },
 ];
 
-export default function LocationSearch({ 
-  selectedLocation, 
-  onLocationChange, 
-  className = "" 
+export default function LocationSearch({
+  selectedLocation,
+  onLocationChange,
+  className,
+  placeholder = "Search Australian suburbs and postcodes...",
+  showRadiusSelector = true,
 }: LocationSearchProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Suburb[]>([]);
-  const [selectedRadius, setSelectedRadius] = useState(selectedLocation?.radius || 25); // Use existing radius or default 25km
-  const searchRef = useRef<HTMLDivElement>(null);
-  
-  // Removed debug logging
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [selectedRadius, setSelectedRadius] = useState(selectedLocation?.radius || 25);
 
-  // Search suburbs when query changes
+  // Search Australian locations
+  const { data: searchResults = [], isLoading } = useQuery({
+    queryKey: ['/api/locations/search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery || searchQuery.length < 2) return [];
+      const response = await fetch(`/api/locations/search?q=${encodeURIComponent(searchQuery)}&limit=20`);
+      if (!response.ok) throw new Error('Failed to search locations');
+      return response.json();
+    },
+    enabled: searchQuery.length >= 2,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Get popular locations for initial display
+  const { data: popularLocations = [] } = useQuery({
+    queryKey: ['/api/locations/popular'],
+    queryFn: async () => {
+      // Get major cities from different states
+      const cities = ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Darwin', 'Hobart', 'Canberra'];
+      const results = [];
+      
+      for (const city of cities) {
+        try {
+          const response = await fetch(`/api/locations/search?q=${encodeURIComponent(city)}&limit=1`);
+          if (response.ok) {
+            const locations = await response.json();
+            if (locations.length > 0) {
+              results.push(locations[0]);
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to fetch ${city}:`, error);
+        }
+      }
+      return results;
+    },
+    staleTime: 60 * 60 * 1000, // Cache for 1 hour
+  });
+
+  // Show/hide dropdown based on input focus and query
   useEffect(() => {
-    const results = searchSuburbs(searchQuery);
-    setSearchResults(results);
-  }, [searchQuery]);
+    setShowDropdown(isInputFocused && (searchQuery.length >= 2 || (searchQuery.length === 0 && popularLocations.length > 0)));
+  }, [isInputFocused, searchQuery, popularLocations]);
 
   // Sync selected radius when selectedLocation changes
   useEffect(() => {
@@ -47,185 +95,156 @@ export default function LocationSearch({
     }
   }, [selectedLocation, selectedRadius]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchQuery("");
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSuburbSelect = (suburb: Suburb) => {
+  const handleLocationSelect = (location: AustralianLocation) => {
+    const lat = location.latitude || 0;
+    const lng = location.longitude || 0;
+    
+    const suburb = {
+      name: location.locality,
+      postcode: location.postcode,
+      state: location.state,
+      lat,
+      lng,
+    };
+    
     onLocationChange({ suburb, radius: selectedRadius });
-    setIsOpen(false);
     setSearchQuery("");
+    setShowDropdown(false);
+    setIsInputFocused(false);
   };
 
-  const handleRadiusChange = (radius: string) => {
-    const radiusNum = parseInt(radius);
-    setSelectedRadius(radiusNum);
-    // Always call onLocationChange when radius changes
+  const handleClearLocation = () => {
+    onLocationChange(null);
+    setSearchQuery("");
+    setShowDropdown(false);
+  };
+
+  const handleRadiusChange = (radius: number) => {
+    setSelectedRadius(radius);
     if (selectedLocation) {
-      onLocationChange({ suburb: selectedLocation.suburb, radius: radiusNum });
+      onLocationChange({ suburb: selectedLocation.suburb, radius });
     }
   };
 
-  const clearLocation = () => {
-    onLocationChange(null);
-    setIsOpen(false);
-    setSearchQuery("");
+  const formatLocationName = (location: { suburb: { name: string; state: string; postcode: string } }) => {
+    return `${location.suburb.name}, ${location.suburb.state} ${location.suburb.postcode}`;
   };
+
+  const displayLocations = searchQuery.length >= 2 ? searchResults : popularLocations;
 
   return (
-    <div className={`relative ${className}`} ref={searchRef}>
-      {/* Current Selection Display */}
-      {!isOpen && selectedLocation ? (
-        <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="flex items-center space-x-1 px-3 py-1">
-            <MapPin className="h-3 w-3" />
-            <span>{selectedLocation.suburb.name}, {selectedLocation.suburb.state}</span>
-            <span className="text-xs">({selectedRadius}km)</span>
-            <button 
-              onClick={clearLocation}
-              className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
+    <div className={cn("relative", className)}>
+      <div className="space-y-3">
+        {/* Location Search */}
+        <div className="relative">
+          <Input
+            type="text"
+            placeholder={selectedLocation ? formatLocationName(selectedLocation) : placeholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => {
+              // Delay hiding dropdown to allow for clicks
+              setTimeout(() => setIsInputFocused(false), 200);
+            }}
+            className="pl-10 pr-10"
+            autoComplete="off"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          
+          {selectedLocation && !searchQuery && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleClearLocation}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
             >
               <X className="h-3 w-3" />
-            </button>
-          </Badge>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsOpen(true)}
-            className="text-xs"
-          >
-            Change
-          </Button>
+            </Button>
+          )}
         </div>
-      ) : !isOpen ? (
-        /* Default Button */
-        <Button
-          variant="ghost"
-          onClick={() => setIsOpen(true)}
-          className="flex items-center space-x-1 text-gray-600 hover:text-primary transition-colors"
-        >
-          <MapPin className="h-4 w-4" />
-          <span className="hidden sm:block">
-            {selectedLocation ? `${selectedLocation.suburb.name}, ${selectedLocation.suburb.state}` : "All Locations"}
-          </span>
-          <Search className="h-3 w-3" />
-        </Button>
-      ) : (
-        /* Search Interface */
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[350px] z-50">
-          <div className="space-y-4">
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search suburbs, cities, postcodes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-                autoFocus
-              />
-            </div>
 
-            {/* Radius Selector - Simple Button Approach */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium">Within:</span>
-              <div className="flex flex-wrap gap-1">
-                {RADIUS_OPTIONS.map(option => (
-                  <Button
-                    key={option.value}
-                    variant={selectedRadius === option.value ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleRadiusChange(option.value.toString())}
-                    className="h-8 px-2 text-xs"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Search Results */}
-            <div className="max-h-60 overflow-y-auto">
-              <div className="space-y-1">
-                {/* All locations option always shown first */}
-                <button
-                  onClick={clearLocation}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors border-b border-gray-100"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">All locations</div>
-                      <div className="text-sm text-gray-500">
-                        View products from all areas
-                      </div>
-                    </div>
-                    <MapPin className="h-4 w-4 text-gray-400" />
-                  </div>
-                </button>
-                
-                {searchResults.length > 0 && searchResults.map((suburb, index) => (
-                  <button
-                    key={`${suburb.name}-${suburb.state}-${index}`}
-                    onClick={() => handleSuburbSelect(suburb)}
-                    className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{suburb.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {suburb.state} {suburb.postcode}
-                        </div>
-                      </div>
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-              
-              {searchQuery && searchResults.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  No suburbs found for "{searchQuery}"
-                </div>
-              )}
-              
-              {!searchQuery && searchResults.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  Start typing to search suburbs
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between pt-2 border-t">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  setIsOpen(false);
-                  setSearchQuery("");
-                }}
-              >
-                Cancel
-              </Button>
-              {selectedLocation && (
-                <Button 
-                  variant="outline" 
+        {/* Radius Selector */}
+        {showRadiusSelector && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Search Radius</label>
+            <div className="flex flex-wrap gap-2">
+              {RADIUS_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={selectedRadius === option.value ? "default" : "outline"}
                   size="sm"
-                  onClick={clearLocation}
+                  onClick={() => handleRadiusChange(option.value)}
+                  className="text-xs"
                 >
-                  Clear Filter
+                  {option.label}
                 </Button>
-              )}
+              ))}
             </div>
           </div>
+        )}
+
+        {/* Selected location display */}
+        {selectedLocation && !searchQuery && (
+          <div>
+            <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+              <MapPin className="h-3 w-3" />
+              {formatLocationName(selectedLocation)}
+              {showRadiusSelector && ` • ${selectedRadius}km radius`}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleClearLocation}
+                className="h-4 w-4 p-0 ml-1 hover:bg-gray-200"
+              >
+                <X className="h-2 w-2" />
+              </Button>
+            </Badge>
+          </div>
+        )}
+      </div>
+
+      {/* Search results dropdown */}
+      {showDropdown && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-64 overflow-y-auto">
+          {isLoading ? (
+            <div className="p-3 text-center text-sm text-gray-500">
+              Searching locations...
+            </div>
+          ) : displayLocations.length === 0 ? (
+            <div className="p-3 text-center text-sm text-gray-500">
+              {searchQuery.length < 2 ? "Type at least 2 characters to search" : "No locations found"}
+            </div>
+          ) : (
+            <>
+              {searchQuery.length === 0 && popularLocations.length > 0 && (
+                <div className="px-3 py-2 text-xs font-medium text-gray-500 bg-gray-50 border-b">
+                  Popular Cities
+                </div>
+              )}
+              {displayLocations.map((location: AustralianLocation) => (
+                <button
+                  key={`${location.postcode}-${location.locality}`}
+                  type="button"
+                  onClick={() => handleLocationSelect(location)}
+                  className="w-full px-3 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none flex items-center space-x-2 text-sm"
+                >
+                  <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">
+                      {location.locality}
+                    </div>
+                    <div className="text-gray-500 text-xs">
+                      {location.state} {location.postcode}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
