@@ -702,8 +702,9 @@ export const buybackOffers = pgTable("buyback_offers", {
   aiEvaluatedRetailPrice: decimal("ai_evaluated_retail_price", { precision: 10, scale: 2 }).notNull(),
   buybackOfferPrice: decimal("buyback_offer_price", { precision: 10, scale: 2 }).notNull(), // 50% of retail
   aiEvaluationData: jsonb("ai_evaluation_data"), // Full AI response for audit
-  status: varchar("status").notNull().default("pending_admin_review"), // pending_admin_review, admin_approved, admin_rejected, admin_revised, pending_seller, accepted, rejected, expired
+  status: varchar("status").notNull().default("pending_admin_review"), // pending_admin_review, admin_approved, admin_rejected, admin_revised, pending_seller, accepted, rejected, expired, auto_declined
   adminNotes: text("admin_notes"),
+  declineReason: text("decline_reason"), // Used for auto-declined offers
   reviewedBy: varchar("reviewed_by"),
   reviewedAt: timestamp("reviewed_at"),
   adminDecision: varchar("admin_decision"), // approved, rejected, revised

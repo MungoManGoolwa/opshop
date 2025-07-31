@@ -10,6 +10,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **January 31, 2025**: AUTOMATIC BUYBACK LIMITS DECLINE SYSTEM WITH "MONTHLY LIMITS EXCEED" ERROR FULLY IMPLEMENTED
+  - Enhanced buyback limits system with automatic decline functionality when configured limits are exceeded
+  - Integrated automatic creation of "auto_declined" offer records with specific decline reasons for comprehensive tracking
+  - Added declineReason field to buyback schema supporting detailed error logging and audit trails
+  - Implemented pre-AI and post-AI evaluation limit checking preventing unnecessary processing costs
+  - Built user-friendly error messages: "Monthly buyback limit reached" and "Price limit exceeded" with specific values
+  - Created comprehensive documentation (BUYBACK_LIMITS_DOCUMENTATION.md) covering system architecture, API endpoints, and business logic
+  - Enhanced database schema with auto_declined status support and proper decline reason tracking
+  - Successfully pushed schema changes and verified zero LSP diagnostics ensuring production-ready implementation
+  - System now automatically declines offers exceeding 2 items per month or $200 maximum price per item (admin configurable)
+  - Built complete audit trail for declined offers enabling analytics and monitoring of limit effectiveness
+
 - **January 31, 2025**: COMPREHENSIVE AUSTRALIAN LOCATIONS DATABASE FULLY OPERATIONAL WITH 18,526 LOCATIONS
   - Successfully imported complete Australian postcodes database with 18,526 locations across all states and territories
   - Built comprehensive location search API endpoints with fuzzy search functionality supporting postcodes and suburb names

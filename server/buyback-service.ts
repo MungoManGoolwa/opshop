@@ -139,6 +139,23 @@ export class BuybackService {
       if (limitsSettings && limitsSettings.isActive) {
         // Check monthly item limit
         if (currentMonthCount >= limitsSettings.maxItemsPerMonth) {
+          // Create declined offer record for tracking
+          await db.insert(buybackOffers).values({
+            userId: request.userId,
+            itemTitle: request.itemTitle,
+            itemDescription: request.itemDescription,
+            itemCondition: request.itemCondition,
+            itemAge: request.itemAge,
+            itemBrand: request.itemBrand,
+            itemCategory: request.itemCategory,
+            images: request.images || [],
+            aiEvaluatedRetailPrice: "0.00",
+            buybackOfferPrice: "0.00",
+            status: "auto_declined",
+            declineReason: `Monthly limits exceeded. You have reached the maximum of ${limitsSettings.maxItemsPerMonth} items per month.`,
+            expiresAt: new Date(), // Immediate expiry for declined offers
+          });
+          
           throw new Error(`Monthly buyback limit reached. You can submit up to ${limitsSettings.maxItemsPerMonth} items per month.`);
         }
       }
@@ -164,6 +181,24 @@ export class BuybackService {
       if (limitsSettings && limitsSettings.isActive) {
         const maxPrice = parseFloat(limitsSettings.maxPricePerItem);
         if (parseFloat(aiResult.buybackOfferPrice.toString()) > maxPrice) {
+          // Create declined offer record for tracking
+          await db.insert(buybackOffers).values({
+            userId: request.userId,
+            itemTitle: request.itemTitle,
+            itemDescription: request.itemDescription,
+            itemCondition: request.itemCondition,
+            itemAge: request.itemAge,
+            itemBrand: request.itemBrand,
+            itemCategory: request.itemCategory,
+            images: request.images || [],
+            aiEvaluatedRetailPrice: aiResult.estimatedRetailPrice.toString(),
+            buybackOfferPrice: aiResult.buybackOfferPrice.toString(),
+            status: "auto_declined",
+            declineReason: `Price limit exceeded. Offer price ($${aiResult.buybackOfferPrice}) exceeds maximum allowed price of $${maxPrice} per item.`,
+            aiEvaluationData: aiResult,
+            expiresAt: new Date(), // Immediate expiry for declined offers
+          });
+          
           throw new Error(`Buyback offer price ($${aiResult.buybackOfferPrice}) exceeds maximum allowed price of $${maxPrice} per item.`);
         }
       }
