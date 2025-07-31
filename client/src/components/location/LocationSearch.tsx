@@ -16,8 +16,8 @@ interface AustralianLocation {
 }
 
 interface LocationSearchProps {
-  selectedLocation?: { suburb: { name: string; postcode: string; state: string; lat: number; lng: number }; radius: number } | null;
-  onLocationChange: (location: { suburb: { name: string; postcode: string; state: string; lat: number; lng: number }; radius: number } | null) => void;
+  selectedLocation?: { suburb: { name: string; postcode: string; state: string; latitude: number; longitude: number }; radius: number } | null;
+  onLocationChange: (location: { suburb: { name: string; postcode: string; state: string; latitude: number; longitude: number }; radius: number } | null) => void;
   className?: string;
   placeholder?: string;
   showRadiusSelector?: boolean;
@@ -96,15 +96,15 @@ export default function LocationSearch({
   }, [selectedLocation, selectedRadius]);
 
   const handleLocationSelect = (location: AustralianLocation) => {
-    const lat = location.latitude || 0;
-    const lng = location.longitude || 0;
+    const latitude = location.latitude || 0;
+    const longitude = location.longitude || 0;
     
     const suburb = {
       name: location.locality,
       postcode: location.postcode,
       state: location.state,
-      lat,
-      lng,
+      latitude,
+      longitude,
     };
     
     onLocationChange({ suburb, radius: selectedRadius });

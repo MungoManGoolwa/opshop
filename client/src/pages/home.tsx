@@ -42,7 +42,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState("");
   const [filters, setFilters] = useState<ProductFilterState>({});
-  const [selectedLocation, setSelectedLocation] = useState<{ suburb: Suburb; radius: number } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{ suburb: { name: string; postcode: string; state: string; latitude: number; longitude: number }; radius: number } | null>(null);
 
   // SEO Metadata for home page
   useSEO({

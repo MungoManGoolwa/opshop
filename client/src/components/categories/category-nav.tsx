@@ -2,12 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import LocationSearch from "@/components/location/LocationSearch";
-import type { Suburb } from "@/lib/australianSuburbs";
+import CompactLocationSearch from "@/components/location/CompactLocationSearch";
 
 interface CategoryNavProps {
-  selectedLocation?: { suburb: Suburb; radius: number } | null;
-  onLocationChange?: (location: { suburb: Suburb; radius: number } | null) => void;
+  selectedLocation?: { suburb: { name: string; postcode: string; state: string; latitude: number; longitude: number }; radius: number } | null;
+  onLocationChange?: (location: { suburb: { name: string; postcode: string; state: string; latitude: number; longitude: number }; radius: number } | null) => void;
 }
 
 export default function CategoryNav({ selectedLocation, onLocationChange }: CategoryNavProps) {
@@ -57,7 +56,7 @@ export default function CategoryNav({ selectedLocation, onLocationChange }: Cate
             ))}
           </div>
           
-          <LocationSearch 
+          <CompactLocationSearch 
             selectedLocation={selectedLocation}
             onLocationChange={onLocationChange || (() => {})}
           />
