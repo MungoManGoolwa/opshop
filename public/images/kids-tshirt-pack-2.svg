@@ -1,0 +1,129 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bg-gradient-kids-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ddd6fe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c4b5fd;stop-opacity:1" />
+    </linearGradient>
+    <filter id="soft-shadow-2" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#bg-gradient-kids-2)"/>
+  
+  <!-- Hanging line -->
+  <line x1="50" y1="30" x2="350" y2="30" stroke="#6b7280" stroke-width="3"/>
+  
+  <!-- T-shirt hanging 1 (Red) -->
+  <g transform="translate(70, 50)">
+    <!-- Hanger clips -->
+    <circle cx="30" cy="0" r="4" fill="#374151"/>
+    <circle cx="80" cy="0" r="4" fill="#374151"/>
+    
+    <!-- T-shirt body -->
+    <path d="M20 40 L20 20 Q20 10 30 10 L40 10 Q40 5 45 0 Q50 -5 55 -5 Q60 -5 65 0 Q70 5 70 10 L80 10 Q90 10 90 20 L90 40 L100 50 L100 65 L90 65 L90 140 Q90 150 80 150 L30 150 Q20 150 20 140 L20 65 L10 65 L10 50 L20 40 Z" 
+          fill="#ef4444" 
+          stroke="#dc2626" 
+          stroke-width="2"
+          filter="url(#soft-shadow-2)"/>
+    
+    <!-- Collar -->
+    <path d="M45 10 Q55 0 65 10 L60 20 Q55 10 50 20 Z" fill="#dc2626"/>
+    
+    <!-- Design: Happy face -->
+    <circle cx="45" cy="70" r="3" fill="#ffffff"/>
+    <circle cx="65" cy="70" r="3" fill="#ffffff"/>
+    <path d="M40 90 Q55 105 70 90" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- T-shirt hanging 2 (Yellow) -->
+  <g transform="translate(160, 50)">
+    <!-- Hanger clips -->
+    <circle cx="30" cy="0" r="4" fill="#374151"/>
+    <circle cx="80" cy="0" r="4" fill="#374151"/>
+    
+    <!-- T-shirt body -->
+    <path d="M20 40 L20 20 Q20 10 30 10 L40 10 Q40 5 45 0 Q50 -5 55 -5 Q60 -5 65 0 Q70 5 70 10 L80 10 Q90 10 90 20 L90 40 L100 50 L100 65 L90 65 L90 140 Q90 150 80 150 L30 150 Q20 150 20 140 L20 65 L10 65 L10 50 L20 40 Z" 
+          fill="#fbbf24" 
+          stroke="#f59e0b" 
+          stroke-width="2"
+          filter="url(#soft-shadow-2)"/>
+    
+    <!-- Collar -->
+    <path d="M45 10 Q55 0 65 10 L60 20 Q55 10 50 20 Z" fill="#f59e0b"/>
+    
+    <!-- Design: Sun -->
+    <circle cx="55" cy="75" r="12" fill="#ffffff"/>
+    <line x1="55" y1="55" x2="55" y2="50" stroke="#ffffff" stroke-width="2"/>
+    <line x1="55" y1="100" x2="55" y2="95" stroke="#ffffff" stroke-width="2"/>
+    <line x1="35" y1="75" x2="40" y2="75" stroke="#ffffff" stroke-width="2"/>
+    <line x1="70" y1="75" x2="75" y2="75" stroke="#ffffff" stroke-width="2"/>
+    <line x1="42" y1="62" x2="45" y2="65" stroke="#ffffff" stroke-width="2"/>
+    <line x1="65" y1="85" x2="68" y2="88" stroke="#ffffff" stroke-width="2"/>
+    <line x1="68" y1="62" x2="65" y2="65" stroke="#ffffff" stroke-width="2"/>
+    <line x1="42" y1="88" x2="45" y2="85" stroke="#ffffff" stroke-width="2"/>
+  </g>
+  
+  <!-- T-shirt hanging 3 (Purple) -->
+  <g transform="translate(250, 50)">
+    <!-- Hanger clips -->
+    <circle cx="30" cy="0" r="4" fill="#374151"/>
+    <circle cx="80" cy="0" r="4" fill="#374151"/>
+    
+    <!-- T-shirt body -->
+    <path d="M20 40 L20 20 Q20 10 30 10 L40 10 Q40 5 45 0 Q50 -5 55 -5 Q60 -5 65 0 Q70 5 70 10 L80 10 Q90 10 90 20 L90 40 L100 50 L100 65 L90 65 L90 140 Q90 150 80 150 L30 150 Q20 150 20 140 L20 65 L10 65 L10 50 L20 40 Z" 
+          fill="#8b5cf6" 
+          stroke="#7c3aed" 
+          stroke-width="2"
+          filter="url(#soft-shadow-2)"/>
+    
+    <!-- Collar -->
+    <path d="M45 10 Q55 0 65 10 L60 20 Q55 10 50 20 Z" fill="#7c3aed"/>
+    
+    <!-- Design: Cat face -->
+    <circle cx="45" cy="70" r="2" fill="#ffffff"/>
+    <circle cx="65" cy="70" r="2" fill="#ffffff"/>
+    <path d="M55 75 L50 85 L55 80 L60 85 Z" fill="#ffffff"/>
+    <!-- Cat ears -->
+    <polygon points="40,55 45,45 50,55" fill="#ffffff"/>
+    <polygon points="60,55 65,45 70,55" fill="#ffffff"/>
+    <!-- Whiskers -->
+    <line x1="30" y1="70" x2="40" y2="72" stroke="#ffffff" stroke-width="1"/>
+    <line x1="30" y1="75" x2="40" y2="75" stroke="#ffffff" stroke-width="1"/>
+    <line x1="70" y1="72" x2="80" y2="70" stroke="#ffffff" stroke-width="1"/>
+    <line x1="70" y1="75" x2="80" y2="75" stroke="#ffffff" stroke-width="1"/>
+  </g>
+  
+  <!-- Price tag -->
+  <g transform="translate(320, 250)">
+    <polygon points="0,0 40,0 50,15 40,30 0,30" fill="#dc2626" filter="url(#soft-shadow-2)"/>
+    <circle cx="35" cy="15" r="3" fill="#ffffff"/>
+    <text x="20" y="12" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">$25</text>
+    <text x="20" y="22" text-anchor="middle" font-family="Arial, sans-serif" font-size="6" fill="white">PACK</text>
+  </g>
+  
+  <!-- Size chart -->
+  <rect x="50" y="250" width="200" height="120" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="2" filter="url(#soft-shadow-2)"/>
+  <text x="150" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#374151">SIZE GUIDE</text>
+  
+  <text x="70" y="290" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Age 2-3: XS</text>
+  <text x="70" y="305" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Age 4-5: S</text>
+  <text x="70" y="320" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Age 6-7: M</text>
+  <text x="70" y="335" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Age 8-9: L</text>
+  
+  <text x="170" y="290" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Chest: 22"</text>
+  <text x="170" y="305" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Chest: 24"</text>
+  <text x="170" y="320" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Chest: 26"</text>
+  <text x="170" y="335" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Chest: 28"</text>
+  
+  <!-- Quality badges -->
+  <circle cx="80" cy="360" r="25" fill="#10b981" filter="url(#soft-shadow-2)"/>
+  <text x="80" y="355" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="white">100%</text>
+  <text x="80" y="365" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="white">COTTON</text>
+  
+  <circle cx="320" cy="360" r="25" fill="#f59e0b" filter="url(#soft-shadow-2)"/>
+  <text x="320" y="357" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">KIDS</text>
+  <text x="320" y="368" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">SAFE</text>
+</svg>
