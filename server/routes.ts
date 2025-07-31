@@ -577,7 +577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedPhotos = [...currentPhotos, ...newPhotos];
 
       await storage.updateProduct(productId, { 
-        photos: updatedPhotos,
+        images: updatedPhotos,
         lastModifiedBy: userId,
         lastModifiedAt: new Date()
       });
@@ -618,8 +618,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const photos = product.photos || [];
-      console.log(`Product has ${photos.length} photos:`, photos.map((p, i) => `${i}: ${p.filename || p.url}`));
+      const photos = product.images || [];
+      console.log(`Product has ${photos.length} photos:`, photos.map((p, i) => `${i}: ${typeof p === 'string' ? p : p.filename || p.url}`));
       
       if (photoIndex < 0 || photoIndex >= photos.length) {
         console.log(`Invalid photo index ${photoIndex} for product with ${photos.length} photos`);
@@ -636,12 +636,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedPhotos = photos.filter((_, index) => index !== photoIndex);
 
       await storage.updateProduct(productId, { 
-        photos: updatedPhotos,
+        images: updatedPhotos,
         lastModifiedBy: userId,
         lastModifiedAt: new Date()
       });
 
-      console.log(`User ${userId} removed photo from product ${productId}: ${removedPhoto.filename}`);
+      console.log(`User ${userId} removed photo from product ${productId}: ${typeof removedPhoto === 'string' ? removedPhoto : removedPhoto.filename}`);
       
       res.json({ 
         message: "Photo removed successfully", 
@@ -2968,8 +2968,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Listing not found" });
       }
 
-      const photos = listing.photos || [];
-      console.log(`Listing has ${photos.length} photos:`, photos.map((p, i) => `${i}: ${p.filename || p.url}`));
+      const photos = listing.images || [];
+      console.log(`Listing has ${photos.length} photos:`, photos.map((p, i) => `${i}: ${typeof p === 'string' ? p : p.filename || p.url}`));
       
       if (photoIndex < 0 || photoIndex >= photos.length) {
         console.log(`Invalid photo index ${photoIndex} for listing with ${photos.length} photos`);
@@ -2986,13 +2986,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedPhotos = photos.filter((_, index) => index !== photoIndex);
 
       await storage.updateProduct(listingId, { 
-        photos: updatedPhotos,
+        images: updatedPhotos,
         lastModifiedBy: userId,
         lastModifiedAt: new Date()
       });
 
       // Optionally delete the physical file (implement file cleanup if needed)
-      console.log(`Admin ${user.email} removed photo from listing ${listingId}: ${removedPhoto.filename}`);
+      console.log(`Admin ${user.email} removed photo from listing ${listingId}: ${typeof removedPhoto === 'string' ? removedPhoto : removedPhoto.filename}`);
       
       res.json({ 
         message: "Photo removed successfully", 
