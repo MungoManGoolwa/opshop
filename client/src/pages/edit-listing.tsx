@@ -143,6 +143,8 @@ export default function EditListing() {
       setImagePreviews([]);
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      // Invalidate the main products list for home page
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
     },
     onError: (error: any) => {
       toast({
@@ -213,6 +215,8 @@ export default function EditListing() {
       // Refresh the product data instead of manipulating local state
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      // Invalidate the main products list for home page
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       // Force refetch to get updated photo list
       queryClient.refetchQueries({ queryKey: ["/api/products", productId] });
     },
