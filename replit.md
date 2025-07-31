@@ -1,7 +1,11 @@
 # Opshop Online - Australia's Sustainable Marketplace
 
 ## Overview
-Opshop Online is a full-stack marketplace application facilitating sustainable commerce for second-hand goods in Australia. It aims to be a leading platform for buying and selling pre-loved items, promoting a circular economy. Key capabilities include comprehensive product listings, user-friendly search and filtering, secure authentication, admin management tools, and an innovative AI-powered instant buyback system. The project's vision is to make sustainable shopping accessible and efficient across Australia.
+Opshop Online is a full-stack marketplace application facilitating sustainable commerce for second-hand goods in Australia. It aims to be a leading platform for buying and selling pre-loved items, promoting a circular economy. 
+
+**Recent Achievement (July 31, 2025)**: Successfully resolved critical photo management system issues including database field mismatches, image truncation during serving, and schema inconsistencies. Complete end-to-end photo system now operational with upload, display, deletion, and reordering functionality.
+
+Key capabilities include comprehensive product listings, user-friendly search and filtering, secure authentication, admin management tools, photo management system, and an innovative AI-powered instant buyback system. The project's vision is to make sustainable shopping accessible and efficient across Australia.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
