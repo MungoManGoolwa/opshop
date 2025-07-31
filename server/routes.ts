@@ -572,8 +572,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadedAt: new Date()
       }));
 
-      // Add photos to existing product photos
-      const currentPhotos = product.photos || [];
+      // Add photos to existing product images
+      const currentPhotos = product.images || [];
       const updatedPhotos = [...currentPhotos, ...newPhotos];
 
       await storage.updateProduct(productId, { 
@@ -675,7 +675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const photos = product.photos || [];
+      const photos = product.images || [];
       
       if (!Array.isArray(photoOrder) || photoOrder.length !== photos.length) {
         return res.status(400).json({ message: "Invalid photo order array" });
@@ -685,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reorderedPhotos = photoOrder.map(index => photos[index]).filter(Boolean);
 
       await storage.updateProduct(productId, { 
-        photos: reorderedPhotos,
+        images: reorderedPhotos,
         lastModifiedBy: userId,
         lastModifiedAt: new Date()
       });
@@ -694,7 +694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         message: "Photos reordered successfully", 
-        photos: reorderedPhotos 
+        images: reorderedPhotos 
       });
     } catch (error: any) {
       console.error("Error reordering photos:", error);
@@ -2923,11 +2923,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
 
       // Add photos to existing listing photos
-      const currentPhotos = listing.photos || [];
+      const currentPhotos = listing.images || [];
       const updatedPhotos = [...currentPhotos, ...newPhotos];
 
       await storage.updateProduct(listingId, { 
-        photos: updatedPhotos,
+        images: updatedPhotos,
         lastModifiedBy: userId,
         lastModifiedAt: new Date()
       });
