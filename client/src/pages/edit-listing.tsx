@@ -165,25 +165,53 @@ export default function EditListing() {
   const deletePhotoMutation = useMutation({
     mutationFn: async (photoIndex: number) => {
       console.log(`Deleting photo at index ${photoIndex} from ${existingPhotos.length} total photos`);
+      console.log(`Request details:`, {
+        isAdmin,
+        productId,
+        photoIndex,
+        existingPhotos: existingPhotos.map((p, i) => ({ index: i, url: p.url }))
+      });
+      
       const endpoint = isAdmin 
         ? `/api/admin/listings/${productId}/photos/${photoIndex}`
         : `/api/products/${productId}/photos/${photoIndex}`;
       
-      // Use direct fetch since CSRF is temporarily disabled
-      const response = await fetch(endpoint, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
+      console.log(`Making DELETE request to: ${endpoint}`);
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete photo');
+      try {
+        // Use direct fetch since CSRF is temporarily disabled
+        const response = await fetch(endpoint, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        
+        console.log(`Response status: ${response.status}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`DELETE failed with status ${response.status}:`, errorText);
+          
+          let errorMessage;
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorText;
+          } catch {
+            errorMessage = errorText || `HTTP ${response.status}`;
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        const result = await response.json();
+        console.log(`DELETE successful:`, result);
+        return result;
+      } catch (error) {
+        console.error(`DELETE request failed:`, error);
+        throw error;
       }
-      
-      return response.json();
     },
     onSuccess: (result, photoIndex) => {
       toast({
