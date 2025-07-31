@@ -2052,6 +2052,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ADMIN BUYBACK LIMITS SETTINGS =====
+  
+  // Get current buyback limits settings
+  app.get('/api/admin/buyback-limits-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.accountType !== 'admin') {
+        await logAdminAction(userId, 'get_buyback_limits_settings', false, 'Unauthorized access attempt');
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const settings = await storage.getBuybackLimitsSettings();
+      await logAdminAction(userId, 'get_buyback_limits_settings', true, `Retrieved buyback limits settings`);
+      
+      res.json(settings || {
+        maxItemsPerMonth: 2,
+        maxPricePerItem: "200.00",
+        isActive: true,
+        description: "Monthly limits for instant buyback to prevent abuse and maintain system sustainability"
+      });
+    } catch (error) {
+      console.error("Error fetching buyback limits settings:", error);
+      res.status(500).json({ message: "Failed to fetch buyback limits settings" });
+    }
+  });
+
+  // Update buyback limits settings
+  app.put('/api/admin/buyback-limits-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (user?.accountType !== 'admin') {
+        await logAdminAction(userId, 'update_buyback_limits_settings', false, 'Unauthorized access attempt');
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { maxItemsPerMonth, maxPricePerItem, description } = req.body;
+
+      // Validate input
+      if (maxItemsPerMonth < 1 || maxItemsPerMonth > 50) {
+        return res.status(400).json({ message: "Max items per month must be between 1 and 50" });
+      }
+
+      if (parseFloat(maxPricePerItem) < 10 || parseFloat(maxPricePerItem) > 2000) {
+        return res.status(400).json({ message: "Max price per item must be between $10 and $2000" });
+      }
+
+      const updatedSettings = await storage.updateBuybackLimitsSettings({
+        maxItemsPerMonth,
+        maxPricePerItem: parseFloat(maxPricePerItem).toFixed(2),
+        description,
+        updatedBy: userId
+      });
+
+      await logAdminAction(userId, 'update_buyback_limits_settings', true, 
+        `Updated limits: ${maxItemsPerMonth} items/month, $${maxPricePerItem} max per item`);
+      
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating buyback limits settings:", error);
+      res.status(500).json({ message: "Failed to update buyback limits settings" });
+    }
+  });
+
+  // Get user's current monthly buyback count (for checking limits)
+  app.get('/api/user/buyback-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const monthlyCount = await storage.getUserMonthlyBuybackCount(userId);
+      const settings = await storage.getBuybackLimitsSettings();
+      
+      res.json({
+        currentMonthCount: monthlyCount,
+        maxItemsPerMonth: settings?.maxItemsPerMonth || 2,
+        maxPricePerItem: settings?.maxPricePerItem || "200.00",
+        remainingItems: Math.max(0, (settings?.maxItemsPerMonth || 2) - monthlyCount)
+      });
+    } catch (error) {
+      console.error("Error fetching user buyback count:", error);
+      res.status(500).json({ message: "Failed to fetch buyback count" });
+    }
+  });
+
   // ===== DYNAMIC DASHBOARD STATISTICS =====
   
   // Dynamic dashboard statistics

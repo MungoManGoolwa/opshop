@@ -3,6 +3,7 @@ import { users, buybackOffers, storeCreditTransactions, products, categories, ca
 import { eq, desc, and } from "drizzle-orm";
 import { evaluateItemWithAI, type ItemEvaluation } from "./ai-evaluation";
 import { emailService } from "./email-service";
+import { storage } from "./storage";
 
 const SYSTEM_USER_ID = "system"; // Special system user for buyback items
 const OFFER_EXPIRY_HOURS = 24;
@@ -131,6 +132,17 @@ export class BuybackService {
   // Create a new buyback offer using AI evaluation
   async createBuybackOffer(request: CreateBuybackOfferRequest) {
     try {
+      // Check buyback limits first
+      const currentMonthCount = await storage.getUserMonthlyBuybackCount(request.userId);
+      const limitsSettings = await storage.getBuybackLimitsSettings();
+      
+      if (limitsSettings && limitsSettings.isActive) {
+        // Check monthly item limit
+        if (currentMonthCount >= limitsSettings.maxItemsPerMonth) {
+          throw new Error(`Monthly buyback limit reached. You can submit up to ${limitsSettings.maxItemsPerMonth} items per month.`);
+        }
+      }
+      
       // Get category-specific buyback percentage
       const buybackPercentage = await this.getCategoryBuybackPercentage(request.itemCategory);
       
@@ -147,6 +159,14 @@ export class BuybackService {
 
       // Get AI evaluation with category-specific percentage
       const aiResult = await evaluateItemWithAI(itemEvaluation, buybackPercentage);
+      
+      // Check maximum price per item limit after AI evaluation
+      if (limitsSettings && limitsSettings.isActive) {
+        const maxPrice = parseFloat(limitsSettings.maxPricePerItem);
+        if (parseFloat(aiResult.buybackOfferPrice.toString()) > maxPrice) {
+          throw new Error(`Buyback offer price ($${aiResult.buybackOfferPrice}) exceeds maximum allowed price of $${maxPrice} per item.`);
+        }
+      }
 
       // Create expiry date (24 hours from now)
       const expiresAt = new Date();

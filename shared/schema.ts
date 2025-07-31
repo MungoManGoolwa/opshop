@@ -83,6 +83,18 @@ export const categoryBuybackSettings = pgTable("category_buyback_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Instant Buyback Limits Configuration - admin configurable monthly limits and max prices
+export const buybackLimitsSettings = pgTable("buyback_limits_settings", {
+  id: serial("id").primaryKey(),
+  maxItemsPerMonth: integer("max_items_per_month").notNull().default(2), // X items per month limit
+  maxPricePerItem: decimal("max_price_per_item", { precision: 10, scale: 2 }).notNull().default("200.00"), // Y dollar maximum per item
+  isActive: boolean("is_active").notNull().default(true),
+  description: text("description").default("Monthly limits for instant buyback to prevent abuse and maintain system sustainability"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+});
+
 // Australian locations table for comprehensive postcode/suburb selection
 export const australianLocations = pgTable("australian_locations", {
   id: serial("id").primaryKey(),
@@ -571,6 +583,7 @@ export type InsertVerificationAuditLog = typeof verificationAuditLog.$inferInser
 
 export type Category = typeof categories.$inferSelect;
 export type CategoryBuybackSettings = typeof categoryBuybackSettings.$inferSelect;
+export type BuybackLimitsSettings = typeof buybackLimitsSettings.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Wishlist = typeof wishlists.$inferSelect;
 export type CartItem = typeof cartItems.$inferSelect;
@@ -598,6 +611,13 @@ export const insertCategoryBuybackSettingsSchema = createInsertSchema(categoryBu
   updatedAt: true,
 });
 export type InsertCategoryBuybackSettings = z.infer<typeof insertCategoryBuybackSettingsSchema>;
+
+export const insertBuybackLimitsSettingsSchema = createInsertSchema(buybackLimitsSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertBuybackLimitsSettings = z.infer<typeof insertBuybackLimitsSettingsSchema>;
 
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,

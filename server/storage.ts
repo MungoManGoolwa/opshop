@@ -17,6 +17,7 @@ import {
   storeCreditTransactions,
   guestCartSessions,
   australianLocations,
+  buybackOffers,
   type User,
   type UpsertUser,
   type Category,
@@ -46,6 +47,9 @@ import {
   type ListingSettings,
   type InsertGuestCartSession,
   type AustralianLocation,
+  type BuybackLimitsSettings,
+  type InsertBuybackLimitsSettings,
+  buybackLimitsSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, ilike, gte, lte, desc, asc, sql, or, isNotNull } from "drizzle-orm";
@@ -175,6 +179,11 @@ export interface IStorage {
   getLocationsByPostcode(postcode: string): Promise<AustralianLocation[]>;
   getLocationsByState(state: string, limit?: number): Promise<AustralianLocation[]>;
   getAllStates(): Promise<string[]>;
+
+  // Buyback limits settings operations
+  getBuybackLimitsSettings(): Promise<BuybackLimitsSettings | undefined>;
+  updateBuybackLimitsSettings(data: Partial<InsertBuybackLimitsSettings>): Promise<BuybackLimitsSettings>;
+  getUserMonthlyBuybackCount(userId: string): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1807,6 +1816,53 @@ export class DatabaseStorage implements IStorage {
       .orderBy(australianLocations.state);
 
     return stateResults.map(result => result.state);
+  }
+
+  // Buyback limits settings operations
+  async getBuybackLimitsSettings(): Promise<BuybackLimitsSettings | undefined> {
+    const [settings] = await db.select().from(buybackLimitsSettings)
+      .where(eq(buybackLimitsSettings.isActive, true))
+      .orderBy(desc(buybackLimitsSettings.createdAt))
+      .limit(1);
+    
+    return settings || undefined;
+  }
+
+  async updateBuybackLimitsSettings(data: Partial<InsertBuybackLimitsSettings>): Promise<BuybackLimitsSettings> {
+    // First, deactivate all existing settings
+    await db.update(buybackLimitsSettings)
+      .set({ isActive: false })
+      .where(eq(buybackLimitsSettings.isActive, true));
+
+    // Create new active settings
+    const [newSettings] = await db.insert(buybackLimitsSettings)
+      .values({
+        ...data,
+        isActive: true,
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return newSettings;
+  }
+
+  async getUserMonthlyBuybackCount(userId: string): Promise<number> {
+    // Get current month start and end dates
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    // Count accepted buyback offers in current month for this user  
+    const result = await db.query.buybackOffers.findMany({
+      where: and(
+        eq(buybackOffers.userId, userId),
+        eq(buybackOffers.status, 'accepted'),
+        gte(buybackOffers.createdAt, monthStart),
+        lte(buybackOffers.createdAt, monthEnd)
+      ),
+    });
+
+    return result?.length || 0;
   }
 }
 

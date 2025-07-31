@@ -32,6 +32,7 @@ const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
 const AdminUsers = lazy(() => import("@/pages/admin-users"));
 const AdminBuyback = lazy(() => import("@/pages/admin-buyback"));
 const AdminBuybackSettings = lazy(() => import("@/pages/admin-buyback-settings"));
+const AdminBuybackLimits = lazy(() => import("@/pages/admin-buyback-limits"));
 const SiteAdmin = lazy(() => import("@/pages/site-admin"));
 const InstantBuyback = lazy(() => import("@/pages/instant-buyback"));
 const Messages = lazy(() => import("@/pages/messages"));
@@ -225,6 +226,11 @@ function Router() {
           <Route path="/admin/buyback-settings">
             <PrivateRoute role="admin">
               <LazyRoute skeleton="admin"><AdminBuybackSettings /></LazyRoute>
+            </PrivateRoute>
+          </Route>
+          <Route path="/admin/buyback-limits">
+            <PrivateRoute role="admin">
+              <LazyRoute skeleton="admin"><AdminBuybackLimits /></LazyRoute>
             </PrivateRoute>
           </Route>
           <Route path="/admin/site">

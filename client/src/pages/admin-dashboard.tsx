@@ -22,7 +22,8 @@ import {
   Home,
   ShoppingCart,
   Mail,
-  Percent
+  Percent,
+  Hash
 } from "lucide-react";
 import { DynamicStatsGrid } from "@/components/DynamicStatsGrid";
 
@@ -402,6 +403,27 @@ export default function AdminDashboard() {
                     </Button>
                     <p className="text-sm text-gray-500 mt-4">
                       Features: Category percentages, AI evaluation settings, buyback configuration
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Buyback Limits</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Hash className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Configure monthly limits and maximum price per item for instant buyback</p>
+                    <Button asChild className="mb-4">
+                      <Link href="/admin/buyback-limits">
+                        <Hash className="mr-2 h-4 w-4" />
+                        Manage Buyback Limits
+                      </Link>
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-4">
+                      Features: Monthly item limits, maximum price per item, abuse prevention
                     </p>
                   </div>
                 </CardContent>
