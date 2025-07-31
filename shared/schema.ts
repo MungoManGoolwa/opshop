@@ -158,6 +158,7 @@ export const products = pgTable("products", {
   engineSize: varchar("engine_size"),
   drivetrain: varchar("drivetrain"), // FWD, RWD, AWD
   registrationState: varchar("registration_state"),
+  faults: text("faults"), // Known issues or faults with the vehicle
   
   // Home & Garden specific
   roomType: varchar("room_type"), // bedroom, living room, kitchen, etc

@@ -31,6 +31,18 @@ const createListingSchema = z.object({
   material: z.string().optional(),
   location: z.string().min(1, "Location is required"),
   shippingCost: z.string().optional().refine(val => !val || !isNaN(Number(val)), "Invalid shipping cost"),
+  // Vehicle-specific fields
+  make: z.string().optional(),
+  vehicleModel: z.string().optional(),
+  year: z.string().optional().refine(val => !val || (!isNaN(Number(val)) && Number(val) >= 1900 && Number(val) <= new Date().getFullYear() + 1), "Invalid year"),
+  engineSize: z.string().optional(),
+  transmission: z.string().optional(),
+  fuelType: z.string().optional(),
+  drivetrain: z.string().optional(),
+  bodyType: z.string().optional(),
+  registrationState: z.string().optional(),
+  faults: z.string().optional(),
+  kilometers: z.string().optional().refine(val => !val || !isNaN(Number(val)), "Invalid kilometers"),
 });
 
 type CreateListingForm = z.infer<typeof createListingSchema>;
@@ -65,8 +77,23 @@ export default function CreateListing() {
       material: "",
       location: "",
       shippingCost: "",
+      // Vehicle fields
+      make: "",
+      vehicleModel: "",
+      year: "",
+      engineSize: "",
+      transmission: "",
+      fuelType: "",
+      drivetrain: "",
+      bodyType: "",
+      registrationState: "",
+      faults: "",
+      kilometers: "",
     },
   });
+
+  // Watch category to show/hide vehicle fields
+  const selectedCategoryId = form.watch("categoryId");
 
   const createListingMutation = useMutation({
     mutationFn: async (data: CreateListingForm) => {
@@ -85,6 +112,18 @@ export default function CreateListing() {
         shippingCost: data.shippingCost || "0.00",
         originalPrice: data.price, // Set original price same as selling price
         images: [], // For now, empty array until image upload is implemented
+        // Vehicle-specific fields
+        make: data.make || "",
+        vehicleModel: data.vehicleModel || "",
+        year: data.year ? parseInt(data.year) : undefined,
+        engineSize: data.engineSize || "",
+        transmission: data.transmission || "",
+        fuelType: data.fuelType || "",
+        drivetrain: data.drivetrain || "",
+        bodyType: data.bodyType || "",
+        registrationState: data.registrationState || "",
+        faults: data.faults || "",
+        kilometers: data.kilometers ? parseInt(data.kilometers) : undefined,
       };
       
       return apiRequest("POST", "/api/products", productData);
@@ -300,6 +339,236 @@ export default function CreateListing() {
                         </FormItem>
                       )}
                     />
+
+                    {/* Vehicle-specific fields - show only when vehicles category is selected */}
+                    {selectedCategoryId === "8" && (
+                      <div className="space-y-4 border-t pt-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Vehicle Details</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="make"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Make</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g. Toyota, Ford" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="vehicleModel"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Model</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g. Camry, Focus" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="year"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Year</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g. 2020" type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="kilometers"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Kilometers</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g. 50000" type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="engineSize"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Engine</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g. 2.0L, Electric" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="fuelType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Fuel Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select fuel type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="petrol">Petrol</SelectItem>
+                                    <SelectItem value="diesel">Diesel</SelectItem>
+                                    <SelectItem value="electric">Electric</SelectItem>
+                                    <SelectItem value="hybrid">Hybrid</SelectItem>
+                                    <SelectItem value="lpg">LPG</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="transmission"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Transmission</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select transmission" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="manual">Manual</SelectItem>
+                                    <SelectItem value="automatic">Automatic</SelectItem>
+                                    <SelectItem value="cvt">CVT</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="drivetrain"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Drive Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select drive type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="fwd">Front Wheel Drive</SelectItem>
+                                    <SelectItem value="rwd">Rear Wheel Drive</SelectItem>
+                                    <SelectItem value="awd">All Wheel Drive</SelectItem>
+                                    <SelectItem value="4wd">4 Wheel Drive</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="bodyType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Body Shape</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select body type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="sedan">Sedan</SelectItem>
+                                    <SelectItem value="hatchback">Hatchback</SelectItem>
+                                    <SelectItem value="suv">SUV</SelectItem>
+                                    <SelectItem value="wagon">Wagon</SelectItem>
+                                    <SelectItem value="coupe">Coupe</SelectItem>
+                                    <SelectItem value="convertible">Convertible</SelectItem>
+                                    <SelectItem value="ute">Ute</SelectItem>
+                                    <SelectItem value="van">Van</SelectItem>
+                                    <SelectItem value="truck">Truck</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="registrationState"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Registration State</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select registration state" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="NSW">New South Wales</SelectItem>
+                                  <SelectItem value="VIC">Victoria</SelectItem>
+                                  <SelectItem value="QLD">Queensland</SelectItem>
+                                  <SelectItem value="SA">South Australia</SelectItem>
+                                  <SelectItem value="WA">Western Australia</SelectItem>
+                                  <SelectItem value="TAS">Tasmania</SelectItem>
+                                  <SelectItem value="NT">Northern Territory</SelectItem>
+                                  <SelectItem value="ACT">Australian Capital Territory</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="faults"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Known Faults or Issues</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Describe any known issues, faults, or damage with the vehicle..."
+                                  rows={3}
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
