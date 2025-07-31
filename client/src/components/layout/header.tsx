@@ -99,39 +99,43 @@ export default function Header() {
       <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4">
           {/* Top Bar */}
-          <div className="flex items-center justify-between py-2 text-sm border-b border-gray-100">
-            <div className="flex items-center space-x-4">
-              <span className="text-primary font-medium">🇦🇺 Australian Marketplace</span>
+          <div className="flex items-center justify-between py-2 text-xs sm:text-sm border-b border-gray-100">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <span className="text-primary font-medium flex items-center">
+                <span className="mr-1">🇦🇺</span>
+                <span className="hidden xs:inline">Australian Marketplace</span>
+                <span className="xs:hidden">AU Marketplace</span>
+              </span>
             </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
             {isAuthenticated && (
-              <Link href="/about" className="flex items-center text-gray-600 hover:text-primary" title="About Us">
-                <span className="hidden md:inline">About Us</span>
-                <HelpCircle className="h-4 w-4 md:hidden" />
+              <Link href="/about" className="flex items-center justify-center text-gray-600 hover:text-primary transition-colors duration-200 p-1 rounded-md hover:bg-gray-50" title="About Us">
+                <HelpCircle className="h-4 w-4 sm:mr-1 md:mr-2" />
+                <span className="hidden sm:inline text-sm font-medium">About Us</span>
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/instant-buyback" className="flex items-center text-green-600 hover:text-green-700 font-medium" title="Instant Buyback">
-                <Sparkles className="h-4 w-4 mr-0 md:mr-1" />
-                <span className="hidden md:inline">Instant Buyback</span>
+              <Link href="/instant-buyback" className="flex items-center justify-center text-green-600 hover:text-green-700 font-medium transition-colors duration-200 p-1 rounded-md hover:bg-green-50" title="Instant Buyback">
+                <Sparkles className="h-4 w-4 sm:mr-1 md:mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline text-sm font-medium whitespace-nowrap">Instant Buyback</span>
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/wallet" className="flex items-center text-gray-600 hover:text-primary" title="Wallet">
-                <CreditCard className="h-4 w-4 mr-0 md:mr-1" />
-                <span className="hidden md:inline">Wallet</span>
+              <Link href="/wallet" className="flex items-center justify-center text-gray-600 hover:text-primary transition-colors duration-200 p-1 rounded-md hover:bg-gray-50" title="Wallet">
+                <CreditCard className="h-4 w-4 sm:mr-1 md:mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline text-sm font-medium">Wallet</span>
               </Link>
             )}
             {isAuthenticated && (
-              <Link href="/messages" className="flex items-center text-gray-600 hover:text-primary" title="Messages">
-                <MessageCircle className="h-4 w-4 mr-0 md:mr-1" />
-                <span className="hidden md:inline">Messages</span>
+              <Link href="/messages" className="flex items-center justify-center text-gray-600 hover:text-primary transition-colors duration-200 p-1 rounded-md hover:bg-gray-50" title="Messages">
+                <MessageCircle className="h-4 w-4 sm:mr-1 md:mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline text-sm font-medium">Messages</span>
               </Link>
             )}
             {isAuthenticated && ((user as any)?.accountType === 'seller' || (user as any)?.accountType === 'shop' || (user as any)?.accountType === 'admin') && (
-              <Link href="/seller/dashboard" className="flex items-center text-gray-600 hover:text-primary" title="Seller Dashboard">
-                <Store className="h-4 w-4 mr-0 md:mr-1" />
-                <span className="hidden md:inline">Sell</span>
+              <Link href="/seller/dashboard" className="flex items-center justify-center text-gray-600 hover:text-primary transition-colors duration-200 p-1 rounded-md hover:bg-gray-50" title="Seller Dashboard">
+                <Store className="h-4 w-4 sm:mr-1 md:mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline text-sm font-medium">Sell</span>
               </Link>
             )}
           </div>
@@ -140,12 +144,14 @@ export default function Header() {
         {/* Main Navigation */}
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-1 md:space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <Recycle className="h-5 w-5 text-white" />
+            <Link href="/" className="flex items-center space-x-2 md:space-x-3 hover:opacity-90 transition-opacity duration-200">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                <Recycle className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
               </div>
-              <span className="text-xl md:text-2xl font-bold text-primary">Opshop</span>
-              <span className="text-sm md:text-lg text-secondary font-medium">Online</span>
+              <div className="flex items-baseline space-x-1">
+                <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-primary leading-none">Opshop</span>
+                <span className="text-xs sm:text-sm md:text-lg text-secondary font-medium leading-none">Online</span>
+              </div>
             </Link>
             
             {/* Search Bar */}
@@ -168,17 +174,18 @@ export default function Header() {
             </div>
           </div>
           
-          <div className="flex items-center space-x-2 md:space-x-4">
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="relative"
+              className="relative flex items-center justify-center p-2 hover:bg-gray-100 transition-colors duration-200 rounded-lg"
               onClick={handleWishlistClick}
               title="Wishlist"
             >
-              <Heart className="h-5 w-5" />
+              <Heart className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden lg:inline ml-1 text-sm font-medium">Wishlist</span>
               {wishlistCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center">
                   {wishlistCount}
                 </Badge>
               )}
@@ -186,33 +193,36 @@ export default function Header() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="relative"
+              className="relative flex items-center justify-center p-2 hover:bg-gray-100 transition-colors duration-200 rounded-lg"
               onClick={handleCartClick}
               title="Shopping Cart"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="hidden lg:inline ml-1 text-sm font-medium">Cart</span>
               {cartCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                <Badge className="absolute -top-1 -right-1 bg-accent text-white text-xs h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center">
                   {cartCount}
                 </Badge>
               )}
             </Button>
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1 sm:space-x-2">
                 <Link href={getDashboardRoute()}>
-                  <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-gray-100">
-                    {(user as any)?.profileImageUrl ? (
-                      <img 
-                        src={(user as any).profileImageUrl} 
-                        alt="Profile" 
-                        className="w-8 h-8 rounded-full object-cover" 
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                        <UserCircle className="h-5 w-5 text-gray-600" />
-                      </div>
-                    )}
-                    <span className="hidden md:inline">
+                  <Button variant="ghost" size="sm" className="flex items-center justify-center space-x-1 sm:space-x-2 p-2 hover:bg-gray-100 transition-colors duration-200 rounded-lg">
+                    <div className="flex items-center justify-center">
+                      {(user as any)?.profileImageUrl ? (
+                        <img 
+                          src={(user as any).profileImageUrl} 
+                          alt="Profile" 
+                          className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0" 
+                        />
+                      ) : (
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                          <UserCircle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="hidden md:inline text-sm font-medium">
                       Dashboard
                     </span>
                   </Button>
@@ -223,10 +233,11 @@ export default function Header() {
               <Button 
                 onClick={() => window.location.href = "/api/login"}
                 size="sm"
+                className="flex items-center justify-center space-x-1 p-2 hover:bg-primary/90 transition-colors duration-200 rounded-lg"
                 title="Login"
               >
-                <span className="hidden md:inline">Login</span>
-                <User className="h-4 w-4 md:hidden" />
+                <User className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline text-sm font-medium">Login</span>
               </Button>
             )}
           </div>
@@ -234,15 +245,20 @@ export default function Header() {
         
         {/* Mobile Search */}
         <div className="md:hidden pb-4">
-          <form onSubmit={handleSearch} className="relative">
-            <Input
-              type="text"
-              placeholder="Search for second-hand treasures..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4"
-            />
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <form onSubmit={handleSearch} className="relative flex items-center">
+            <div className="relative flex-1">
+              <Input
+                type="text"
+                placeholder="Search for second-hand treasures..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 h-10"
+              />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400 flex-shrink-0" />
+            </div>
+            <Button type="submit" size="sm" className="ml-2 px-3 py-2">
+              <Search className="h-4 w-4" />
+            </Button>
           </form>
         </div>
       </div>
