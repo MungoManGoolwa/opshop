@@ -187,8 +187,27 @@ export default function SiteAdmin() {
     user.accountType.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
-  const handleUserRoleChange = (userId: string, newRole: string) => {
-    updateUserMutation.mutate({ id: userId, role: newRole });
+  // Function to get account type badge styling
+  const getAccountTypeBadge = (accountType: string) => {
+    switch (accountType?.toLowerCase()) {
+      case 'admin':
+        return { variant: 'destructive' as const, className: 'bg-red-600 text-white' };
+      case 'moderator':
+        return { variant: 'default' as const, className: 'bg-orange-600 text-white' };
+      case 'shop':
+        return { variant: 'default' as const, className: 'bg-purple-600 text-white' };
+      case 'seller':
+        return { variant: 'default' as const, className: 'bg-blue-600 text-white' };
+      case 'buyer':
+      case 'customer':
+        return { variant: 'secondary' as const, className: 'bg-gray-500 text-white' };
+      default:
+        return { variant: 'outline' as const, className: '' };
+    }
+  };
+
+  const handleUserRoleChange = (userId: string, newAccountType: string) => {
+    updateUserMutation.mutate({ id: userId, accountType: newAccountType });
   };
 
   const handleUserStatusChange = (userId: string, isActive: boolean) => {
@@ -209,7 +228,7 @@ export default function SiteAdmin() {
     totalOrders: Array.isArray(orders) ? orders.length : 0,
     activeUsers: Array.isArray(users) ? users.filter((u: User) => u.isActive).length : 0,
     verifiedUsers: Array.isArray(users) ? users.filter((u: User) => u.isVerified).length : 0,
-    adminUsers: Array.isArray(users) ? users.filter((u: User) => u.role === 'admin').length : 0,
+    adminUsers: Array.isArray(users) ? users.filter((u: User) => u.accountType === 'admin').length : 0,
     activeProducts: Array.isArray(products) ? products.filter((p: Product) => p.status === 'available').length : 0,
     pendingProducts: Array.isArray(products) ? products.filter((p: Product) => !p.isVerified).length : 0,
   };
@@ -345,10 +364,10 @@ export default function SiteAdmin() {
                               <p className="font-medium">{user.firstName} {user.lastName}</p>
                               <p className="text-sm text-gray-600">{user.email}</p>
                               <div className="flex items-center space-x-2 mt-1">
-                                <Badge variant={user.accountType === 'admin' ? 'destructive' : 'secondary'}>
-                                  {user.accountType}
-                                </Badge>
-                                <Badge variant={user.accountType === 'shop' ? 'default' : 'outline'}>
+                                <Badge 
+                                  variant={getAccountTypeBadge(user.accountType).variant}
+                                  className={getAccountTypeBadge(user.accountType).className}
+                                >
                                   {user.accountType}
                                 </Badge>
                                 <Badge variant={user.isActive ? 'default' : 'secondary'}>
