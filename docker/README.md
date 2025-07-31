@@ -1,92 +1,125 @@
-# Opshop Online - Docker Deployment
+# Docker Deployment for Opshop Online
 
-This folder contains the Docker configuration and deployment package for Opshop Online marketplace.
+This directory contains Docker configuration files for deploying the Opshop Online marketplace application.
 
-## Contents
+## Quick Start
 
-- `Dockerfile` - Production-ready Docker image configuration
+1. **Copy environment file:**
+   ```bash
+   cp docker/.env.docker docker/.env
+   ```
+
+2. **Update environment variables:**
+   Edit `docker/.env` with your actual configuration values.
+
+3. **Build and run:**
+   ```bash
+   cd docker
+   docker-compose up -d
+   ```
+
+## Files Overview
+
+- `Dockerfile` - Multi-stage Docker image build configuration
 - `docker-compose.yml` - Complete application stack with PostgreSQL
-- `.dockerignore` - Files to exclude from Docker builds
-- `opshop-online-deployment-*.tar.gz` - Complete application deployment package
+- `.dockerignore` - Files to exclude from Docker build context
+- `docker-entrypoint.sh` - Application startup script with health checks
+- `.env.docker` - Environment variables template
+- `README.md` - This documentation file
 
-## Deployment Package
+## Environment Configuration
 
-The deployment package contains the complete Opshop Online application ready for deployment:
+### Required Variables
 
-### What's Included:
-- All source code (client, server, shared)
-- Configuration files and schemas
-- Database migrations and initialization scripts
-- Docker configuration files
-- Documentation and setup instructions
+- `DATABASE_URL` - PostgreSQL connection string
+- `SESSION_SECRET` - Secret key for session encryption
+- `NODE_ENV` - Set to 'production' for production deployment
 
-### What's Excluded:
-- node_modules (will be installed during build)
-- Build artifacts (generated during deployment)
-- Log files and temporary data
-- Environment secrets (must be configured separately)
+### Optional Services
 
-## Quick Start with Docker
+- **Stripe:** `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`
+- **PayPal:** `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`
+- **Anthropic AI:** `ANTHROPIC_API_KEY`
 
+## Docker Commands
+
+### Build the image:
 ```bash
-# Extract deployment package
-tar -xzf opshop-online-deployment-*.tar.gz
+docker build -f docker/Dockerfile -t opshop-online .
+```
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
-
-# Build and start the application
+### Run with Docker Compose:
+```bash
+cd docker
 docker-compose up -d
-
-# Check application health
-curl http://localhost:3000/health
 ```
 
-## Environment Variables Required
-
-```env
-DATABASE_URL=postgresql://user:password@postgres:5432/opshop
-SESSION_SECRET=your-secure-session-secret
-STRIPE_SECRET_KEY=sk_test_or_live_key
-VITE_STRIPE_PUBLIC_KEY=pk_test_or_live_key
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_CLIENT_SECRET=your-paypal-client-secret
-ANTHROPIC_API_KEY=your-anthropic-api-key
-REPL_ID=your-repl-id
-REPLIT_DOMAINS=your-domain.com
-POSTGRES_PASSWORD=secure-database-password
+### View logs:
+```bash
+docker-compose logs -f opshop-app
 ```
 
-## Application Features
+### Stop services:
+```bash
+docker-compose down
+```
 
-The deployment includes:
-- Complete React.js frontend with responsive design
-- Express.js backend with comprehensive API
-- PostgreSQL database with full schema
-- AI-powered instant buyback system
-- Payment processing (Stripe & PayPal)
-- User authentication and role management
-- Location-based product search
-- Administrative dashboard
-- Progressive Web App (PWA) capabilities
+### Rebuild and restart:
+```bash
+docker-compose down
+docker-compose up --build -d
+```
 
 ## Health Checks
 
 The application includes health check endpoints:
+
 - `/health` - Basic application health
-- `/health/ready` - Application readiness check
-- `/health/live` - Application liveness check
+- `/health/ready` - Readiness check including database connectivity
+- `/health/live` - Liveness check for container orchestration
 
-## Monitoring
+## Production Deployment
 
-Built-in monitoring features:
-- Structured logging with Pino
-- Request tracking and performance metrics
-- Error logging and reporting
-- Admin analytics dashboard
+1. **Security:** Update all default passwords and secrets
+2. **SSL/TLS:** Configure reverse proxy (nginx/traefik) for HTTPS
+3. **Monitoring:** Set up logging and monitoring solutions
+4. **Backups:** Configure automated database backups
+5. **Scaling:** Consider using Docker Swarm or Kubernetes for scaling
 
-## Support
+## Troubleshooting
 
-This is a production-ready deployment of Opshop Online marketplace platform.
-For technical support or customization, contact the development team.
+### Database Connection Issues
+```bash
+docker-compose logs postgres
+docker-compose exec postgres psql -U opshop -d opshop
+```
+
+### Application Logs
+```bash
+docker-compose logs opshop-app
+```
+
+### Reset Everything
+```bash
+docker-compose down -v
+docker-compose up --build -d
+```
+
+## Architecture
+
+The Docker setup provides:
+
+- **Multi-stage build** for optimized image size
+- **Non-root user** for security
+- **Health checks** for container orchestration
+- **Volume mounts** for persistent data
+- **Environment-based configuration**
+- **Production-ready PostgreSQL** with initialization
+
+## Performance Notes
+
+- Image size optimized with multi-stage build
+- Alpine Linux base for minimal footprint
+- Production dependencies only in final image
+- Health checks for automatic recovery
+- Restart policies for high availability
