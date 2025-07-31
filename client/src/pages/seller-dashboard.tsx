@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -14,6 +14,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumbs } from "@/components/navigation/breadcrumbs";
 import FeedbackCelebration from "@/components/seller/feedback-celebration";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Plus, 
   DollarSign, 
@@ -28,6 +46,8 @@ import {
 export default function SellerDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
 
   useEffect(() => {
     document.title = "Seller Dashboard - Opshop Online";
@@ -40,6 +60,34 @@ export default function SellerDashboard() {
   const { data: commissions, isLoading: commissionsLoading } = useQuery({
     queryKey: ["/api/seller/commissions"],
   });
+
+  // Delete product mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      return apiRequest("DELETE", `/api/products/${productId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/seller/products"] });
+      setDeletingProductId(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete product",
+        variant: "destructive",
+      });
+      setDeletingProductId(null);
+    },
+  });
+
+  const handleDeleteProduct = (productId: number) => {
+    setDeletingProductId(productId);
+    deleteProductMutation.mutate(productId);
+  };
 
   const getConditionColor = (condition: string) => {
     switch (condition.toLowerCase()) {
@@ -232,9 +280,50 @@ export default function SellerDashboard() {
                                 <Edit className="h-4 w-4" />
                               </Link>
                             </Button>
-                            <Button size="sm" variant="outline">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="outline">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/products/${product.id}`}>
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Product
+                                  </Link>
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem 
+                                      className="text-destructive focus:text-destructive"
+                                      onSelect={(e) => e.preventDefault()}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete Product
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete "{product.title}"? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteProduct(product.id)}
+                                        disabled={deletingProductId === product.id}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        {deletingProductId === product.id ? "Deleting..." : "Delete"}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       ))}

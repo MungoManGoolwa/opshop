@@ -17,6 +17,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Users, 
   Package, 
@@ -85,6 +96,7 @@ export default function SiteAdmin() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<number | null>(null);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
     siteName: "Opshop Online",
     siteDescription: "Australia's Sustainable Marketplace",
@@ -152,6 +164,35 @@ export default function SiteAdmin() {
       toast({ title: "Failed to update settings", description: error.message, variant: "destructive" });
     },
   });
+
+  // Delete product mutation (admin version)
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      return apiRequest("DELETE", `/api/products/${productId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setDeletingProductId(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete product",
+        variant: "destructive",
+      });
+      setDeletingProductId(null);
+    },
+  });
+
+  const handleDeleteProduct = (productId: number) => {
+    setDeletingProductId(productId);
+    deleteProductMutation.mutate(productId);
+  };
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -507,6 +548,32 @@ export default function SiteAdmin() {
                             <Button size="sm" variant="outline">
                               <Eye className="w-4 h-4" />
                             </Button>
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{product.title}"? This action cannot be undone and will permanently remove the product from the system.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteProduct(product.id)}
+                                    disabled={deletingProductId === product.id}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    {deletingProductId === product.id ? "Deleting..." : "Delete Product"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </div>
                       ))
