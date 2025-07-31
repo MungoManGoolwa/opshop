@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,8 @@ export default function EditListing() {
   const queryClient = useQueryClient();
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<any[]>([]);
+  const [photosToDelete, setPhotosToDelete] = useState<number[]>([]);
 
   // Get product ID from URL params
   const params = useParams();
@@ -98,12 +101,90 @@ export default function EditListing() {
         shippingCost: productData.shippingCost?.toString() || "",
       });
       
-      // Set existing image previews
-      if (productData.images && Array.isArray(productData.images)) {
-        setImagePreviews(productData.images);
+      // Set existing photos
+      if (productData.photos && Array.isArray(productData.photos)) {
+        setExistingPhotos(productData.photos);
+      } else if (productData.images && Array.isArray(productData.images)) {
+        // Fallback for legacy image format
+        const legacyPhotos = productData.images.map((url: string, index: number) => ({
+          url,
+          filename: `legacy_${index}`,
+          originalName: `image_${index}`,
+        }));
+        setExistingPhotos(legacyPhotos);
       }
     }
   }, [productData, form]);
+
+  // Photo upload mutation
+  const uploadPhotosMutation = useMutation({
+    mutationFn: async (photos: File[]) => {
+      const formData = new FormData();
+      photos.forEach(photo => formData.append('photos', photo));
+      
+      const endpoint = user?.accountType === 'admin' 
+        ? `/api/admin/listings/${productId}/photos`
+        : `/api/products/${productId}/photos`;
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload photos');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "Success",
+        description: `${result.addedPhotos?.length || 0} photos uploaded successfully!`,
+      });
+      setImages([]);
+      setImagePreviews([]);
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload photos",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Photo deletion mutation
+  const deletePhotoMutation = useMutation({
+    mutationFn: async (photoIndex: number) => {
+      const endpoint = user?.accountType === 'admin' 
+        ? `/api/admin/listings/${productId}/photos/${photoIndex}`
+        : `/api/products/${productId}/photos/${photoIndex}`;
+      
+      return apiRequest("DELETE", endpoint);
+    },
+    onSuccess: (result, photoIndex) => {
+      toast({
+        title: "Success",
+        description: "Photo deleted successfully!",
+      });
+      // Remove from local state
+      setExistingPhotos(prev => prev.filter((_, index) => index !== photoIndex));
+      queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete photo",
+        variant: "destructive",
+      });
+    },
+  });
 
   const updateListingMutation = useMutation({
     mutationFn: async (data: EditListingForm) => {
@@ -138,6 +219,8 @@ export default function EditListing() {
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       
+      // Note: New photos are uploaded separately via the Upload button
+      
       // Redirect based on user role
       if (user?.accountType === 'admin') {
         setLocation("/admin/site");
@@ -156,10 +239,12 @@ export default function EditListing() {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + images.length > 5) {
+    const totalPhotos = existingPhotos.length + images.length + files.length;
+    
+    if (totalPhotos > 10) {
       toast({
         title: "Too many images",
-        description: "You can upload a maximum of 5 images",
+        description: "You can have a maximum of 10 images total",
         variant: "destructive",
       });
       return;
@@ -177,25 +262,19 @@ export default function EditListing() {
     });
   };
 
-  const removeImage = (index: number) => {
+  const removeNewImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const moveImage = (fromIndex: number, toIndex: number) => {
-    setImages(prev => {
-      const newImages = [...prev];
-      const [movedImage] = newImages.splice(fromIndex, 1);
-      newImages.splice(toIndex, 0, movedImage);
-      return newImages;
-    });
-    
-    setImagePreviews(prev => {
-      const newPreviews = [...prev];
-      const [movedPreview] = newPreviews.splice(fromIndex, 1);
-      newPreviews.splice(toIndex, 0, movedPreview);
-      return newPreviews;
-    });
+  const removeExistingPhoto = (photoIndex: number) => {
+    deletePhotoMutation.mutate(photoIndex);
+  };
+
+  const uploadNewPhotos = () => {
+    if (images.length > 0) {
+      uploadPhotosMutation.mutate(images);
+    }
   };
 
   const onSubmit = (data: EditListingForm) => {
@@ -487,90 +566,54 @@ export default function EditListing() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Product Images</CardTitle>
-                    <p className="text-sm text-gray-600">Upload up to 5 images. Drag to reorder.</p>
+                    <p className="text-sm text-gray-600">
+                      Current images: {existingPhotos.length} | New uploads: {images.length} | Total: {existingPhotos.length + images.length}/10 max
+                    </p>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-4">
-                        Upload up to 5 high-quality images of your item
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        id="image-upload"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById('image-upload')?.click()}
-                      >
-                        Choose Images
-                      </Button>
-                    </div>
-
-                    {imagePreviews.length > 0 && (
+                  <CardContent className="space-y-6">
+                    {/* Existing Photos Section */}
+                    {existingPhotos.length > 0 && (
                       <div className="space-y-4">
-                        <p className="text-sm text-gray-600 font-medium">
-                          Images ({imagePreviews.length}/5)
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-lg font-medium">Current Photos</h4>
+                          <Badge variant="outline">{existingPhotos.length} photos</Badge>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {imagePreviews.map((preview, index) => (
-                            <div key={index} className="relative group">
+                          {existingPhotos.map((photo, index) => (
+                            <div key={`existing-${index}`} className="relative group">
                               <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-colors">
                                 <img
-                                  src={preview}
-                                  alt={`Product image ${index + 1}`}
+                                  src={photo.url}
+                                  alt={photo.originalName || `Product image ${index + 1}`}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
                               
-                              {/* Image Controls */}
-                              <div className="absolute top-2 right-2 space-y-1">
-                                <button
+                              {/* Delete Button */}
+                              <div className="absolute top-2 right-2">
+                                <Button
                                   type="button"
-                                  onClick={() => removeImage(index)}
-                                  className="bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-md"
-                                  title="Remove image"
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => removeExistingPhoto(index)}
+                                  disabled={deletePhotoMutation.isPending}
+                                  className="h-7 w-7 p-0"
+                                  title="Delete photo"
                                 >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-
-                              {/* Move buttons */}
-                              <div className="absolute bottom-2 left-2 right-2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                                {index > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => moveImage(index, index - 1)}
-                                    className="bg-blue-500 text-white rounded px-2 py-1 text-xs hover:bg-blue-600 shadow-md"
-                                    title="Move left"
-                                  >
-                                    ←
-                                  </button>
-                                )}
-                                <div className="flex-1" />
-                                {index < imagePreviews.length - 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => moveImage(index, index + 1)}
-                                    className="bg-blue-500 text-white rounded px-2 py-1 text-xs hover:bg-blue-600 shadow-md"
-                                    title="Move right"
-                                  >
-                                    →
-                                  </button>
-                                )}
+                                  {deletePhotoMutation.isPending ? (
+                                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                  ) : (
+                                    <X className="w-3 h-3" />
+                                  )}
+                                </Button>
                               </div>
 
                               {/* Primary image indicator */}
                               {index === 0 && (
                                 <div className="absolute top-2 left-2">
-                                  <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                  <Badge className="bg-green-500 text-white text-xs">
                                     Primary
-                                  </span>
+                                  </Badge>
                                 </div>
                               )}
                             </div>
@@ -578,6 +621,88 @@ export default function EditListing() {
                         </div>
                       </div>
                     )}
+
+                    {/* Upload New Photos Section */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-medium">Add New Photos</h4>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600 mb-4">
+                          Upload high-quality images of your item (max 10 total)
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          id="image-upload"
+                        />
+                        <div className="space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => document.getElementById('image-upload')?.click()}
+                            disabled={existingPhotos.length + images.length >= 10}
+                          >
+                            Choose Images
+                          </Button>
+                          {images.length > 0 && (
+                            <Button
+                              type="button"
+                              onClick={uploadNewPhotos}
+                              disabled={uploadPhotosMutation.isPending}
+                            >
+                              {uploadPhotosMutation.isPending ? "Uploading..." : `Upload ${images.length} New Photos`}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* New Image Previews */}
+                      {imagePreviews.length > 0 && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium">New Images to Upload</p>
+                            <Badge variant="secondary">{images.length} selected</Badge>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {imagePreviews.map((preview, index) => (
+                              <div key={`new-${index}`} className="relative group">
+                                <div className="aspect-square rounded-lg overflow-hidden border-2 border-dashed border-blue-300 hover:border-blue-400 transition-colors">
+                                  <img
+                                    src={preview}
+                                    alt={`New image ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                
+                                {/* Remove Button */}
+                                <div className="absolute top-2 right-2">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => removeNewImage(index)}
+                                    className="h-7 w-7 p-0 bg-white"
+                                    title="Remove image"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+
+                                {/* New indicator */}
+                                <div className="absolute top-2 left-2">
+                                  <Badge variant="secondary" className="text-xs">
+                                    New
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
