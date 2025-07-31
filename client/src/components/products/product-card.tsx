@@ -197,7 +197,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
           
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
             <div className="flex items-center space-x-1">
               <MapPin className="h-3 w-3" />
               <span className="truncate">{product.location}</span>
@@ -207,6 +207,13 @@ export default function ProductCard({ product }: ProductCardProps) {
               <span>4.8</span>
             </div>
           </div>
+          
+          {/* Seller Information */}
+          {(product as any).sellerName && (
+            <div className="text-xs text-gray-600 mb-2">
+              Sold by <span className="font-medium text-gray-800">{(product as any).sellerName}</span>
+            </div>
+          )}
           
           {product.views !== undefined && (
             <div className="mt-2 text-xs text-gray-500">

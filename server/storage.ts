@@ -71,10 +71,10 @@ export interface IStorage {
     latitude?: number;
     longitude?: number;
     radius?: number;
-  }): Promise<Product[]>;
-  getProduct(id: number): Promise<Product | undefined>;
-  getSimilarProducts(productId: number, limit?: number): Promise<Product[]>;
-  getProductsForComparison(productIds: number[]): Promise<Product[]>;
+  }): Promise<(Product & { sellerName?: string })[]>;
+  getProduct(id: number): Promise<(Product & { sellerName?: string }) | undefined>;
+  getSimilarProducts(productId: number, limit?: number): Promise<(Product & { sellerName?: string })[]>;
+  getProductsForComparison(productIds: number[]): Promise<(Product & { sellerName?: string })[]>;
   getProductsBySeller(sellerId: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product>;
@@ -299,7 +299,7 @@ export class DatabaseStorage implements IStorage {
     // Beauty & Health specific
     skinType?: string;
     hairType?: string;
-  }): Promise<Product[]> {
+  }): Promise<(Product & { sellerName?: string })[]> {
     const conditions = [eq(products.status, 'available')];
 
     if (filters?.categoryId) {
@@ -531,12 +531,58 @@ export class DatabaseStorage implements IStorage {
         break;
     }
 
-    return await query;
+    const productsData = await query;
+
+    // Get seller names separately to add to products
+    const sellerIds = productsData.map(p => p.sellerId).filter(Boolean);
+    const sellersMap = new Map();
+    
+    if (sellerIds.length > 0) {
+      const sellers = await db.select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email
+      }).from(users).where(sql`${users.id} IN (${sql.join(sellerIds.map(id => sql`${id}`), sql`, `)})`);
+      
+      sellers.forEach(seller => {
+        const sellerName = [seller.firstName, seller.lastName].filter(Boolean).join(' ') || seller.email || 'Unknown Seller';
+        sellersMap.set(seller.id, sellerName);
+      });
+    }
+
+    // Add seller names to products
+    return productsData.map(product => ({
+      ...product,
+      sellerName: sellersMap.get(product.sellerId) || null
+    }));
   }
 
-  async getProduct(id: number): Promise<Product | undefined> {
+  async getProduct(id: number): Promise<(Product & { sellerName?: string }) | undefined> {
     const [product] = await db.select().from(products).where(eq(products.id, id));
-    return product || undefined;
+    if (!product) {
+      return undefined;
+    }
+
+    // Get seller information if product has a seller
+    let sellerName = null;
+    if (product.sellerId) {
+      const [seller] = await db.select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email
+      }).from(users).where(eq(users.id, product.sellerId));
+      
+      if (seller) {
+        sellerName = [seller.firstName, seller.lastName].filter(Boolean).join(' ') || seller.email || 'Unknown Seller';
+      }
+    }
+
+    return {
+      ...product,
+      sellerName
+    };
   }
 
   async getSimilarProducts(productId: number, limit: number = 6): Promise<(Product & { sellerName?: string })[]> {
