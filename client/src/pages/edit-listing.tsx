@@ -61,6 +61,9 @@ export default function EditListing() {
     enabled: productId > 0,
   });
 
+  // Type the product data properly
+  const productData = product as any;
+
   const form = useForm<EditListingForm>({
     resolver: zodResolver(editListingSchema),
     defaultValues: {
@@ -80,27 +83,27 @@ export default function EditListing() {
 
   // Pre-populate form when product data loads
   useEffect(() => {
-    if (product) {
+    if (productData) {
       form.reset({
-        title: product.title || "",
-        description: product.description || "",
-        price: product.price?.toString() || "",
-        condition: product.condition || "",
-        categoryId: product.categoryId?.toString() || "",
-        brand: product.brand || "",
-        size: product.size || "",
-        color: product.color || "",
-        material: product.material || "",
-        location: product.location || "",
-        shippingCost: product.shippingCost?.toString() || "",
+        title: productData.title || "",
+        description: productData.description || "",
+        price: productData.price?.toString() || "",
+        condition: productData.condition || "",
+        categoryId: productData.categoryId?.toString() || "",
+        brand: productData.brand || "",
+        size: productData.size || "",
+        color: productData.color || "",
+        material: productData.material || "",
+        location: productData.location || "",
+        shippingCost: productData.shippingCost?.toString() || "",
       });
       
       // Set existing image previews
-      if (product.images && Array.isArray(product.images)) {
-        setImagePreviews(product.images);
+      if (productData.images && Array.isArray(productData.images)) {
+        setImagePreviews(productData.images);
       }
     }
-  }, [product, form]);
+  }, [productData, form]);
 
   const updateListingMutation = useMutation({
     mutationFn: async (data: EditListingForm) => {
@@ -167,6 +170,22 @@ export default function EditListing() {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
+  const moveImage = (fromIndex: number, toIndex: number) => {
+    setImages(prev => {
+      const newImages = [...prev];
+      const [movedImage] = newImages.splice(fromIndex, 1);
+      newImages.splice(toIndex, 0, movedImage);
+      return newImages;
+    });
+    
+    setImagePreviews(prev => {
+      const newPreviews = [...prev];
+      const [movedPreview] = newPreviews.splice(fromIndex, 1);
+      newPreviews.splice(toIndex, 0, movedPreview);
+      return newPreviews;
+    });
+  };
+
   const onSubmit = (data: EditListingForm) => {
     updateListingMutation.mutate(data);
   };
@@ -189,7 +208,7 @@ export default function EditListing() {
     );
   }
 
-  if (!product) {
+  if (!productData) {
     return (
       <ProtectedRoute allowedRoles={["seller", "business", "admin"]}>
         <div className="min-h-screen bg-neutral">
@@ -455,7 +474,8 @@ export default function EditListing() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Images</CardTitle>
+                    <CardTitle>Product Images</CardTitle>
+                    <p className="text-sm text-gray-600">Upload up to 5 images. Drag to reorder.</p>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
@@ -481,23 +501,69 @@ export default function EditListing() {
                     </div>
 
                     {imagePreviews.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        {imagePreviews.map((preview, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={preview}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-24 object-cover rounded border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
+                      <div className="space-y-4">
+                        <p className="text-sm text-gray-600 font-medium">
+                          Images ({imagePreviews.length}/5)
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {imagePreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-colors">
+                                <img
+                                  src={preview}
+                                  alt={`Product image ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              
+                              {/* Image Controls */}
+                              <div className="absolute top-2 right-2 space-y-1">
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(index)}
+                                  className="bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-md"
+                                  title="Remove image"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              {/* Move buttons */}
+                              <div className="absolute bottom-2 left-2 right-2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                                {index > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => moveImage(index, index - 1)}
+                                    className="bg-blue-500 text-white rounded px-2 py-1 text-xs hover:bg-blue-600 shadow-md"
+                                    title="Move left"
+                                  >
+                                    ←
+                                  </button>
+                                )}
+                                <div className="flex-1" />
+                                {index < imagePreviews.length - 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => moveImage(index, index + 1)}
+                                    className="bg-blue-500 text-white rounded px-2 py-1 text-xs hover:bg-blue-600 shadow-md"
+                                    title="Move right"
+                                  >
+                                    →
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Primary image indicator */}
+                              {index === 0 && (
+                                <div className="absolute top-2 left-2">
+                                  <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                    Primary
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </CardContent>

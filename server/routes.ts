@@ -536,6 +536,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Photo management for regular users
+  app.post('/api/products/:id/photos', 
+    isAuthenticated,
+    upload.array('photos', 10),
+    async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const productId = parseInt(req.params.id);
+      
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Check ownership or admin access
+      if (product.sellerId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user?.accountType !== 'admin') {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: "No photos provided" });
+      }
+
+      // Process uploaded photos
+      const newPhotos = req.files.map((file: any) => ({
+        url: `/uploads/${file.filename}`,
+        filename: file.filename,
+        originalName: file.originalname,
+        size: file.size,
+        uploadedBy: userId,
+        uploadedAt: new Date()
+      }));
+
+      // Add photos to existing product photos
+      const currentPhotos = product.photos || [];
+      const updatedPhotos = [...currentPhotos, ...newPhotos];
+
+      await storage.updateProduct(productId, { 
+        photos: updatedPhotos,
+        lastModifiedBy: userId,
+        lastModifiedAt: new Date()
+      });
+
+      console.log(`User ${userId} added ${newPhotos.length} photos to product ${productId}`);
+      
+      res.json({ 
+        message: "Photos added successfully", 
+        addedPhotos: newPhotos,
+        totalPhotos: updatedPhotos.length 
+      });
+    } catch (error: any) {
+      console.error("Error adding photos to product:", error);
+      res.status(500).json({ message: error.message || "Failed to add photos" });
+    }
+  });
+
+  app.delete('/api/products/:id/photos/:photoIndex', 
+    isAuthenticated,
+    async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const productId = parseInt(req.params.id);
+      const photoIndex = parseInt(req.params.photoIndex);
+      
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Check ownership or admin access
+      if (product.sellerId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user?.accountType !== 'admin') {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      const photos = product.photos || [];
+      
+      if (photoIndex < 0 || photoIndex >= photos.length) {
+        return res.status(400).json({ message: "Invalid photo index" });
+      }
+
+      // Remove photo from array
+      const removedPhoto = photos[photoIndex];
+      const updatedPhotos = photos.filter((_, index) => index !== photoIndex);
+
+      await storage.updateProduct(productId, { 
+        photos: updatedPhotos,
+        lastModifiedBy: userId,
+        lastModifiedAt: new Date()
+      });
+
+      console.log(`User ${userId} removed photo from product ${productId}: ${removedPhoto.filename}`);
+      
+      res.json({ 
+        message: "Photo removed successfully", 
+        removedPhoto,
+        remainingPhotos: updatedPhotos.length 
+      });
+    } catch (error: any) {
+      console.error("Error removing photo from product:", error);
+      res.status(500).json({ message: error.message || "Failed to remove photo" });
+    }
+  });
+
+  app.put('/api/products/:id/photos/reorder', 
+    isAuthenticated,
+    async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const productId = parseInt(req.params.id);
+      const { photoOrder } = req.body; // Array of photo indices in new order
+      
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Check ownership or admin access
+      if (product.sellerId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user?.accountType !== 'admin') {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      }
+
+      const photos = product.photos || [];
+      
+      if (!Array.isArray(photoOrder) || photoOrder.length !== photos.length) {
+        return res.status(400).json({ message: "Invalid photo order array" });
+      }
+
+      // Reorder photos according to the provided order
+      const reorderedPhotos = photoOrder.map(index => photos[index]).filter(Boolean);
+
+      await storage.updateProduct(productId, { 
+        photos: reorderedPhotos,
+        lastModifiedBy: userId,
+        lastModifiedAt: new Date()
+      });
+
+      console.log(`User ${userId} reordered photos for product ${productId}`);
+      
+      res.json({ 
+        message: "Photos reordered successfully", 
+        photos: reorderedPhotos 
+      });
+    } catch (error: any) {
+      console.error("Error reordering photos:", error);
+      res.status(500).json({ message: error.message || "Failed to reorder photos" });
+    }
+  });
+
   // Seller routes
   app.get('/api/seller/products', isAuthenticated, async (req: any, res) => {
     try {
