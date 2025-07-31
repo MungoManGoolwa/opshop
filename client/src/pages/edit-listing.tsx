@@ -46,6 +46,9 @@ export default function EditListing() {
   const [existingPhotos, setExistingPhotos] = useState<any[]>([]);
   const [photosToDelete, setPhotosToDelete] = useState<number[]>([]);
 
+  // Type guard for user with accountType
+  const isAdmin = user && 'accountType' in user && user.accountType === 'admin';
+
   // Get product ID from URL params
   const params = useParams();
   const productId = parseInt(params.id || '0');
@@ -122,7 +125,7 @@ export default function EditListing() {
       const formData = new FormData();
       photos.forEach(photo => formData.append('photos', photo));
       
-      const endpoint = user?.accountType === 'admin' 
+      const endpoint = isAdmin 
         ? `/api/admin/listings/${productId}/photos`
         : `/api/products/${productId}/photos`;
       
@@ -161,7 +164,8 @@ export default function EditListing() {
   // Photo deletion mutation
   const deletePhotoMutation = useMutation({
     mutationFn: async (photoIndex: number) => {
-      const endpoint = user?.accountType === 'admin' 
+      console.log(`Deleting photo at index ${photoIndex} from ${existingPhotos.length} total photos`);
+      const endpoint = isAdmin 
         ? `/api/admin/listings/${productId}/photos/${photoIndex}`
         : `/api/products/${productId}/photos/${photoIndex}`;
       
@@ -172,12 +176,14 @@ export default function EditListing() {
         title: "Success",
         description: "Photo deleted successfully!",
       });
-      // Remove from local state
-      setExistingPhotos(prev => prev.filter((_, index) => index !== photoIndex));
+      // Refresh the product data instead of manipulating local state
       queryClient.invalidateQueries({ queryKey: ["/api/products", productId] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+      // Force refetch to get updated photo list
+      queryClient.refetchQueries({ queryKey: ["/api/products", productId] });
     },
     onError: (error: any) => {
+      console.error("Photo deletion failed:", error);
       toast({
         title: "Delete Failed",
         description: error.message || "Failed to delete photo",
@@ -204,7 +210,7 @@ export default function EditListing() {
       };
       
       // Use admin endpoint if user is admin, otherwise use regular endpoint
-      const endpoint = user?.accountType === 'admin' 
+      const endpoint = isAdmin 
         ? `/api/admin/products/${productId}` 
         : `/api/products/${productId}`;
       
@@ -222,7 +228,7 @@ export default function EditListing() {
       // Note: New photos are uploaded separately via the Upload button
       
       // Redirect based on user role
-      if (user?.accountType === 'admin') {
+      if (isAdmin) {
         setLocation("/admin/site");
       } else {
         setLocation("/seller/dashboard");
@@ -333,14 +339,14 @@ export default function EditListing() {
             <div className="mb-8">
               <div className="flex items-center space-x-2 mb-4">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={user?.accountType === 'admin' ? "/admin/site" : "/seller/dashboard"}>
+                  <Link href={isAdmin ? "/admin/site" : "/seller/dashboard"}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to {user?.accountType === 'admin' ? 'Admin Panel' : 'Dashboard'}
+                    Back to {isAdmin ? 'Admin Panel' : 'Dashboard'}
                   </Link>
                 </Button>
               </div>
-              <h1 className="text-3xl font-bold">{user?.accountType === 'admin' ? 'Admin Edit Listing' : 'Edit Listing'}</h1>
-              <p className="text-gray-600">{user?.accountType === 'admin' ? 'Update any product information' : 'Update your product information'}</p>
+              <h1 className="text-3xl font-bold">{isAdmin ? 'Admin Edit Listing' : 'Edit Listing'}</h1>
+              <p className="text-gray-600">{isAdmin ? 'Update any product information' : 'Update your product information'}</p>
             </div>
 
             <Form {...form}>

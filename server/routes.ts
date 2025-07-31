@@ -603,6 +603,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const productId = parseInt(req.params.id);
       const photoIndex = parseInt(req.params.photoIndex);
       
+      console.log(`User attempting to delete photo ${photoIndex} from product ${productId}`);
+      
       const product = await storage.getProduct(productId);
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -617,9 +619,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const photos = product.photos || [];
+      console.log(`Product has ${photos.length} photos:`, photos.map((p, i) => `${i}: ${p.filename || p.url}`));
       
       if (photoIndex < 0 || photoIndex >= photos.length) {
-        return res.status(400).json({ message: "Invalid photo index" });
+        console.log(`Invalid photo index ${photoIndex} for product with ${photos.length} photos`);
+        return res.status(400).json({ 
+          message: "Invalid photo index",
+          photoIndex,
+          totalPhotos: photos.length,
+          availableIndices: photos.map((_, i) => i)
+        });
       }
 
       // Remove photo from array
@@ -2951,6 +2960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const listingId = parseInt(req.params.id);
       const photoIndex = parseInt(req.params.photoIndex);
       
+      console.log(`Admin attempting to delete photo ${photoIndex} from listing ${listingId}`);
+      
       const listing = await storage.getProduct(listingId);
       
       if (!listing) {
@@ -2958,9 +2969,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const photos = listing.photos || [];
+      console.log(`Listing has ${photos.length} photos:`, photos.map((p, i) => `${i}: ${p.filename || p.url}`));
       
       if (photoIndex < 0 || photoIndex >= photos.length) {
-        return res.status(400).json({ message: "Invalid photo index" });
+        console.log(`Invalid photo index ${photoIndex} for listing with ${photos.length} photos`);
+        return res.status(400).json({ 
+          message: "Invalid photo index",
+          photoIndex,
+          totalPhotos: photos.length,
+          availableIndices: photos.map((_, i) => i)
+        });
       }
 
       // Remove photo from array
