@@ -47,7 +47,7 @@ export default function EditListing() {
   const [photosToDelete, setPhotosToDelete] = useState<number[]>([]);
 
   // Type guard for user with accountType
-  const isAdmin = user && 'accountType' in user && user.accountType === 'admin';
+  const isAdmin = user && typeof user === 'object' && user !== null && 'accountType' in user && user.accountType === 'admin';
 
   // Get product ID from URL params
   const params = useParams();
@@ -169,7 +169,21 @@ export default function EditListing() {
         ? `/api/admin/listings/${productId}/photos/${photoIndex}`
         : `/api/products/${productId}/photos/${photoIndex}`;
       
-      return apiRequest("DELETE", endpoint);
+      // Use direct fetch since CSRF is temporarily disabled
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete photo');
+      }
+      
+      return response.json();
     },
     onSuccess: (result, photoIndex) => {
       toast({
