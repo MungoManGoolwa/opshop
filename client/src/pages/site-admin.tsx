@@ -184,7 +184,7 @@ export default function SiteAdmin() {
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchQuery.toLowerCase())
+    user.accountType.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
   const handleUserRoleChange = (userId: string, newRole: string) => {
@@ -345,8 +345,8 @@ export default function SiteAdmin() {
                               <p className="font-medium">{user.firstName} {user.lastName}</p>
                               <p className="text-sm text-gray-600">{user.email}</p>
                               <div className="flex items-center space-x-2 mt-1">
-                                <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'}>
-                                  {user.role}
+                                <Badge variant={user.accountType === 'admin' ? 'destructive' : 'secondary'}>
+                                  {user.accountType}
                                 </Badge>
                                 <Badge variant={user.accountType === 'shop' ? 'default' : 'outline'}>
                                   {user.accountType}
@@ -366,7 +366,7 @@ export default function SiteAdmin() {
                           
                           <div className="flex items-center space-x-2">
                             <Select 
-                              value={user.role} 
+                              value={user.accountType} 
                               onValueChange={(value) => handleUserRoleChange(user.id, value)}
                             >
                               <SelectTrigger className="w-32">

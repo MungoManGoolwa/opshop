@@ -31,7 +31,7 @@ export default function ProtectedRoute({
     }
 
     if (!isLoading && isAuthenticated && allowedRoles.length > 0) {
-      if (!user?.role || !allowedRoles.includes(user.role)) {
+      if (!user?.accountType || !allowedRoles.includes(user.accountType)) {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access this page.",
@@ -74,7 +74,7 @@ export default function ProtectedRoute({
     );
   }
 
-  if (allowedRoles.length > 0 && (!user?.role || !allowedRoles.includes(user.role))) {
+  if (allowedRoles.length > 0 && (!user?.accountType || !allowedRoles.includes(user.accountType))) {
     return (
       <div className="min-h-screen bg-neutral flex items-center justify-center">
         <div className="text-center">

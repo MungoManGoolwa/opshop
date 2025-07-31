@@ -95,8 +95,8 @@ export default function UserImpersonationButton({ user, onImpersonationStart }: 
                 {user.firstName} {user.lastName}
               </h3>
               <p className="text-sm text-gray-600">{user.email}</p>
-              <Badge className={`${getRoleBadgeColor(user.role)} text-white mt-1`}>
-                {user.role}
+              <Badge className={`${getRoleBadgeColor(user.accountType)} text-white mt-1`}>
+                {user.accountType}
               </Badge>
             </div>
           </div>

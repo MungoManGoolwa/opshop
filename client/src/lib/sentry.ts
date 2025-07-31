@@ -118,7 +118,7 @@ export const setSentryUser = (user: {
   Sentry.setUser({
     id: user.id,
     email: user.email,
-    role: user.role
+    role: user.accountType
   });
 };
 

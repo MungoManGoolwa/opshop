@@ -133,9 +133,9 @@ export default function WelcomeSplash({ onClose }: WelcomeSplashProps) {
             </p>
             <div className="flex items-center space-x-2 text-xs text-gray-500">
               <Badge variant="secondary" className="text-xs">
-                {(user as any)?.role === 'admin' ? 'Administrator' : 
-                 (user as any)?.role === 'seller' ? 'Seller' : 
-                 (user as any)?.role === 'business' ? 'Business' : 'Customer'}
+                {(user as any)?.accountType === 'admin' ? 'Administrator' : 
+                 (user as any)?.accountType === 'seller' ? 'Seller' : 
+                 (user as any)?.accountType === 'business' ? 'Business' : 'Customer'}
               </Badge>
               {Array.isArray(wishlist) && wishlist.length > 0 && (
                 <Badge variant="outline" className="text-xs">

@@ -50,8 +50,8 @@ export function usePermissions() {
     if (!config.requireAuth && !user) return true;
     
     // Check role permission
-    if (user && 'role' in user) {
-      return config.roles.includes((user as any).role as UserRole);
+    if (user && 'accountType' in user) {
+      return config.roles.includes((user as any).accountType as UserRole);
     }
     
     return false;
@@ -61,17 +61,17 @@ export function usePermissions() {
     if (isLoading) return false;
     if (requireAuth && !isAuthenticated) return false;
     if (!requireAuth && !user) return true;
-    if (user && 'role' in user) return roles.includes((user as any).role as UserRole);
+    if (user && 'accountType' in user) return roles.includes((user as any).accountType as UserRole);
     return false;
   };
 
   return {
     hasPermission,
     canAccess,
-    isAdmin: user && 'role' in user ? (user as any).role === "admin" : false,
-    isModerator: user && 'role' in user ? (user as any).role === "moderator" : false,
-    isSeller: user && 'role' in user ? ((user as any).role === "seller" || (user as any).role === "business") : false,
-    isCustomer: user && 'role' in user ? (user as any).role === "customer" : false,
-    userRole: user && 'role' in user ? (user as any).role : undefined,
+    isAdmin: user && 'accountType' in user ? (user as any).accountType === "admin" : false,
+    isModerator: user && 'accountType' in user ? (user as any).accountType === "moderator" : false,
+    isSeller: user && 'accountType' in user ? ((user as any).accountType === "seller" || (user as any).accountType === "business") : false,
+    isCustomer: user && 'accountType' in user ? (user as any).accountType === "customer" : false,
+    userRole: user && 'accountType' in user ? (user as any).accountType : undefined,
   };
 }
