@@ -227,8 +227,10 @@ export default function SellerDashboard() {
                             <p className="text-sm text-gray-600">{product.views || 0} views</p>
                           </div>
                           <div className="flex space-x-2">
-                            <Button size="sm" variant="outline">
-                              <Edit className="h-4 w-4" />
+                            <Button size="sm" variant="outline" asChild>
+                              <Link href={`/seller/edit/${product.id}`}>
+                                <Edit className="h-4 w-4" />
+                              </Link>
                             </Button>
                             <Button size="sm" variant="outline">
                               <MoreHorizontal className="h-4 w-4" />

@@ -58,6 +58,7 @@ const GuestCheckout = lazy(() => import("@/pages/guest-checkout"));
 const ErrorDashboard = lazy(() => import("@/pages/error-dashboard"));
 const SellerVerification = lazy(() => import("@/pages/seller-verification"));
 const SellerAchievements = lazy(() => import("@/pages/seller-achievements"));
+const EditListing = lazy(() => import("@/pages/edit-listing"));
 
 function Router() {
   const { isAuthenticated, isLoading, error, user } = useAuth();
@@ -189,6 +190,11 @@ function Router() {
           <Route path="/seller/create">
             <PrivateRoute role="seller">
               <LazyRoute skeleton="listing"><CreateListing /></LazyRoute>
+            </PrivateRoute>
+          </Route>
+          <Route path="/seller/edit/:id">
+            <PrivateRoute role="seller">
+              <LazyRoute skeleton="listing"><EditListing /></LazyRoute>
             </PrivateRoute>
           </Route>
           <Route path="/seller/verification">
