@@ -1,0 +1,59 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="product-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f7fafc;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#bg-gradient)"/>
+  
+  <!-- Product box -->
+  <rect x="100" y="120" width="200" height="160" rx="12" ry="12" 
+        fill="url(#product-gradient)" 
+        stroke="#e2e8f0" 
+        stroke-width="2" 
+        filter="url(#shadow)"/>
+  
+  <!-- Product label -->
+  <rect x="110" y="140" width="180" height="40" rx="6" fill="#4f46e5"/>
+  <text x="200" y="157" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">PREMIUM</text>
+  <text x="200" y="172" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">TEST PRODUCT</text>
+  
+  <!-- Product features -->
+  <circle cx="130" cy="210" r="8" fill="#10b981"/>
+  <text x="145" y="215" font-family="Arial, sans-serif" font-size="10" fill="#374151">Quality Assured</text>
+  
+  <circle cx="130" cy="230" r="8" fill="#f59e0b"/>
+  <text x="145" y="235" font-family="Arial, sans-serif" font-size="10" fill="#374151">Fast Shipping</text>
+  
+  <circle cx="130" cy="250" r="8" fill="#ef4444"/>
+  <text x="145" y="255" font-family="Arial, sans-serif" font-size="10" fill="#374151">30-Day Return</text>
+  
+  <!-- Price tag -->
+  <polygon points="320,100 360,120 360,140 340,160 320,140" fill="#dc2626"/>
+  <text x="340" y="133" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">$50</text>
+  
+  <!-- Rating stars -->
+  <g transform="translate(200, 300)">
+    <polygon points="0,8 2.4,5.2 6,5.2 3.6,2.8 4.8,0 0,1.6 -4.8,0 -3.6,2.8 -6,5.2 -2.4,5.2" fill="#fbbf24"/>
+    <polygon points="15,8 17.4,5.2 21,5.2 18.6,2.8 19.8,0 15,1.6 10.2,0 11.4,2.8 9,5.2 12.6,5.2" fill="#fbbf24"/>
+    <polygon points="30,8 32.4,5.2 36,5.2 33.6,2.8 34.8,0 30,1.6 25.2,0 26.4,2.8 24,5.2 27.6,5.2" fill="#fbbf24"/>
+    <polygon points="45,8 47.4,5.2 51,5.2 48.6,2.8 49.8,0 45,1.6 40.2,0 41.4,2.8 39,5.2 42.6,5.2" fill="#fbbf24"/>
+    <polygon points="60,8 62.4,5.2 66,5.2 63.6,2.8 64.8,0 60,1.6 55.2,0 56.4,2.8 54,5.2 57.6,5.2" fill="#d1d5db"/>
+  </g>
+  
+  <!-- Badge -->
+  <circle cx="80" cy="150" r="30" fill="#059669" stroke="#047857" stroke-width="3"/>
+  <text x="80" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">NEW</text>
+  <text x="80" y="157" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">ARRIVAL</text>
+</svg>
