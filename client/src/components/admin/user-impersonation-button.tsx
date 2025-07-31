@@ -37,7 +37,7 @@ export default function UserImpersonationButton({ user, onImpersonationStart }: 
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Impersonation Started",
-        description: `You are now viewing the site as ${data.targetUser.firstName || data.targetUser.email}`,
+        description: `You are now viewing the site as ${data.targetUser?.firstName || data.targetUser?.email}`,
       });
       setIsDialogOpen(false);
       onImpersonationStart?.();

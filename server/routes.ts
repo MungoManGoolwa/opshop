@@ -2303,8 +2303,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Start impersonating a user (admin only)
   app.post('/api/admin/impersonate', isAuthenticated, async (req: any, res) => {
-    const adminUser = req.user?.claims?.sub ? await storage.getUser(req.user.claims.sub) : null;
+    const adminUserId = req.user?.claims?.sub;
+    console.log('=== IMPERSONATION DEBUG ===');
+    console.log('Impersonation attempt by user:', adminUserId, 'type:', typeof adminUserId);
+    console.log('Full user claims:', req.user?.claims);
+    
+    const adminUser = adminUserId ? await storage.getUser(String(adminUserId)) : null;
+    console.log('Admin user found:', adminUser ? { 
+      id: adminUser.id, 
+      email: adminUser.email,
+      accountType: adminUser.accountType 
+    } : 'null');
+    
     if (adminUser?.accountType !== 'admin') {
+      console.log('Access denied - user account type:', adminUser?.accountType);
       return res.status(403).json({ message: 'Admin access required' });
     }
 
@@ -2399,6 +2411,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const isImpersonating = req.session.isImpersonating || false;
     const originalUserId = req.session.originalUserId;
     
+    // Debug current user info
+    const currentUserId = req.user?.claims?.sub;
+    console.log('Impersonation status check:', {
+      currentUserId,
+      isImpersonating,
+      originalUserId
+    });
+    
     let originalUser = null;
     if (isImpersonating && originalUserId) {
       originalUser = await storage.getUser(originalUserId);
@@ -2406,6 +2426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     res.json({
       isImpersonating,
+      currentUserId,
       originalUser: originalUser ? {
         id: originalUser.id,
         email: originalUser.email,
