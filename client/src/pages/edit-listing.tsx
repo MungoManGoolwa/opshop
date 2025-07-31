@@ -104,17 +104,9 @@ export default function EditListing() {
         shippingCost: productData.shippingCost?.toString() || "",
       });
       
-      // Set existing photos
-      if (productData.photos && Array.isArray(productData.photos)) {
-        setExistingPhotos(productData.photos);
-      } else if (productData.images && Array.isArray(productData.images)) {
-        // Fallback for legacy image format
-        const legacyPhotos = productData.images.map((url: string, index: number) => ({
-          url,
-          filename: `legacy_${index}`,
-          originalName: `image_${index}`,
-        }));
-        setExistingPhotos(legacyPhotos);
+      // Set existing photos from images field
+      if (productData.images && Array.isArray(productData.images)) {
+        setExistingPhotos(productData.images);
       }
     }
   }, [productData, form]);

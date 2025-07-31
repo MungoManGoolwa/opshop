@@ -562,15 +562,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No photos provided" });
       }
 
-      // Process uploaded photos
-      const newPhotos = req.files.map((file: any) => ({
-        url: `/uploads/${file.filename}`,
-        filename: file.filename,
-        originalName: file.originalname,
-        size: file.size,
-        uploadedBy: userId,
-        uploadedAt: new Date()
-      }));
+      // Process uploaded photos - store as simple URL strings for text[] field
+      const newPhotos = req.files.map((file: any) => `/uploads/${file.filename}`);
 
       // Add photos to existing product images
       const currentPhotos = product.images || [];
@@ -2912,15 +2905,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No photos provided" });
       }
 
-      // Process uploaded photos
-      const newPhotos = req.files.map((file: any) => ({
-        url: `/uploads/${file.filename}`,
-        filename: file.filename,
-        originalName: file.originalname,
-        size: file.size,
-        uploadedBy: userId,
-        uploadedAt: new Date()
-      }));
+      // Process uploaded photos - store as simple URL strings for text[] field
+      const newPhotos = req.files.map((file: any) => `/uploads/${file.filename}`);
 
       // Add photos to existing listing photos
       const currentPhotos = listing.images || [];
