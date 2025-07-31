@@ -146,13 +146,14 @@ export default function Landing() {
           <ProductGrid products={featuredProducts} />
           
           <div className="text-center mt-12">
-            <Button 
-              size="lg" 
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => window.location.href = "/login"}
-            >
-              View All Items
-            </Button>
+            <Link href="/search">
+              <Button 
+                size="lg" 
+                className="bg-primary hover:bg-primary/90"
+              >
+                View All Items
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

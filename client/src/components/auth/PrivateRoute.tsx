@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PrivateRouteProps {
   children: React.ReactNode;
-  role?: "admin" | "moderator" | "seller" | "business" | "customer";
+  role?: "admin" | "moderator" | "seller" | "business" | "customer" | ("admin" | "moderator" | "seller" | "business" | "customer")[];
   requireAuth?: boolean;
 }
 
@@ -34,21 +34,26 @@ export default function PrivateRoute({
     }
 
     // Check role requirement
-    if (role && user && 'role' in user && (user as any).role !== role) {
-      // Special handling for admin role - also allow moderators for some admin functions
-      if (role === "admin" && (user as any).role === "moderator") {
-        return; // Allow moderators to access some admin routes
-      }
+    if (role && user && 'role' in user) {
+      const userRole = (user as any).role;
+      const allowedRoles = Array.isArray(role) ? role : [role];
+      
+      if (!allowedRoles.includes(userRole)) {
+        // Special handling for admin role - also allow moderators for some admin functions
+        if (allowedRoles.includes("admin") && userRole === "moderator") {
+          return; // Allow moderators to access some admin routes
+        }
 
-      toast({
-        title: "Access Denied",
-        description: `You need ${role} privileges to access this page.`,
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-      return;
+        toast({
+          title: "Access Denied",
+          description: `You need ${Array.isArray(role) ? role.join(' or ') : role} privileges to access this page.`,
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
+        return;
+      }
     }
   }, [isAuthenticated, isLoading, user, role, requireAuth, toast]);
 
@@ -67,8 +72,13 @@ export default function PrivateRoute({
   }
 
   // Don't render if role check failed
-  if (role && user && 'role' in user && (user as any).role !== role && !(role === "admin" && (user as any).role === "moderator")) {
-    return null;
+  if (role && user && 'role' in user) {
+    const userRole = (user as any).role;
+    const allowedRoles = Array.isArray(role) ? role : [role];
+    
+    if (!allowedRoles.includes(userRole) && !(allowedRoles.includes("admin") && userRole === "moderator")) {
+      return null;
+    }
   }
 
   return <>{children}</>;
